@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1c2230">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Öğretmenler Odası">
+<link rel="icon" href="img/ikon-192.png">
+<link rel="apple-touch-icon" href="img/ikon-192.png">
+<title>Öğretmenler Odası · Akıl ve Zeka Oyunları Atölyesi</title>
+<link rel="stylesheet" href="css/masa.css">
+</head>
+<body>
+<header class="ust">
+  <a class="marka" href="#plan" title="Ana sayfa">
+    <span class="marka-isaret" aria-hidden="true">▦</span>
+    <span><b>Öğretmenler Odası</b><small>Akıl ve Zeka Oyunları Atölyesi · 2026-2027</small></span>
+  </a>
+  <div class="plan-sec" role="tablist" aria-label="Program seçimi">
+    <button data-plan="D1" role="tab">Destek 1</button>
+    <button data-plan="D3" role="tab">Destek 3</button>
+    <button data-plan="KOD" role="tab">Kodlama</button>
+  </div>
+  <nav class="menu">
+    <a href="#plan"><span class="m-ikon">▤</span>Yıllık Plan</a>
+    <a href="#bu-hafta" class="vurgu"><span class="m-ikon">★</span>Bu Hafta</a>
+    <a href="#gunler"><span class="m-ikon">◷</span>Belirli Gün & AB</a>
+    <a href="#araclar"><span class="m-ikon">⏱</span>Tahta Araçları</a>
+    <a href="#nasil"><span class="m-ikon">?</span>Nasıl Kullanılır?</a>
+  </nav>
+  <div class="ust-sag">
+    <button id="btnAyar" class="ikon" title="Ayarlar (öğretmen, okul, sınıf listesi)">⚙</button>
+    <button id="btnTam" class="ikon" title="Tam ekran">⛶</button>
+  </div>
+</header>
+
+<div id="bugun" class="bugun-serit"></div>
+<main id="sahne"></main>
+
+<!-- tahta modu: öğrenci sunumu -->
+<div id="sunum" class="sunum" hidden>
+  <div class="sunum-ust">
+    <span id="sunumBaslik"></span>
+    <div class="sunum-araclar">
+      <button data-s="zaman" title="Zamanlayıcı">⏱</button>
+      <button data-s="kura" title="Rastgele öğrenci">🎲</button>
+      <button data-s="kalem" title="Tahtaya yaz">✎</button>
+      <button data-s="sil" title="Yazıları sil">⌫</button>
+      <button data-s="kapat" title="Kapat (Esc)">✕</button>
+    </div>
+  </div>
+  <div id="slayt" class="slayt"></div>
+  <canvas id="kalemTuval" class="kalem-tuval"></canvas>
+  <div id="sunumMini" class="sunum-mini" hidden></div>
+  <div class="sunum-alt">
+    <button id="sOnce" aria-label="Önceki">‹</button>
+    <span id="sSayac"></span>
+    <button id="sSonra" aria-label="Sonraki">›</button>
+  </div>
+</div>
+
+<dialog id="ayarlar">
+  <form method="dialog">
+    <h2>Ayarlar</h2>
+    <p class="not">Bu bilgiler yalnızca bu bilgisayarda saklanır; günlük planların imza alanına yazılır.</p>
+    <label>Öğretmen adı soyadı <input name="ogretmen"></label>
+    <label>Okul / BİLSEM <input name="okul"></label>
+    <label>Okul müdürü <input name="mudur"></label>
+    <label>Grup / sınıf adı <input name="grup" placeholder="Örn. D1-A"></label>
+    <label>Öğrenci listesi (her satıra bir ad) <textarea name="ogrenciler" rows="7"></textarea></label>
+    <menu><button value="iptal">Vazgeç</button><button value="kaydet" class="ana">Kaydet</button></menu>
+  </form>
+</dialog>
+
+<div id="baski" class="baski"></div>
+
+<script>if (location.protocol.startsWith("http")) { const m = document.createElement("link"); m.rel = "manifest"; m.href = "manifest.webmanifest"; document.head.append(m); }</script>
+<script src="js/plan-data.js"></script>
+<script src="js/takvim.js"></script>
+<script src="js/ozgun-etkinlikler.js"></script>
+<script src="js/gunler.js"></script>
+<script src="js/kodlama.js"></script>
+<script src="js/masa.js"></script>
+</body>
+</html>
