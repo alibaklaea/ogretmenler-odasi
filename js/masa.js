@@ -150,9 +150,9 @@
   // ---------- projeler: TEKNOFEST ve eTwinning ----------
   const PROJE_TUR = {
     teknofest: { ad: "TEKNOFEST", renk: "milli",
-      bilgi: "TEKNOFEST Teknoloji Yarışmaları, T3 Vakfı ve Sanayi ve Teknoloji Bakanlığı yürütücülüğünde her yıl düzenlenir. Kategoriler, yaş grupları ve rapor tarihleri her yıl şartnamede yeniden ilan edilir; başvurudan önce güncel şartnameyi okuyun.",
-      linkler: [["TEKNOFEST yarışmaları", "https://www.teknofest.org/tr/yarismalar/"], ["T3 Vakfı", "https://www.t3vakfi.org"]],
-      adimlar: ["Kategoriyi ve güncel şartnameyi incele", "Takımı ve danışman öğretmeni belirle", "Başvuruyu yap (son tarihe dikkat)", "Ön değerlendirme raporunu hazırla", "Proje detay raporunu hazırla", "Prototipi üret ve test et", "Final sunumuna ve yarışmaya hazırlan"] },
+      bilgi: "İlkokul ve ortaokul için en uygun yarışma: İnsanlık Yararına Teknolojiler (TÜBİTAK). 2026 takvimi: başvuru 20 Şubat, Ön Değerlendirme Raporu 25 Mart 17.00, sunum teslimi 30 Haziran, çevrim içi sunum 8-20 Temmuz, final Ağustos-Eylül. Takım en fazla 6 öğrenci ve tek danışmandan oluşur. Rapor ve yarı final ön eleme içindir; nihai puanın tamamı prototip ve final sunumundan gelir. Danışman yol gösterir, işi öğrenciler yapar. 2027 tarihleri şartnamede ilan edilince güncelleyin.",
+      linkler: [["TEKNOFEST yarışmaları", "https://www.teknofest.org/tr/yarismalar/"], ["İnsanlık Yararına Teknoloji", "https://teknofest.org/tr/yarismalar/insanlik-yararina-teknoloji-yarismasi/"], ["T3 KYS başvuru", "https://www.t3kys.com"]],
+      adimlar: ["Problem avı ve alt tema seçimi", "Takımı (en fazla 6) ve danışmanı belirle", "Veri topla, benzer çözümleri araştır", "T3 KYS'den başvuruyu yap", "Ön Değerlendirme Raporunu yaz ve yükle", "Prototipi üret ve test et", "Proje sunumunu hazırla ve yükle", "Çevrim içi sunum (yarı final)", "Final: prototip, poster ve sunum"] },
     etwinning: { ad: "eTwinning", renk: "ab",
       bilgi: "eTwinning, Avrupa Okul Eğitimi Platformu (ESEP) üzerinden okulların ortak proje yürüttüğü Avrupa Komisyonu ağıdır. Türkiye'de Ulusal Destek Servisi MEB YEĞİTEK bünyesindedir. Öğrencileri TwinSpace'e eklemeden önce veli izinlerini alın.",
       linkler: [["Avrupa Okul Eğitimi Platformu", "https://school-education.ec.europa.eu/tr"], ["eTwinning Türkiye", "https://etwinning.meb.gov.tr"]],
@@ -200,7 +200,7 @@
       <table class="bilgi-tablo">${p.ogrenciler ? `<tr><th>Öğrenciler</th><td>${esc(p.ogrenciler)}</td></tr>` : ""}${p.ortaklar ? `<tr><th>${p.tur === "etwinning" ? "Ortak okullar / ülkeler" : "Danışman / ekip"}</th><td>${esc(p.ortaklar)}</td></tr>` : ""}${p.baslangic ? `<tr><th>Başlangıç</th><td>${tarihYaz(iso(p.baslangic))}</td></tr>` : ""}${p.baglanti ? `<tr><th>Bağlantı</th><td><a href="${esc(p.baglanti)}" target="_blank" rel="noopener">${esc(p.baglanti.replace(/^https?:\/\//, "").slice(0, 50))}</a></td></tr>` : ""}</table>
       ${top ? `<div style="margin-top:10px"><div class="not">İlerleme: ${biten}/${top}</div><div class="ilerleme" style="margin:6px 0 8px"><i style="width:${top ? biten / top * 100 : 0}%"></i></div>
         ${p.adimlar.map((a, i) => `<label style="display:flex;gap:8px;align-items:center;padding:3px 0;font-size:.93rem"><input type="checkbox" style="width:auto" data-padim="${p.id}:${i}" ${a.tamam ? "checked" : ""}>${a.tamam ? `<s>${esc(a.ad)}</s>` : esc(a.ad)}</label>`).join("")}</div>` : ""}
-      <div class="dugmeler" style="margin-top:12px"><button class="dugme kucuk" data-pd="${p.id}">Düzenle</button><button class="dugme kucuk" data-pbas="${p.id}">Proje kartını yazdır</button><button class="dugme kucuk" data-psil="${p.id}">Sil</button></div></div>`;
+      <div class="dugmeler" style="margin-top:12px">${p.tur === "teknofest" ? `<a class="dugme kucuk ana" href="#odr/${p.id}">Ön Değerlendirme Raporu${p.odr ? ` · %${Math.round(odrKontrol(p.odr).filter((k) => k.ok).length / odrKontrol(p.odr).length * 100)}` : ""}</a>` : ""}<button class="dugme kucuk" data-pd="${p.id}">Düzenle</button><button class="dugme kucuk" data-pbas="${p.id}">Proje kartını yazdır</button><button class="dugme kucuk" data-psil="${p.id}">Sil</button></div></div>`;
   }
 
   function projeFormu(p) {
@@ -247,6 +247,299 @@
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }
 
+  // ---------- TEKNOFEST Ön Değerlendirme Raporu (ÖDR) sihirbazı ----------
+  // Bölüm sırası geçmiş yıl şablonlarındaki ortak akışa göre kuruldu; resmî şablon başvurudan sonra
+  // takımlara gönderilir, bu taslak oraya aktarılır. Takvim 2026 İYT-İlkokul şartnamesine göre tahminidir.
+  const TF_TAHMINI = { tBasvuru: "2027-02-19", tOdr: "2027-03-24", tSunum: "2027-06-30", tCevrim: "2027-07-08", tFinal: "2027-08-30" };
+  const TF_YARISMA = ["İnsanlık Yararına Teknolojiler (İlkokul)", "İnsanlık Yararına Teknolojiler (Ortaokul)", "İnsanlık Yararına Teknolojiler (Lise)",
+    "Eğitim Teknolojileri", "Akıllı Ulaşım", "Engelsiz Yaşam Teknolojileri", "Deneyap Kart Robolig", "Diğer"];
+  const TF_TEMA = ["Doğa, Çevre ve Sürdürülebilirlik › Atık Yönetimi ve Geri Dönüşüm Teknolojileri", "Doğa, Çevre ve Sürdürülebilirlik › Yeşil Teknolojiler ve Yenilenebilir Enerji",
+    "Doğa, Çevre ve Sürdürülebilirlik › Akıllı Şehirler ve Sürdürülebilir Yaşam", "Doğa, Çevre ve Sürdürülebilirlik › Doğal Yaşam, Ekosistem ve Biyoçeşitlilik",
+    "Doğa, Çevre ve Sürdürülebilirlik › Afet Teknolojileri ve Güvenli Alanlar", "Astronomi, Uzay Bilimleri ve Havacılık › Gezegenimiz ve Evren",
+    "Astronomi, Uzay Bilimleri ve Havacılık › Astronomide Gözlemler ve Teleskoplar", "Astronomi, Uzay Bilimleri ve Havacılık › Uzay Teknolojileri, Uydular ve Roketler",
+    "Astronomi, Uzay Bilimleri ve Havacılık › Uzayda Yaşam ve Kolonileşme", "Sağlıklı Yaşam › Fiziksel ve Zihinsel Sağlık", "Sağlıklı Yaşam › Besin (Gıda) Teknolojileri",
+    "Sağlıklı Yaşam › Sürdürülebilir Tarım ve Biyoteknoloji", "Diğer (şartnamedeki temayı yazın)"];
+
+  const ODR_BOLUM = [
+    { id: "takvim0", ad: "0. Yarışma takvimi", not: "2027 şartnamesi yayımlanınca bu tarihleri güncelleyin. Varsayılanlar 2026 İnsanlık Yararına Teknolojiler takvimine göre tahminidir (2026: başvuru 20 Şubat, ÖDR 25 Mart 17.00, sunum 30 Haziran, çevrim içi sunum 8-20 Temmuz).",
+      alanlar: [{ k: "tBasvuru", l: "Son başvuru tarihi", tip: "tarih" }, { k: "tOdr", l: "ÖDR son teslim tarihi", tip: "tarih" }, { k: "tSunum", l: "Proje sunumu son teslim", tip: "tarih" },
+        { k: "tCevrim", l: "Çevrim içi sunum (yarı final)", tip: "tarih" }, { k: "tFinal", l: "Final (yaklaşık)", tip: "tarih" }] },
+    { id: "bilgi", ad: "1. Takım ve proje bilgileri", alanlar: [
+      { k: "projeAdi", l: "Proje adı", ip: "Kısa, akılda kalan ve ne yaptığını söyleyen bir ad. Ör. “Dokunmadan Açılan Akıllı Çöp Kutusu”." },
+      { k: "yarisma", l: "Yarışma", tip: "secim", se: TF_YARISMA },
+      { k: "tema", l: "Ana tema › alt tema", tip: "secim", se: TF_TEMA, ip: "Proje tek bir alt temaya net biçimde oturmalı. Aynı proje birden fazla kategoriye başvurursa başvurular geçersiz sayılır." },
+      { k: "takimAdi", l: "Takım adı" }, { k: "okul", l: "Okul / kurum" }, { k: "danisman", l: "Danışman öğretmen (yalnız bir kişi)" },
+      { k: "onceki", l: "Bu proje daha önce bir yarışmaya katıldı mı?", ip: "Şartname gereği: katıldıysa yarışmanın adı, yeri, tarihi, düzenleyeni ve sonucu yazılır; eski proje mutlaka geliştirilmiş olmalı. Katılmadıysa “Hayır”." }],
+      tablolar: [{ k: "uyeler", l: "Takım üyeleri (en fazla 6 öğrenci; danışman bu sayıya dâhil değil)", cols: ["Ad Soyad", "Sınıf", "Projedeki görevi"], min: 2 }] },
+    { id: "ozet", ad: "2. Proje özeti", alanlar: [{ k: "ozet", l: "Projenizi 3-5 cümleyle anlatın", tip: "uzun", hedef: [40, 130],
+      ip: "Sırasıyla: Hangi sorunu fark ettik? Ne tasarladık? Nasıl çalışıyor? Kime ne fayda sağlıyor? Okuyan biri 30 saniyede anlamalı. Bu bölümü en son yazın." }] },
+    { id: "problem", ad: "3. Problem (sorun) tanımı", alanlar: [
+      { k: "problem", l: "Sorun nedir? Nerede, kimde görülüyor?", tip: "uzun", hedef: [40, 200], ip: "Sorunu önce tek cümleyle yazın, sonra nerede ve kimde ortaya çıktığını anlatın. Genel (“dünyada çevre kirliliği var”) değil, yerel ve somut olsun." },
+      { k: "farkettik", l: "Sorunu nasıl fark ettiniz?", tip: "uzun", ip: "Kendi gözleminiz, yaşadığınız bir olay, yaptığınız anket ya da görüşme. Hakemler öğrencinin kendi gözlemini görmek ister." },
+      { k: "veri", l: "Sorunu gösteren veri (sayı + kaynak)", tip: "uzun", ip: "En az bir sayı ve kaynağı: TÜİK, bakanlık, belediye, WHO/UNICEF raporu ya da kendi anketiniz (“Okulumuzda 80 öğrenciyle yaptığımız ankette %62'si …”). Kaynağı 11. bölüme ekleyin." }] },
+    { id: "hedef", ad: "4. Hedef kitle", alanlar: [{ k: "hedef", l: "Projeden kimler, kaç kişi faydalanacak? Onlara nasıl ulaşılacak?", tip: "uzun",
+      ip: "“Herkes” yazmayın. Birincil kullanıcı (ör. okulumuzdaki 450 öğrenci), ikincil kullanıcı (temizlik görevlileri), yaklaşık sayı ve ulaşma yolu." }] },
+    { id: "cozum", ad: "5. Çözüm önerisi ve çalışma prensibi", alanlar: [
+      { k: "cozum", l: "Çözümünüz nedir?", tip: "uzun", ip: "Ne tasarladığınızı tek paragrafta anlatın: bir cihaz mı, uygulama mı, model mi, oyun mu?" },
+      { k: "calisma", l: "Nasıl çalışıyor? (adım adım, her satıra bir adım)", tip: "uzun", ip: "Girdi → işlem → çıktı: “1. Ultrasonik sensör yaklaşan eli algılar. 2. Arduino mesafeyi ölçer. 3. 20 cm'den yakınsa servo motor kapağı açar.” Raporda akış şeması ya da çizim kullanacaksanız not düşün." },
+      { k: "teknoloji", l: "Malzemeler ve teknolojiler; neden bunları seçtiniz?", tip: "uzun", ip: "Arduino, sensörler, Tinkercad, Scratch, 3B yazıcı, karton maket… Seçim gerekçesi: ucuz, kolay bulunur, güvenli, okulda var." }] },
+    { id: "ozgun", ad: "6. Özgünlük ve yenilikçi yön", alanlar: [{ k: "fark", l: "Çözümünüzü benzerlerinden farklı kılan nedir?", tip: "uzun",
+      ip: "En az bir somut fark: daha ucuz, daha kolay kullanılır, yerel bir soruna özel, iki fikrin yeni bir birleşimi. Benzerini hiç bulamadık demek yerine en yakın örnekleri yazın." }],
+      tablolar: [{ k: "benzer", l: "Benzer çözümler (en az 2)", cols: ["Benzer ürün / proje", "Ne yapıyor?", "Eksiği", "Bizim farkımız"], min: 2 }] },
+    { id: "yontem", ad: "7. Bilimsel yöntem", alanlar: [
+      { k: "soru", l: "Araştırma sorusu", ip: "Soru işaretiyle bitsin. Ör. “Kapağın kendiliğinden açılması öğrencilerin atığı kutuya atma oranını artırır mı?”" },
+      { k: "hipotez", l: "Hipotez (tahmininiz)", ip: "“Bence … çünkü …”" },
+      { k: "test", l: "Nasıl test edeceksiniz?", tip: "uzun", ip: "Neyi ölçeceksiniz, kaç kez, nerede? Önce-sonra karşılaştırması, ölçüm tablosu, kontrol durumu. Ör. “Kapak takılmadan önce ve sonra birer hafta kutu çevresine düşen atık sayılacak.”" },
+      { k: "etik", l: "Etik ve güvenlik", tip: "uzun", ip: "Anket/görüşme varsa veli ve okul izni; kişisel veri toplanmaması; elektrik ve kesici alet güvenliği; canlılara zarar verilmemesi; kullanılan görsel ve kodlara kaynak gösterilmesi." }] },
+    { id: "uygulama", ad: "8. Uygulanabilirlik: malzeme, bütçe ve riskler",
+      tablolar: [{ k: "butce", l: "Malzeme ve tahmini maliyet", cols: ["Malzeme", "Adet", "Birim fiyat (TL)", "Nereden?"], min: 3, toplam: true },
+        { k: "riskler", l: "Riskler ve B planı", cols: ["Risk", "Olasılık (az/orta/çok)", "B planımız"], min: 2 }] },
+    { id: "etki", ad: "9. Toplumsal fayda ve beklenen etki", alanlar: [{ k: "etki", l: "Proje gerçekleşirse ne değişir? Başkaları nasıl kullanabilir?", tip: "uzun",
+      ip: "Çevresel, sosyal ve ekonomik fayda. Ölçülebilir yazın: “Okulumuzda kutu dışına düşen atığı yarıya indirmeyi hedefliyoruz.” Yaygınlaştırma: başka okullar, belediye, açık kaynak paylaşım." }] },
+    { id: "plan", ad: "10. Proje takvimi (iş-zaman çizelgesi)", not: "“Hazırlık planından doldur” düğmesi bugünden itibaren önerilen takvimi buraya aktarır; sonra düzenleyebilirsiniz.",
+      tablolar: [{ k: "takvim", l: "İş-zaman çizelgesi", cols: ["Aşama", "Tarih aralığı", "Çıktı"], min: 4 }] },
+    { id: "kaynak", ad: "11. Kaynakça", alanlar: [{ k: "kaynakca", l: "Kaynaklar (her satıra bir kaynak)", tip: "uzun",
+      ip: "Yazar/kurum (yıl). Başlık. Bağlantı (Erişim tarihi). Ör. “TÜİK (2024). Atık İstatistikleri. https://data.tuik.gov.tr (Erişim: 12.12.2026)”. Kullandığınız görseller, kodlar ve geçmiş TEKNOFEST raporları da kaynak gösterilmeli." }] }
+  ];
+
+  const HAZIRLIK_ONCE = [
+    ["Problem avı", "Okulda, evde ve çevrede gözlem yapılır; 10 sorun listelenir, en önemli 3'ü seçilir.", "Sorun listesi"],
+    ["Tema ve sorun seçimi", "Sorun şartnamedeki alt temayla eşleştirilir; sorundan etkilenen kişilerle konuşulur.", "Seçilen sorun + alt tema"],
+    ["Veri toplama", "Anket ya da gözlem planı yapılır (veli ve okul izni alınır); resmî istatistik aranır.", "Veri tablosu"],
+    ["Benzer çözüm araştırması", "En az 2-3 benzer ürün ya da proje bulunur; eksikleri tabloya yazılır.", "Karşılaştırma tablosu"],
+    ["Fikir üretme", "Beyin fırtınası ve SCAMPER ile 5 fikir üretilir, ölçütlerle biri seçilir.", "Seçilen çözüm"],
+    ["Çözüm tasarımı", "Eskiz çizilir; çalışma prensibi adım adım ve akış şemasıyla yazılır.", "Eskiz + akış şeması"],
+    ["Simülasyon", "Tinkercad, Scratch ya da kâğıt modelle ilk deneme yapılır.", "Çalışan simülasyon"],
+    ["Malzeme ve bütçe", "Malzeme listesi çıkarılır, fiyatlar araştırılır; okulda olanlar işaretlenir.", "Bütçe tablosu"],
+    ["Test planı ve riskler", "Araştırma sorusu, hipotez ve ölçüm planı yazılır; riskler ve B planı belirlenir.", "Test planı"],
+    ["ÖDR yazımı 1", "Öğrenciler problem, hedef kitle ve çözüm bölümlerini kendi cümleleriyle yazar.", "Taslak 1"],
+    ["ÖDR yazımı 2", "Özgünlük, yöntem, bütçe, takvim ve kaynakça tamamlanır; görseller eklenir.", "Taslak 2"],
+    ["Hakem gözüyle kontrol", "Kontrol listesi uygulanır; metin resmî şablona aktarılır, sayfa sınırı kontrol edilir.", "Son taslak"],
+    ["ÖDR teslimi", "Son tarihten en az 3 gün önce KYS'ye yüklenir.", "Teslim edilen rapor"]];
+  const HAZIRLIK_SONRA = [
+    ["İlk maket", "Karton ya da atık malzemeyle ölçekli maket yapılır.", "Maket"],
+    ["Çalışan prototip", "Devre, yazılım ve gövde birleştirilir; temel çalışma prensibi gösterilir.", "Çalışan prototip"],
+    ["Test", "Ölçüm tablosuyla en az üç deneme yapılır, sonuçlar kaydedilir.", "Test verisi"],
+    ["İyileştirme", "Test sonuçlarına göre prototip geliştirilir.", "Prototip 2"],
+    ["Proje sunumu hazırlığı", "Sunum şablonu doldurulur; fotoğraf ve video çekilir.", "Sunum dosyası"],
+    ["Sunum teslimi", "Proje sunumu KYS'ye yüklenir.", "Teslim edilen sunum"]];
+
+  function pazartesi(d) { const x = new Date(d); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); x.setHours(12, 0, 0, 0); return x; }
+  function tatilHaftasi(m) { return [0, 1, 2, 3, 4].every((i) => { const t = tatilBul(gunEkle(m, i)); return t && t.ara; }); }
+  function haftalarArasi(bas, bit) { const L = []; for (let m = pazartesi(bas); m <= bit; m = gunEkle(m, 7)) L.push({ m, tatil: tatilHaftasi(m) }); return L; }
+  function dagitHaftalara(gorevler, haftalarL) {
+    const okul = haftalarL.filter((h) => !h.tatil), n = Math.max(okul.length, 1), T = gorevler.length;
+    okul.forEach((h, i) => { h.gorevler = []; });
+    gorevler.forEach((g, i) => { const h = okul[Math.min(n - 1, Math.floor(i * n / T))]; if (h) h.gorevler.push(g); });
+    let son = null; okul.forEach((h) => { if (h.gorevler.length) son = h.gorevler[h.gorevler.length - 1]; else if (son) h.gorevler.push([son[0] + " (devam)", son[1], son[2]]); });
+    return haftalarL;
+  }
+  function hazirlikPlani(O) {
+    const t = (k) => iso(O[k] || TF_TAHMINI[k]);
+    const odr = t("tOdr"), bas = bugun > odr ? gunEkle(odr, -21) : bugun;
+    const once = dagitHaftalara(HAZIRLIK_ONCE, haftalarArasi(bas, gunEkle(odr, -1)));
+    const basv = t("tBasvuru"), hb = once.filter((h) => !h.tatil && h.m <= gunEkle(basv, -7)).pop() || once.find((h) => !h.tatil);
+    if (hb) hb.gorevler.unshift(["Başvuru", `Danışman T3 KYS'de takımı oluşturur ve başvuruyu yapar (son gün ${tarihYaz(basv)}).`, "Başvuru tamam"]);
+    const sonra = dagitHaftalara(HAZIRLIK_SONRA, haftalarArasi(gunEkle(odr, 1), gunEkle(t("tSunum"), -1)));
+    sonra.push({ m: pazartesi(t("tCevrim")), gorevler: [["Çevrim içi sunum (yarı final)", "Sunumu öğrenciler yapar; danışman jüriye sunum yapamaz.", "Yarı final"]] });
+    sonra.push({ m: pazartesi(t("tFinal")), gorevler: [["Final", "Prototip, poster ve final sunumu (nihai puanın tamamı bu aşamadan gelir).", "Final"]] });
+    return once.concat(sonra);
+  }
+  function planOzeti(P) { // ardışık aynı görevleri tek satırda birleştirir
+    const R = [];
+    P.forEach((h) => (h.gorevler || []).forEach((g) => {
+      const ad = g[0].replace(" (devam)", ""), son = R[R.length - 1];
+      if (son && son.ad === ad) son.bit = gunEkle(h.m, 4); else R.push({ ad, bas: h.m, bit: gunEkle(h.m, 4), cikti: g[2] });
+    }));
+    return R.map((r) => [r.ad, kisaTarih(r.bas, r.bit), r.cikti]);
+  }
+
+  const kelime = (s) => (String(s || "").trim().match(/\S+/g) || []).length;
+  const doluSatir = (T) => (T || []).filter((r) => r.some((c) => String(c || "").trim()));
+  function butceToplam(O) { return doluSatir(O.butce).reduce((s, r) => s + (parseFloat(String(r[1]).replace(",", ".")) || 0) * (parseFloat(String(r[2]).replace(",", ".")) || 0), 0); }
+
+  function odrKontrol(O) {
+    const ilk = String(O.yarisma || "").includes("İlkokul");
+    const kaynaklar = String(O.kaynakca || "").split("\n").filter((s) => s.trim()).length;
+    const uyeler = doluSatir(O.uyeler).length, oz = kelime(O.ozet), adim = String(O.calisma || "").split("\n").filter((s) => s.trim()).length;
+    return [
+      ["Proje adı, yarışma ve alt tema seçildi", O.projeAdi && O.yarisma && O.tema],
+      ["Takımda 1-6 öğrenci var, danışman yazıldı", uyeler >= 1 && uyeler <= 6 && O.danisman],
+      ["Önceki yarışma bilgisi yazıldı (yoksa “Hayır”)", String(O.onceki || "").trim()],
+      [`Özet 40-130 kelime (şu an ${oz})`, oz >= 40 && oz <= 130],
+      ["Problem somut ve yerel anlatıldı", kelime(O.problem) >= 25],
+      ["Sorunu gösteren en az bir sayı var", /\d/.test(O.veri || "")],
+      [`Veri için kaynak gösterildi (kaynak sayısı ${kaynaklar}, öneri ${ilk ? "2+" : "3+"})`, kaynaklar >= (ilk ? 2 : 3)],
+      ["Hedef kitle “herkes” değil, sayı içeriyor", O.hedef && !/herkes/i.test(O.hedef) && /\d/.test(O.hedef)],
+      [`Çalışma prensibi en az 3 adım (şu an ${adim})`, adim >= 3],
+      ["Malzeme/teknoloji seçimi gerekçeli", kelime(O.teknoloji) >= 12],
+      [`En az 2 benzer çözümle karşılaştırma (şu an ${doluSatir(O.benzer).length})`, doluSatir(O.benzer).length >= 2],
+      ["Araştırma sorusu soru işaretiyle bitiyor", /\?\s*$/.test(O.soru || "")],
+      ["Hipotez ve test planı yazıldı", O.hipotez && kelime(O.test) >= 15],
+      ["Etik/güvenlik ele alındı (anket varsa izin)", O.etik && (!/anket|görüşme/i.test((O.veri || "") + (O.test || "")) || /izin/i.test(O.etik))],
+      [`Bütçe en az 3 kalem (toplam ${butceToplam(O).toLocaleString("tr-TR")} TL)`, doluSatir(O.butce).length >= 3],
+      ["En az 2 risk ve B planı", doluSatir(O.riskler).length >= 2],
+      ["Toplumsal fayda ölçülebilir yazıldı", /\d|%/.test(O.etki || "") && kelime(O.etki) >= 20],
+      ["İş-zaman çizelgesi en az 4 aşama", doluSatir(O.takvim).length >= 4]
+    ].map(([m, ok]) => ({ m, ok: !!ok }));
+  }
+
+  function odrSayfa(id) {
+    const p = projeler.find((x) => x.id === id);
+    if (!p) { location.hash = "projeler/teknofest"; return; }
+    const O = p.odr = p.odr || {};
+    O.projeAdi ??= p.ad; O.danisman ??= ayar.ogretmen || ""; O.okul ??= ayar.okul || "";
+    for (const k in TF_TAHMINI) O[k] ??= TF_TAHMINI[k];
+    const alanHTML = (a) => {
+      const v = O[a.k] ?? "";
+      const inp = a.tip === "uzun" ? `<textarea data-k="${a.k}" rows="${a.k === "calisma" || a.k === "kaynakca" ? 5 : 4}">${esc(v)}</textarea>`
+        : a.tip === "secim" ? `<select data-k="${a.k}"><option value=""></option>${a.se.map((o) => `<option ${o === v ? "selected" : ""}>${esc(o)}</option>`).join("")}</select>`
+        : `<input data-k="${a.k}" ${a.tip === "tarih" ? 'type="date"' : ""} value="${esc(v)}">`;
+      return `<label class="odr-alan"><b>${esc(a.l)}</b>${a.ip ? `<span class="not">${esc(a.ip)}</span>` : ""}${inp}${a.hedef ? `<span class="not" data-kelime="${a.k}"></span>` : ""}</label>`;
+    };
+    const tabloHTML = (t) => {
+      O[t.k] = O[t.k] || []; while (O[t.k].length < t.min) O[t.k].push(t.cols.map(() => ""));
+      return `<div class="odr-alan"><b>${esc(t.l)}</b><div style="overflow-x:auto"><table class="odr-tablo"><tr>${t.cols.map((c) => `<th>${esc(c)}</th>`).join("")}<th></th></tr>
+        ${O[t.k].map((r, ri) => `<tr>${t.cols.map((_, ci) => `<td><input data-t="${t.k}" data-r="${ri}" data-c="${ci}" value="${esc(r[ci] || "")}"></td>`).join("")}<td><button class="kopya" data-satirsil="${t.k}:${ri}" title="Satırı sil">×</button></td></tr>`).join("")}</table></div>
+        <div class="dugmeler" style="margin-top:6px"><button class="dugme kucuk" data-satirekle="${t.k}">+ Satır</button>${t.k === "takvim" ? '<button class="dugme kucuk" id="takvimDoldur">Hazırlık planından doldur</button>' : ""}${t.toplam ? `<span class="not" id="butceT"></span>` : ""}</div></div>`;
+    };
+    const bolumDolu = (b) => { const A = (b.alanlar || []).map((a) => String(O[a.k] || "").trim()).concat((b.tablolar || []).map((t) => doluSatir(O[t.k]).length ? "x" : ""));
+      return [A.filter(Boolean).length, A.length]; };
+    $("#sahne").innerHTML = `<div class="ust-baslik"><div><a href="#projeler/teknofest">‹ Projeler</a><h1 style="margin-top:6px">Ön Değerlendirme Raporu</h1>
+        <p>${esc(p.ad)} · Öğrenciler soruları kendi cümleleriyle cevaplar; sistem cevapları rapor taslağına, prototip planına ve hazırlık takvimine dönüştürür.</p></div>
+        <div class="dugmeler"><button class="dugme" id="odrOrnek">Örnek proje ile doldur</button></div></div>
+      <div class="uyari">Şartname gereği proje fikri, tasarım, yazılım ve rapor öğrencilerin emeğiyle üretilmelidir; danışman yalnızca soru sorarak yol gösterir. Jüri, metinle öğrencinin yaşı arasında tutarsızlık görürse ayrıntılı teknik sorular sorabilir. Bu yüzden cevapları öğrencilerin ağzından, onların kelimeleriyle yazın.</div>
+      <div class="iki-sutun"><div id="odrForm">${ODR_BOLUM.map((b) => { const [d, t] = bolumDolu(b);
+        return `<details class="kart odr-bolum" ${d < t ? "open" : ""}><summary><b>${esc(b.ad)}</b><span class="rozet ${d === t ? "dunya" : ""}" data-bolum="${b.id}">${d}/${t}</span></summary>
+          ${b.not ? `<p class="not">${esc(b.not)}</p>` : ""}${(b.alanlar || []).map(alanHTML).join("")}${(b.tablolar || []).map(tabloHTML).join("")}</details>`; }).join("")}</div>
+        <div><div class="kart odr-yan"><h3>Hakem gözüyle kontrol</h3><div id="odrKontrol"></div>
+          <div class="dugmeler" style="margin-top:14px;flex-direction:column;align-items:stretch">
+            <button class="dugme ana" id="odrBas">Rapor taslağını yazdır / PDF</button>
+            <button class="dugme" id="odrWord">Word olarak indir (.doc)</button>
+            <button class="dugme" id="odrProto">Prototip planını yazdır</button>
+            <button class="dugme" id="odrTakvim">Haftalık hazırlık takvimini yazdır</button></div>
+          <p class="not" style="margin-top:12px">Resmî ÖDR şablonu başvurudan sonra takımlara gönderilir. Taslağı Word'e indirip başlıkları şablondaki sıraya göre aktarın; sayfa sınırına uyun ve son tarihten en az 3 gün önce yükleyin.</p></div></div></div>`;
+    const kontrolCiz = () => {
+      const K = odrKontrol(O), ok = K.filter((k) => k.ok).length;
+      $("#odrKontrol").innerHTML = `<div class="sayac" style="font-size:3rem;margin:4px 0">${Math.round(ok / K.length * 100)}%</div><div class="ilerleme"><i style="width:${ok / K.length * 100}%"></i></div>
+        <ul class="odr-kontrol">${K.map((k) => `<li class="${k.ok ? "ok" : ""}">${k.ok ? "✓" : "○"} ${esc(k.m)}</li>`).join("")}</ul>`;
+      document.querySelectorAll("[data-kelime]").forEach((s) => s.textContent = `${kelime(O[s.dataset.kelime])} kelime`);
+      const bt = $("#butceT"); if (bt) bt.textContent = `Toplam: ${butceToplam(O).toLocaleString("tr-TR")} TL`;
+      ODR_BOLUM.forEach((b) => { const [d, t] = bolumDolu(b), r = document.querySelector(`[data-bolum="${b.id}"]`); if (r) { r.textContent = `${d}/${t}`; r.classList.toggle("dunya", d === t); } });
+    };
+    let zaman = null;
+    const kaydet = () => { clearTimeout(zaman); zaman = setTimeout(() => { p.ad = O.projeAdi || p.ad; if (!p.sonTarih && O.tOdr) p.sonTarih = O.tOdr; projeKaydet(); }, 400); kontrolCiz(); };
+    $("#odrForm").addEventListener("input", (e) => {
+      const el = e.target;
+      if (el.dataset.k) O[el.dataset.k] = el.value;
+      if (el.dataset.t) O[el.dataset.t][+el.dataset.r][+el.dataset.c] = el.value;
+      kaydet();
+    });
+    $("#odrForm").addEventListener("change", (e) => { if (e.target.dataset.k) { O[e.target.dataset.k] = e.target.value; kaydet(); } });
+    $("#odrForm").addEventListener("click", (e) => {
+      const ek = e.target.closest("[data-satirekle]"), sil = e.target.closest("[data-satirsil]");
+      if (ek) { const t = ODR_BOLUM.flatMap((b) => b.tablolar || []).find((x) => x.k === ek.dataset.satirekle); O[t.k].push(t.cols.map(() => "")); projeKaydet(); odrSayfa(id); }
+      if (sil) { const [k, r] = sil.dataset.satirsil.split(":"); O[k].splice(+r, 1); projeKaydet(); odrSayfa(id); }
+      if (e.target.id === "takvimDoldur") { O.takvim = planOzeti(hazirlikPlani(O)); projeKaydet(); odrSayfa(id); }
+    });
+    $("#odrOrnek").onclick = () => {
+      if ($("#odrOrnek").dataset.onay !== "1") { $("#odrOrnek").dataset.onay = "1"; $("#odrOrnek").textContent = "Mevcut cevaplar silinecek. Emin misin?"; return; }
+      p.odr = Object.assign({}, TF_TAHMINI, odrOrnek(), { takvim: null }); p.odr.takvim = planOzeti(hazirlikPlani(p.odr)); projeKaydet(); odrSayfa(id);
+    };
+    $("#odrBas").onclick = () => bas(odrRaporHTML(p));
+    $("#odrWord").onclick = () => indir(`ODR-${(O.projeAdi || "proje").replace(/[^\wçğıöşüÇĞİÖŞÜ]+/g, "-")}.doc`,
+      `<html><head><meta charset="utf-8"><style>body{font-family:Calibri,Arial;font-size:11pt}table{border-collapse:collapse;width:100%}td,th{border:1px solid #444;padding:4px;vertical-align:top;text-align:left}th{background:#eee}h1{font-size:16pt}h2{font-size:13pt;margin-top:14pt}</style></head><body>${odrGovde(p)}</body></html>`, "application/msword");
+    $("#odrProto").onclick = () => bas(prototipHTML(p));
+    $("#odrTakvim").onclick = () => bas(hazirlikHTML(p));
+    kontrolCiz();
+  }
+
+  function odrGovde(p) {
+    const O = p.odr || {}, P = (s) => esc(s || "—").replace(/\n/g, "<br>");
+    const tablo = (cols, rows) => `<table><tr>${cols.map((c) => `<th>${esc(c)}</th>`).join("")}</tr>${doluSatir(rows).map((r) => `<tr>${cols.map((_, i) => `<td>${esc(r[i] || "")}</td>`).join("")}</tr>`).join("")}</table>`;
+    const adimlar = String(O.calisma || "").split("\n").filter((s) => s.trim());
+    return `<h1>${esc(O.projeAdi || p.ad)}</h1>
+      <table><tr><th>Yarışma</th><td>${esc(O.yarisma || "")}</td></tr><tr><th>Ana tema › alt tema</th><td>${esc(O.tema || "")}</td></tr>
+        <tr><th>Takım adı</th><td>${esc(O.takimAdi || "")}</td></tr><tr><th>Okul / kurum</th><td>${esc(O.okul || "")}</td></tr>
+        <tr><th>Danışman</th><td>${esc(O.danisman || "")}</td></tr><tr><th>Daha önce katıldığı yarışma</th><td>${esc(O.onceki || "")}</td></tr></table>
+      <h2>Takım üyeleri</h2>${tablo(["Ad Soyad", "Sınıf", "Projedeki görevi"], O.uyeler)}
+      <h2>1. Proje Özeti</h2><p>${P(O.ozet)}</p>
+      <h2>2. Problem (Sorun) Tanımı</h2><p>${P(O.problem)}</p><p><b>Sorunu nasıl fark ettik?</b> ${P(O.farkettik)}</p><p><b>Sorunu gösteren veriler:</b> ${P(O.veri)}</p>
+      <h2>3. Hedef Kitle</h2><p>${P(O.hedef)}</p>
+      <h2>4. Çözüm Önerisi ve Çalışma Prensibi</h2><p>${P(O.cozum)}</p>
+      ${adimlar.length ? `<p><b>Çalışma adımları:</b></p><ol>${adimlar.map((a) => `<li>${esc(a.replace(/^\d+[.)-]\s*/, ""))}</li>`).join("")}</ol>` : ""}
+      <p><b>Kullanılan malzeme ve teknolojiler:</b> ${P(O.teknoloji)}</p>
+      <h2>5. Özgünlük ve Yenilikçi Yön</h2><p>${P(O.fark)}</p>${tablo(["Benzer ürün / proje", "Ne yapıyor?", "Eksiği", "Bizim farkımız"], O.benzer)}
+      <h2>6. Bilimsel Yöntem</h2><p><b>Araştırma sorusu:</b> ${P(O.soru)}</p><p><b>Hipotez:</b> ${P(O.hipotez)}</p><p><b>Test planı:</b> ${P(O.test)}</p><p><b>Etik ve güvenlik:</b> ${P(O.etik)}</p>
+      <h2>7. Uygulanabilirlik</h2>${tablo(["Malzeme", "Adet", "Birim fiyat (TL)", "Nereden?"], O.butce)}<p><b>Tahmini toplam maliyet:</b> ${butceToplam(O).toLocaleString("tr-TR")} TL</p>
+      <p><b>Riskler ve B planı</b></p>${tablo(["Risk", "Olasılık", "B planımız"], O.riskler)}
+      <h2>8. Toplumsal Fayda ve Beklenen Etki</h2><p>${P(O.etki)}</p>
+      <h2>9. Proje Takvimi</h2>${tablo(["Aşama", "Tarih aralığı", "Çıktı"], O.takvim)}
+      <h2>10. Kaynakça</h2><ol>${String(O.kaynakca || "").split("\n").filter((s) => s.trim()).map((k) => `<li>${esc(k)}</li>`).join("")}</ol>`;
+  }
+  function odrRaporHTML(p) {
+    return `<div class="sayfa odr-sayfa"><div class="s-ust"><span>TEKNOFEST · ${esc((p.odr || {}).yarisma || "")}</span><span>Proje Ön Değerlendirme Raporu · TASLAK</span></div>${odrGovde(p)}
+      <p class="not" style="margin-top:6mm">Bu taslak resmî ÖDR şablonuna aktarılmak üzere hazırlanmıştır.</p></div>`;
+  }
+
+  function prototipHTML(p) {
+    const O = p.odr || {}, plan = hazirlikPlani(O), ilk = (ad) => { const h = plan.find((x) => (x.gorevler || []).some((g) => g[0] === ad)); return h ? tarihYaz(h.m) : ""; };
+    const asamalar = [
+      ["1. Eskiz", "Kâğıtta çizim; ölçüler, parçalar ve hareket yönleri. Çalışma adımları oklarla gösterilir.", "Çözüm tasarımı"],
+      ["2. Simülasyon", "Tinkercad / Scratch / kâğıt model ile çalışma mantığı denenir.", "Simülasyon"],
+      ["3. İlk maket", "Karton, ahşap ya da yapı bloklarıyla ölçekli model (gerçek boyut şart değil).", "İlk maket"],
+      ["4. Çalışan prototip", "Devre, yazılım ve gövde birleşir; temel çalışma prensibi gösterilir.", "Çalışan prototip"],
+      ["5. Test", O.test || "Ölçüm tablosuyla en az üç deneme.", "Test"],
+      ["6. İyileştirme", "Test sonuçlarına göre değişiklik; önce-sonra fotoğrafı çekilir.", "İyileştirme"],
+      ["7. Sunum ve poster", "Prototip görselleri ve açıklamalarla sunum; finalde poster (öğrenciler sunar).", "Proje sunumu hazırlığı"]];
+    return `<div class="sayfa"><div class="s-ust"><span>TEKNOFEST · ${esc(O.yarisma || "")}</span><span>Prototip Planı</span></div>
+      <h1>${esc(O.projeAdi || p.ad)} · Prototip Planı</h1>
+      <div class="s-yonerge">Prototip; fikrin uygulanabilir olduğunu gösteren işlevsel bir modeldir. Görsel estetikten çok, düzeneğin problemi nasıl çözdüğünün gösterilmesi önemlidir. Büyük yapılarda küçültülmüş maket kabul edilir. Danışman yalnızca güvenlik gereken işlerde (kesici alet, sıcak silikon, yüksek voltaj) yardım eder; tasarımı değiştirmez.</div>
+      <table><tr><th>Aşama</th><th>Ne yapılacak?</th><th>Başlangıç</th><th>Sorumlu</th><th>✓</th></tr>${asamalar.map((a) => `<tr><td><b>${a[0]}</b></td><td>${esc(a[1])}</td><td>${ilk(a[2])}</td><td></td><td></td></tr>`).join("")}</table>
+      <h1 style="font-size:12pt">Çalışma prensibi</h1><ol>${String(O.calisma || "").split("\n").filter((s) => s.trim()).map((a) => `<li>${esc(a.replace(/^\d+[.)-]\s*/, ""))}</li>`).join("") || "<li></li><li></li><li></li>"}</ol>
+      <h1 style="font-size:12pt">Malzeme listesi</h1><table><tr><th>Malzeme</th><th>Adet</th><th>Birim fiyat</th><th>Nereden?</th><th>Hazır ✓</th></tr>${doluSatir(O.butce).map((r) => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${esc(r[2])}</td><td>${esc(r[3])}</td><td></td></tr>`).join("") || "<tr><td></td><td></td><td></td><td></td><td></td></tr>".repeat(4)}</table>
+      <h1 style="font-size:12pt">Test tablosu</h1><p class="not">${esc(O.soru || "")}</p><table><tr><th>Deneme</th><th>Koşul</th><th>Beklenen</th><th>Ölçülen</th><th>Not</th></tr>${[1, 2, 3, 4, 5].map((i) => `<tr><td>${i}</td><td></td><td></td><td></td><td></td></tr>`).join("")}</table>
+      <h1 style="font-size:12pt">Görev dağılımı</h1><table><tr><th>Öğrenci</th><th>Görevi</th></tr>${doluSatir(O.uyeler).map((r) => `<tr><td>${esc(r[0])}</td><td>${esc(r[2])}</td></tr>`).join("") || "<tr><td></td><td></td></tr>".repeat(3)}</table>
+      <div class="s-alt"><span>${esc(O.projeAdi || "")}</span><span>Öğretmenler Odası · TEKNOFEST</span></div></div>`;
+  }
+
+  function hazirlikHTML(p) {
+    const O = p.odr || {}, P = hazirlikPlani(O);
+    return `<div class="sayfa"><div class="s-ust"><span>TEKNOFEST · ${esc(O.yarisma || "")}</span><span>Haftalık Hazırlık Takvimi</span></div>
+      <h1>${esc(O.projeAdi || p.ad)} · Haftalık Hazırlık Takvimi</h1>
+      <div class="s-yonerge">Başvuru: ${tarihYaz(iso(O.tBasvuru))} · ÖDR teslimi: ${tarihYaz(iso(O.tOdr))} · Sunum teslimi: ${tarihYaz(iso(O.tSunum))} · Final: ${tarihYaz(iso(O.tFinal))}. Tarihler 2027 şartnamesi yayımlanınca güncellenmelidir.</div>
+      <table style="font-size:9pt"><tr><th style="width:26mm">Hafta</th><th>Görev</th><th>Ne yapılacak?</th><th style="width:28mm">Çıktı</th><th style="width:8mm">✓</th></tr>
+      ${P.map((h) => h.tatil ? `<tr><td>${kisaTarih(h.m, gunEkle(h.m, 4))}</td><td colspan="4"><i>Tatil haftası: evde gözlem ve okuma</i></td></tr>`
+        : (h.gorevler || []).map((g, i) => `<tr><td>${i ? "" : kisaTarih(h.m, gunEkle(h.m, 4))}</td><td><b>${esc(g[0])}</b></td><td>${esc(g[1])}</td><td>${esc(g[2])}</td><td></td></tr>`).join("")).join("")}</table>
+      <div class="s-alt"><span>${esc(O.projeAdi || "")}</span><span>Öğretmenler Odası · TEKNOFEST</span></div></div>`;
+  }
+
+  function odrOrnek() { // ilkokul düzeyinde, kodlama atölyesindeki “Akıllı Kapak” projesinden örnek
+    return {
+      projeAdi: "Dokunmadan Açılan Akıllı Çöp Kutusu", yarisma: "İnsanlık Yararına Teknolojiler (İlkokul)", tema: TF_TEMA[0], takimAdi: "Temiz Adımlar", okul: ayar.okul || "Bilim ve Sanat Merkezi",
+      danisman: ayar.ogretmen || "", onceki: "Hayır",
+      uyeler: [["Öğrenci 1", "4. sınıf", "Kodlama ve devre"], ["Öğrenci 2", "4. sınıf", "Anket ve veri"], ["Öğrenci 3", "3. sınıf", "Maket ve tasarım"]],
+      ozet: "Okulumuzda öğrencilerin çöp kutusunun kapağına dokunmak istemediği için atıkları kutunun yanına bıraktığını fark ettik. Elimizi yaklaştırınca kapağı kendiliğinden açan bir çöp kutusu tasarladık. Kutunun üstündeki mesafe sensörü eli algılıyor, Arduino kartı servo motora komut veriyor ve kapak açılıyor. Projemiz okulumuzu daha temiz yapmayı ve kapağa dokunarak mikrop bulaşmasını azaltmayı amaçlıyor.",
+      problem: "Okulumuzun koridorlarındaki çöp kutularının kapağı elle açılıyor. Öğrenciler kapağa dokunmak istemediği için kâğıt ve ambalajları kutunun üstüne ya da yanına bırakıyor. Bu durum koridorların kirlenmesine ve temizlik görevlilerinin işinin artmasına yol açıyor.",
+      farkettik: "Teneffüslerde iki hafta boyunca 3. kat koridorundaki çöp kutusunu gözlemledik ve kutunun yanına bırakılan atıkları saydık. Ayrıca temizlik görevlimizle görüştük.",
+      veri: "Gözlemimizde iki haftada kutunun yanına 74 atık bırakıldığını saydık. Okulumuzda 80 öğrenciyle yaptığımız ankette öğrencilerin %61'i kapağa dokunmak istemediğini söyledi.",
+      hedef: "Birincil kullanıcı okulumuzdaki yaklaşık 450 öğrenci ve 35 öğretmen. İkincil kullanıcı 4 temizlik görevlisi. Projeyi önce bir koridorda deneyip okul idaresine ve diğer okullara tanıtacağız.",
+      cozum: "Ultrasonik mesafe sensörü ve servo motorla çalışan, el yaklaşınca kapağı kendiliğinden açıp birkaç saniye sonra kapatan bir çöp kutusu kapağı tasarladık. Kapak, okuldaki mevcut kutuların üstüne takılabiliyor.",
+      calisma: "1. Ultrasonik sensör kutunun önüne yaklaşan eli algılar.\n2. Arduino kartı mesafeyi ölçer.\n3. Mesafe 20 cm'den kısaysa servo motor kapağı açar.\n4. 3 saniye sonra kapak kendiliğinden kapanır.\n5. Kapağın kaç kez açıldığı sayılır ve kaydedilir.",
+      teknoloji: "Arduino Uno, HC-SR04 ultrasonik sensör, SG90 servo motor, pil yuvası ve karton gövde kullandık. Bu malzemeleri seçtik çünkü ucuz, kolay bulunuyor ve BİLSEM'deki kodlama atölyesinde kullanmayı öğrendik. Devreyi önce Tinkercad'de denedik.",
+      fark: "Piyasadaki sensörlü çöp kutuları pahalı ve okuldaki kutuların değiştirilmesini gerektiriyor. Bizim kapağımız var olan kutuların üstüne takılıyor ve kapağın kaç kez açıldığını sayarak hangi koridorun daha çok kullanıldığını gösteriyor.",
+      benzer: [["Sensörlü ev tipi çöp kutusu", "El yaklaşınca açılıyor", "Pahalı; okuldaki kutuya takılamıyor", "Mevcut kutuya takılan ucuz kapak"], ["Pedallı çöp kutusu", "Ayakla açılıyor", "Pedal kırılabiliyor, küçük çocuklar zorlanıyor", "Dokunmadan açılıyor, kullanım sayısını ölçüyor"]],
+      soru: "Kapağın kendiliğinden açılması, kutunun yanına bırakılan atık sayısını azaltır mı?",
+      hipotez: "Bence azaltır, çünkü öğrenciler kapağa dokunmak zorunda kalmayınca atığı kutuya atmayı tercih eder.",
+      test: "Kapağı takmadan önce bir hafta ve taktıktan sonra bir hafta, her gün okul çıkışında kutunun yanına bırakılan atıkları sayacağız. İki haftanın toplamlarını tabloda karşılaştıracağız. Kapağın günde kaç kez açıldığını da Arduino ile kaydedeceğiz.",
+      etik: "Anket için okul idaresinden ve velilerden izin aldık; ankette isim sormadık. Devrede düşük gerilimli pil kullanıyoruz. Kesici alet ve sıcak silikon kullanırken danışman öğretmenimiz güvenlik için yanımızda oldu. Kullandığımız görsellere kaynak gösterdik.",
+      butce: [["Arduino Uno", "1", "450", "Okulda var"], ["HC-SR04 ultrasonik sensör", "1", "60", "Elektronik malzeme mağazası"], ["SG90 servo motor", "1", "75", "Elektronik malzeme mağazası"], ["Pil yuvası ve kablolar", "1", "50", "Okulda var"]],
+      riskler: [["Servo motor kapağı kaldıramaz", "orta", "Kapağı hafif kartondan yaparız ya da daha güçlü servo kullanırız"], ["Sensör koridordan geçenleri algılayıp kapağı gereksiz açar", "çok", "Mesafe eşiğini 20 cm'den 10 cm'ye indiririz"], ["Pil çabuk biter", "orta", "Adaptörle prizden besleriz"]],
+      etki: "Okulumuzda kutunun yanına bırakılan atığı en az %50 azaltmayı hedefliyoruz. Kapağa dokunulmadığı için mikrop bulaşması azalacak. Kapağın planlarını ve kodunu ücretsiz paylaşarak başka okulların da yapmasını sağlayacağız.",
+      kaynakca: "Arduino (2026). Servo Library Reference. https://docs.arduino.cc (Erişim: 05.12.2026)\nTinkercad (2026). Circuits. https://www.tinkercad.com (Erişim: 05.12.2026)\nOkulumuzda yapılan öğrenci anketi ve koridor gözlem tablosu (Kasım 2026)"
+    };
+  }
+
   function projeSerit() {
     return projeler.filter((p) => p.durum !== "tamam" && p.sonTarih && kalanGun(p.sonTarih) >= 0 && kalanGun(p.sonTarih) <= 30)
       .map((p) => `<a class="rozet ${PROJE_TUR[p.tur].renk}" href="#projeler/${p.tur}" style="text-decoration:none">${PROJE_TUR[p.tur].ad}: ${esc(p.ad.slice(0, 28))} · ${kalanGun(p.sonTarih)} gün</a>`).join("");
@@ -263,6 +556,7 @@
     else if (yol === "gunler") gunlerSayfa(a1 || "hepsi");
     else if (yol === "araclar") araclarSayfa();
     else if (yol === "projeler") projelerSayfa(a1 || "teknofest");
+    else if (yol === "odr") odrSayfa(a1);
     else if (yol === "nasil") nasilSayfa();
     else planSayfa();
     window.scrollTo(0, 0);

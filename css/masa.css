@@ -295,3 +295,27 @@ main, .kart, .iki-sutun > div { min-width: 0; }
 
 dialog#projeDlg { width: min(620px, 96vw); max-height: 92vh; }
 @media (max-width: 760px) { .menu a { font-size: .62rem; padding: 4px 2px; } .menu a .m-ikon { font-size: 1.15rem; } }
+
+/* ÖDR sihirbazı */
+.odr-bolum { margin-bottom: 12px; padding: 0; }
+.odr-bolum > summary { cursor: pointer; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; gap: 10px; list-style: none; font-size: 1.05rem; }
+.odr-bolum > summary::-webkit-details-marker { display: none; }
+.odr-bolum[open] > summary { border-bottom: 1px solid var(--cizgi); margin-bottom: 12px; }
+.odr-bolum > :not(summary) { margin-left: 18px; margin-right: 18px; }
+.odr-bolum > :last-child { margin-bottom: 16px; }
+.odr-alan { display: grid; gap: 5px; margin-bottom: 16px; }
+.odr-alan .not { font-size: .84rem; }
+.odr-tablo { width: 100%; border-collapse: collapse; min-width: 480px; }
+.odr-tablo th { text-align: left; font-size: .8rem; color: var(--soluk); padding: 4px; }
+.odr-tablo td { padding: 2px; }
+.odr-tablo input { padding: 6px 8px; font-size: .9rem; }
+.odr-yan { position: sticky; top: 90px; }
+.odr-kontrol { list-style: none; padding: 0; margin: 10px 0 0; font-size: .88rem; }
+.odr-kontrol li { padding: 4px 0; color: var(--milli); border-bottom: 1px dashed var(--cizgi); }
+.odr-kontrol li.ok { color: var(--dunya); }
+.odr-sayfa h1 { font-size: 16pt; }
+.odr-sayfa h2 { font-size: 12pt; margin: 5mm 0 2mm; border-bottom: .8pt solid #999; padding-bottom: 1mm; }
+.odr-sayfa p { margin: 0 0 2.5mm; }
+.odr-sayfa td { height: auto; }
+.sayfa.odr-sayfa { min-height: auto; }
+@media (max-width: 960px) { .odr-yan { position: static; } }
