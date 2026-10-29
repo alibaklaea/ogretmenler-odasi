@@ -319,3 +319,16 @@ dialog#projeDlg { width: min(620px, 96vw); max-height: 92vh; }
 .odr-sayfa td { height: auto; }
 .sayfa.odr-sayfa { min-height: auto; }
 @media (max-width: 960px) { .odr-yan { position: static; } }
+
+/* Kalite Etiketi sihirbazı */
+.ql-alt { border-top: 1px solid var(--cizgi); padding: 14px 0 4px; }
+.ql-alt-bas { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.ql-olcek { display: grid; gap: 4px; margin-bottom: 10px; }
+.ql-olcek label { display: grid; grid-template-columns: auto 22px 1fr; gap: 8px; align-items: start; padding: 6px 8px; border: 1px solid var(--cizgi); border-radius: 8px; font-size: .86rem; cursor: pointer; background: #fff; }
+.ql-olcek label input { width: auto; margin-top: 3px; }
+.ql-olcek label b { color: var(--vurgu); }
+.ql-olcek label.secili { border-color: var(--vurgu); background: var(--vurgu-acik); }
+.ql-kutu { display: grid; gap: 4px; margin-bottom: 10px; font-size: .9rem; }
+.ql-kutu label { display: flex; gap: 8px; align-items: flex-start; }
+
+.odr-sayfa ul { list-style: none; padding-left: 0; }

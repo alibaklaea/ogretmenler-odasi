@@ -154,8 +154,8 @@
       linkler: [["TEKNOFEST yarışmaları", "https://www.teknofest.org/tr/yarismalar/"], ["İnsanlık Yararına Teknoloji", "https://teknofest.org/tr/yarismalar/insanlik-yararina-teknoloji-yarismasi/"], ["T3 KYS başvuru", "https://www.t3kys.com"]],
       adimlar: ["Problem avı ve alt tema seçimi", "Takımı (en fazla 6) ve danışmanı belirle", "Veri topla, benzer çözümleri araştır", "T3 KYS'den başvuruyu yap", "Ön Değerlendirme Raporunu yaz ve yükle", "Prototipi üret ve test et", "Proje sunumunu hazırla ve yükle", "Çevrim içi sunum (yarı final)", "Final: prototip, poster ve sunum"] },
     etwinning: { ad: "eTwinning", renk: "ab",
-      bilgi: "eTwinning, Avrupa Okul Eğitimi Platformu (ESEP) üzerinden okulların ortak proje yürüttüğü Avrupa Komisyonu ağıdır. Türkiye'de Ulusal Destek Servisi MEB YEĞİTEK bünyesindedir. Öğrencileri TwinSpace'e eklemeden önce veli izinlerini alın.",
-      linkler: [["Avrupa Okul Eğitimi Platformu", "https://school-education.ec.europa.eu/tr"], ["eTwinning Türkiye", "https://etwinning.meb.gov.tr"]],
+      bilgi: "2026-2028 Avrupa teması “Geleceğe Hazır Okullar” (Future-ready schools): temel beceriler, kapsayıcılık ve iyi oluş, dijital beceriler ve yapay zekâ, aktif vatandaşlık, sürdürülebilirlik, uyum ve dayanıklılık. Kalite Etiketi yalnız Avrupa projelerine (kurucular iki ülkeden) verilir. 2026'da son başvuru 1 Temmuz'du; projede Türkiye'den en fazla 10 öğretmen, öğretmen başına en fazla 4 başvuru, boş TwinSpace'li başvurular reddedildi. Türkiye Özel Ödülleri aynı formun Açıklama kısmına yazılan ibareyle istenir ve yalnız Kalite Etiketi alan projeler arasından verilir.",
+      linkler: [["Avrupa Okul Eğitimi Platformu", "https://school-education.ec.europa.eu/tr"], ["eTwinning Türkiye", "https://etwinning.meb.gov.tr"], ["2026 Kalite Etiketi rehberi", "https://etwinning.meb.gov.tr/wp-content/uploads/2026/02/2026_Kalite_Etiketi_Basvuru_Sureci_TR_Ozel_Odulleri.pdf"]],
       adimlar: ["ESEP'te proje ortağı bul", "Proje planını ortak okulla yaz", "Projeyi kaydet ve onay al", "Veli izinlerini al, öğrencileri TwinSpace'e ekle", "Ortak etkinlikleri yürüt (aylık plan)", "Yaygınlaştır (okul sitesi, pano, veli)", "Değerlendirme anketi ve proje ürünü", "Ulusal / Avrupa Kalite Etiketi başvurusu"] }
   };
   const DURUM = { fikir: "Fikir", basvuru: "Başvuru aşaması", devam: "Devam ediyor", tamam: "Tamamlandı" };
@@ -168,7 +168,7 @@
     const T = PROJE_TUR[tur] ? tur : "teknofest", B = PROJE_TUR[T];
     const liste = projeler.filter((p) => p.tur === T).sort((a, b) => (a.durum === "tamam") - (b.durum === "tamam") || (a.sonTarih || "9").localeCompare(b.sonTarih || "9"));
     $("#sahne").innerHTML = `<div class="ust-baslik"><div><h1>Projeler</h1><p>TEKNOFEST ve eTwinning projelerinizi buraya ekleyin. Yaklaşan son tarihler üst şeritte görünür.</p></div>
-        <div class="dugmeler"><button class="dugme ana" id="pYeni">+ Yeni ${B.ad} projesi</button></div></div>
+        <div class="dugmeler">${T === "etwinning" ? '<button class="dugme" id="pOdul">2027 ödül odaklı proje taslağı</button>' : ""}<button class="dugme ana" id="pYeni">+ Yeni ${B.ad} projesi</button></div></div>
       <div class="sekmeler" role="tablist">${Object.entries(PROJE_TUR).map(([k, v]) => `<button role="tab" aria-selected="${k === T}" data-t="${k}">${v.ad} (${projeler.filter((p) => p.tur === k).length})</button>`).join("")}</div>
       <div class="iki-sutun"><div>${liste.length ? liste.map(projeKart).join("") : `<div class="kart"><p>Henüz ${B.ad} projesi yok.</p><button class="dugme ana" id="pYeni2">+ İlk projeyi ekle</button></div>`}</div>
         <div><div class="kart" style="margin-bottom:16px"><h3>${B.ad} hakkında</h3><p class="not" style="font-size:.92rem">${esc(B.bilgi)}</p>
@@ -178,6 +178,7 @@
           <div class="dugmeler" style="margin-top:10px"><button class="dugme kucuk" id="pYedek">Yedeği indir</button><label class="dugme kucuk" style="cursor:pointer">Yedeği yükle<input type="file" id="pYukle" accept=".json" hidden></label><button class="dugme kucuk" id="pYayin">Yayın dosyasını indir</button></div></div></div></div>`;
     document.querySelectorAll("[data-t]").forEach((b) => b.onclick = () => location.hash = "projeler/" + b.dataset.t);
     [$("#pYeni"), $("#pYeni2")].forEach((b) => b && (b.onclick = () => projeFormu({ tur: T })));
+    if ($("#pOdul")) $("#pOdul").onclick = () => { projeler = projeler.concat(odulProjesi()); projeKaydet(); projelerSayfa("etwinning"); };
     $("#sahne").querySelectorAll("[data-pd]").forEach((b) => b.onclick = () => projeFormu(projeler.find((p) => p.id === b.dataset.pd)));
     $("#sahne").querySelectorAll("[data-psil]").forEach((b) => b.onclick = () => {
       if (b.dataset.onay !== "1") { b.dataset.onay = "1"; b.textContent = "Emin misin? Tekrar dokun"; return; }
@@ -186,7 +187,7 @@
       const [id, i] = c.dataset.padim.split(":"), p = projeler.find((x) => x.id === id); p.adimlar[+i].tamam = c.checked; projeKaydet(); projelerSayfa(T); });
     $("#sahne").querySelectorAll("[data-pbas]").forEach((b) => b.onclick = () => bas(projeSayfasi(projeler.find((p) => p.id === b.dataset.pbas))));
     $("#pYedek").onclick = () => indir(`projeler-yedek-${isoYaz(bugun)}.json`, JSON.stringify(projeler, null, 2), "application/json");
-    $("#pYayin").onclick = () => indir("projeler.js", "// Sitede herkese görünen projeler (Öğretmenler Odası).\nwindow.PROJELER = " + JSON.stringify(projeler, null, 2) + ";\n", "text/javascript");
+    $("#pYayin").onclick = () => indir("projeler.js", "// Sitede herkese görünen projeler (Öğretmenler Odası).\nwindow.PROJELER = " + JSON.stringify(projeler.map(({ odr, ql, ...acik }) => acik), null, 2) + ";\n", "text/javascript");
     $("#pYukle").onchange = async (e) => { try { const v = JSON.parse(await e.target.files[0].text()); if (Array.isArray(v)) { projeler = v; projeKaydet(); projelerSayfa(T); } } catch (x) { alert("Dosya okunamadı."); } };
   }
 
@@ -200,7 +201,7 @@
       <table class="bilgi-tablo">${p.ogrenciler ? `<tr><th>Öğrenciler</th><td>${esc(p.ogrenciler)}</td></tr>` : ""}${p.ortaklar ? `<tr><th>${p.tur === "etwinning" ? "Ortak okullar / ülkeler" : "Danışman / ekip"}</th><td>${esc(p.ortaklar)}</td></tr>` : ""}${p.baslangic ? `<tr><th>Başlangıç</th><td>${tarihYaz(iso(p.baslangic))}</td></tr>` : ""}${p.baglanti ? `<tr><th>Bağlantı</th><td><a href="${esc(p.baglanti)}" target="_blank" rel="noopener">${esc(p.baglanti.replace(/^https?:\/\//, "").slice(0, 50))}</a></td></tr>` : ""}</table>
       ${top ? `<div style="margin-top:10px"><div class="not">İlerleme: ${biten}/${top}</div><div class="ilerleme" style="margin:6px 0 8px"><i style="width:${top ? biten / top * 100 : 0}%"></i></div>
         ${p.adimlar.map((a, i) => `<label style="display:flex;gap:8px;align-items:center;padding:3px 0;font-size:.93rem"><input type="checkbox" style="width:auto" data-padim="${p.id}:${i}" ${a.tamam ? "checked" : ""}>${a.tamam ? `<s>${esc(a.ad)}</s>` : esc(a.ad)}</label>`).join("")}</div>` : ""}
-      <div class="dugmeler" style="margin-top:12px">${p.tur === "teknofest" ? `<a class="dugme kucuk ana" href="#odr/${p.id}">Ön Değerlendirme Raporu${p.odr ? ` · %${Math.round(odrKontrol(p.odr).filter((k) => k.ok).length / odrKontrol(p.odr).length * 100)}` : ""}</a>` : ""}<button class="dugme kucuk" data-pd="${p.id}">Düzenle</button><button class="dugme kucuk" data-pbas="${p.id}">Proje kartını yazdır</button><button class="dugme kucuk" data-psil="${p.id}">Sil</button></div></div>`;
+      <div class="dugmeler" style="margin-top:12px">${p.tur === "teknofest" ? `<a class="dugme kucuk ana" href="#odr/${p.id}">Ön Değerlendirme Raporu${p.odr ? ` · %${Math.round(odrKontrol(p.odr).filter((k) => k.ok).length / odrKontrol(p.odr).length * 100)}` : ""}</a>` : `<a class="dugme kucuk ana" href="#ql/${p.id}">Kalite Etiketi başvurusu${p.ql && p.ql.puan ? ` · ${qlPuan(p.ql).toplam.toFixed(1)}/25` : ""}</a>`}<button class="dugme kucuk" data-pd="${p.id}">Düzenle</button><button class="dugme kucuk" data-pbas="${p.id}">Proje kartını yazdır</button><button class="dugme kucuk" data-psil="${p.id}">Sil</button></div></div>`;
   }
 
   function projeFormu(p) {
@@ -540,6 +541,235 @@
     };
   }
 
+  // ---------- eTwinning Ulusal Kalite Etiketi başvuru sihirbazı ----------
+  // Puan ölçütleri: eTwinning Quality Label Framework, Guidelines for evaluators (v2.2, 2022).
+  // Kurallar ve Türkiye Özel Ödülleri: eTwinning Türkiye 2026 Kalite Etiketi ve Türkiye Özel Ödülleri Başvuru Rehberi.
+  const QL_KRITER = [
+    { id: "1", ad: "1. Ortak okullar arası iş birliği", not: "İş birliği iletişimin ötesindedir: ortak sınıflar birbirinin katkısı olmadan etkinliği tamamlayamaz. Karma uluslu öğrenci takımları en etkili uygulamadır.",
+      alt: [
+        { id: "1a", ad: "Öğretmenler arası koordinasyon", d: ["Koordinasyona katılım yok; yayımlanmış çalışma planı yok.", "Ara sıra öğretmen paylaşımı var ama aralarında etkileşim yok; plan yok.", "Öğretmenler arasında etkileşim var; yayımlanmış bir çalışma planı var.", "Ortak alanlarda projenin gidişi konuşuluyor, roller belli; ama görev dağılımlı ayrıntılı plan/takvim yok.", "Görev dağılımlı ayrıntılı ortak plan/takvim TwinSpace'te yayımlandı ve etkin kullanılıyor; her öğretmenin rolü izlenebiliyor."],
+          s: ["Ortak çalışma planı ve takvim TwinSpace'te yayımlandı mı?", "Hangi görevler hangi öğretmende? Sizin koordinasyon göreviniz neydi?", "Öğretmen forumunda/toplantılarında hangi kararları birlikte aldınız?"] },
+        { id: "1b", ad: "Öğrenciler arası çevrim içi iş birliği", esik: 3, d: ["Ortak okullarla öğrenci etkileşimi yok.", "Etkinlikler paralel yürüyor; ürünler görülebilir ama okullar arası öğrenci etkileşimi yok.", "Farklı okullardan öğrenciler arasında etkileşim (video konferans, forum, sohbet) ve geri bildirim var.", "Farklı okullardan öğrenciler ortak bir ürün üzerinde sırayla ya da bağımsız çalışıyor; içerik ve biçim üzerinde forumda anlaşıldı.", "Etkinliklerin çoğu karma uluslu takımlarla yapıldı; öğrenciler tartışıp uzlaşarak ortak hedefe çalıştı."],
+          s: ["Karma uluslu takımlar kuruldu mu? Kaç takım, hangi görevlerle?", "Öğrenciler ortak okullardaki arkadaşlarıyla nerede ve nasıl iletişim kurdu (TwinSpace forumu, video konferans)?", "Öğrenciler birbirinin çalışmasına hangi geri bildirimi verdi?"] },
+        { id: "1c", ad: "Ortak ürünler", d: ["Okulların ürünleri arasında bağ yok.", "Ürünler bağımsız ama biçim ve içerikçe bağlantılı; farklar planda açıklanmamış.", "Ürünler bağımsız ama bağlantılı; farklar planda açıklanmış.", "Bir okulun ürettiği bilgi diğerinin ürününde kullanılıyor; ürünler birbirini tamamlıyor.", "Ürünlerin çoğu farklı okullardan katkıların birleşimi (gezici kitap gibi); hiçbir grup tek yazar sayılamaz."],
+          s: ["Hangi ortak ürünleri oluşturdunuz (ortak e-kitap, veri tablosu, video, oyun)?", "Bir okulun verisi/ürünü diğer okulun işinde nasıl kullanıldı?", "Ortak üründe sizin sınıfınızın payı neydi?"] }] },
+    { id: "2", ad: "2. Dijital teknolojilerin kullanımı", not: "Araçlar pedagojik hedeflere hizmet etmeli; dijital beceri ve dijital vatandaşlık geliştirmeli. Gizlilik, güvenlik ve telif hakları gözetilmeli.",
+      alt: [
+        { id: "2a", ad: "Dijital araçların seçimi ve kullanımı", esik: 3, d: ["Dijital araçları çoğunlukla öğretmenler kullandı.", "Öğrenciler yaşa uygun araç kullandı ama bu proje hedeflerini desteklemiyor.", "Yaşa uygun araçlar proje hedeflerini destekliyor.", "Hedefleri destekleyen araç kullanımına ek olarak aşağıdaki koşullardan biri var.", "Öğrenciler dijital ürünü aktif olarak oluşturdu ve aşağıdaki koşullardan en az ikisi var."],
+          k: ["Araçlar yaratıcı biçimde kullanıldı", "Aynı ürün için farklı araçlar kullanıldı", "Öğrenciler araçları önerdi ve seçti", "Öğrencilere araç kılavuzu/öğreticisi verildi, araçları kendi başlarına kullandılar", "Öğrenciler dijital ürünü kendileri oluşturdu"],
+          s: ["Hangi araçları hangi etkinlikte, hangi hedef için kullandınız?", "Öğrenciler aracı nasıl seçti, nasıl öğrendi?"] },
+        { id: "2b", ad: "TwinSpace yönetimi", d: ["TwinSpace kullanılmıyor.", "TwinSpace'e yalnız öğretmenler erişiyor.", "Öğrenciler de erişiyor ama bölümler düzensiz; proje izlenemiyor.", "Herkes erişiyor; bölümler düzenli, proje kolay izleniyor.", "Çok iyi düzenlenmiş; her etkinlik ve sonuca kolayca ulaşılıyor; öğretmen, öğrenci, aile ve uzman kullanıcıları doğru yönetiliyor."],
+          s: ["TwinSpace sayfaları ay/etkinlik sırasıyla mı düzenli?", "Her paylaşımda adınız, soyadınız ve okul adınız yazıyor mu? (Rehber gereği zorunlu)", "Aileler ya da konuk uzmanlar davet edildi mi?"] },
+        { id: "2c", ad: "KVKK/GDPR, telif hakkı ve e-güvenlik", esik: 2, d: ["Aşağıdakilerden yalnız biri var.", "Davranış kurallarına uyum + 1 öğe.", "Davranış kurallarına uyum + 2 öğe.", "Davranış kurallarına uyum + 3 öğe.", "Davranış kurallarına uyum + 4 öğe; ayrıca davranış kuralları ve lisanslı kaynaklar TwinSpace'te herkese açık yayımlandı."],
+          k: ["Tüm davranışlar eTwinning Davranış Kuralları'na uygun (zorunlu)", "Öğrenci görselleri ve kişisel veriler kurallara uygun paylaşıldı", "Öğrenci iletişimi TwinSpace içinde yapıldı (WhatsApp vb. kullanılmadı)", "Kullanılan çalışma ortamları güvenli ve çocuğa uygun", "Görsel, müzik, video ve metinlerde lisanslara uyuldu, kaynaklar gösterildi", "Davranış kuralları ve telifsiz kaynak listesi TwinSpace'te herkese açık sayfada"],
+          s: ["Veli izinleri alındı mı? Öğrenci yüzleri nasıl paylaşıldı?", "TwinSpace'te bir ‘Proje kuralları / e-güvenlik’ sayfası var mı?"] }] },
+    { id: "3", ad: "3. Pedagojik yaklaşımlar", not: "Öğrenciler projenin ana gücü olmalı: yaratıcı, sorumlu ve özerk. Öğretmenin fikirlerini uygulayan konumunda kalmamalı.",
+      alt: [
+        { id: "3a", ad: "Eğitsel hedefler", d: ["Hedef belirlenmemiş.", "Hedefler aşağıdaki özelliklerden birini taşıyor.", "Hedefler net ve ikisini taşıyor.", "Hedefler net ve üçünü taşıyor.", "Hedefler net ve dördünü taşıyor; ayrıca açık bir değerlendirme süreci kurulmuş."],
+          k: ["Belirli", "İlgili (öğrencinin ihtiyacına uygun)", "Ulaşılabilir", "Zamana bağlı", "Ölçülebilir", "Hedefler için açık bir değerlendirme süreci var"],
+          s: ["Projenin 3-5 hedefini yazın; her biri ölçülebilir mi?", "Hedeflere ulaşıldığını nasıl anladınız?"] },
+        { id: "3b", ad: "Pedagojik yaklaşım ve öğrenci özerkliği", d: ["Öğrenciler katılmıyor.", "Anlatım ağırlıklı; öğrenci pasif; kararları ve ürünleri öğretmen oluşturuyor.", "Öğrenci etkin ama yöntem çeşitliliği az; ara görevlerde birlikte karar veriliyor.", "Çeşitli etkinlik ve yöntemler; kararlar öğretmen ve öğrencilerce birlikte alınıyor; ürünler birlikte oluşturuluyor.", "Birbirine bağlı etkinlikler; öğrenciler tema, iş bölümü ve etkinlikler gibi yapısal kararlarda söz sahibi; ürünleri öğrenciler oluşturuyor."],
+          s: ["Hangi yöntemleri kullandınız (proje tabanlı, sorgulama, oyunlaştırma, tasarım odaklı düşünme)?", "Öğrenciler hangi kararları kendileri verdi (logo, proje adı, ürün türü, iş bölümü)?"] }] },
+    { id: "4", ad: "4. Müfredat entegrasyonu", not: "Proje çalışması okul programına dayanmalı ve çoğunlukla okul saatinde yapılmalı. Avrupa anahtar yetkinlikleriyle bağ kurulmalı.",
+      alt: [
+        { id: "4a", ad: "Bir ya da birden çok derste müfredat entegrasyonu", d: ["Müfredat bağlantısı yok.", "Hedefler anılıyor ama etkinliklerle açık bağ yok.", "Etkinlikler müfredat hedeflerini işliyor (açıkça yazılmamış olsa da).", "Müfredat hedefleri ve içerik ayrıntılı açıklanmış.", "Ayrıntılı açıklama + proje resmî okul/sınıf planının parçası; hedeflere ne ölçüde ulaşıldığı açık."],
+          s: ["Proje hangi yıllık plan haftalarına ve kazanımlarına dayanıyor?", "Çalışmaların ne kadarı ders saatinde yapıldı?"] },
+        { id: "4b", ad: "Disiplinler arası yaklaşım", d: ["Disiplinler arası öğe yok.", "İkinci bir dersin öğeleri var ama hedefi yok.", "Disiplinler arası öğeler var ama hedeflerle uyumsuz.", "Disiplinler arası öğeler hedeflere uygun.", "Aynı okulda farklı dersler projede; ürünler farklı alanlarla ilişkili."],
+          s: ["Projede hangi dersler/branşlar birlikte çalıştı?"] },
+        { id: "4c", ad: "Anahtar yetkinlikler", d: ["Anahtar yetkinlikler anılmıyor.", "Anılıyor ama projenin geri kalanıyla bağ yok.", "Bazı yetkinlikler genel hedeflerle bağlı ama içerik/etkinliklerde yetersiz anlatılmış.", "Yetkinlikler hedef, içerik ve etkinliklerde açıkça ve ayrıntılı bağlanmış.", "Ayrıntılı bağ + yetkinliklerin gelişimini ölçen değerlendirme ölçütleri var."],
+          k: ["Okuryazarlık", "Çok dillilik", "Matematik, fen ve mühendislik", "Dijital yetkinlik", "Kişisel, sosyal ve öğrenmeyi öğrenme", "Vatandaşlık", "Girişimcilik", "Kültürel farkındalık ve ifade"],
+          s: ["Seçtiğiniz her yetkinliği hangi etkinlik geliştirdi? Nasıl ölçtünüz?"] }] },
+    { id: "5", ad: "5. Sonuçlar, değerlendirme ve yaygınlaştırma", not: "Sonuçlar ve etki belgelenmeli. Anket sonuçlarını kopyalayıp yapıştırmak değerlendirme sayılmaz; öğretmenin analizi ve yorumu gerekir.",
+      alt: [
+        { id: "5a", ad: "Hedeflere, etkinliklere ve çıktılara ulaşma", d: ["Çıktılar hedeflerle ilişkili değil.", "Çıktıların yarısından azı hedeflerle ilişkili.", "En az yarısı ilişkili.", "Yarısından fazlası ilişkili.", "Tüm çıktılar hedeflerle ilişkili; her hedefe ulaşma düzeyi yapılandırılmış biçimde belgelendi."],
+          s: ["Her hedef için hangi çıktı ortaya çıktı? (hedef → etkinlik → ürün tablosu)"] },
+        { id: "5b", ad: "Proje değerlendirmesi", d: ["Değerlendirme yapılmadı.", "Öğretmen ya da öğrenci değerlendirmesi/planı var ama sonuçlar görünmüyor.", "Sonuçlar görünüyor ama analiz edilmemiş.", "Öğretmen ve öğrenci değerlendirmesi yapıldı; sonuçlar görünür ve analiz edildi.", "Proje boyunca aşamalı değerlendirme yapıldı; sonuçların analizi ve yansıtması var."],
+          s: ["Ön test-son test, ara değerlendirme, öğretmen ve öğrenci anketleri yapıldı mı?", "Sonuçlardan ne çıkardınız, neyi değiştirdiniz?"] },
+        { id: "5c", ad: "Yaygınlaştırma", d: ["Projeyi yalnız katılımcılar biliyor.", "Ürünler sınıf panosunda, eTwinning projesi olduğu belirtilerek sergilendi.", "Pano + aşağıdaki okul içi öğelerden biri.", "Pano + okul içi öğelerden en az ikisi; kamuya açık materyaller projeyi doğru yansıtıyor.", "Okul içi en az iki öğe + okul dışına yaygınlaştırma (medya haberi, başka okul öğretmenlerine eğitim, başka etkinlik/ödülde sunum, yerel kurumlar)."],
+          k: ["Ürünler sınıf panosunda ‘eTwinning projesi’ olarak sergilendi", "Öğretmenler kurulu / zümre toplantısında tanıtıldı", "Okulun ortak alanlarında sergilendi", "Veliler TwinSpace ya da başka yolla bilgilendirildi", "Medyada haber (gazete, TV, radyo, haber sitesi)", "Başka okulların öğretmenlerine eğitimde kullanıldı", "Başka bir etkinlikte sunuldu / başka ödüle başvuruldu", "Yerel kurumlar (belediye, il müdürlüğü vb.) bilgilendirildi"],
+          s: ["Haber linklerini, okul sitesi duyurularını ve sosyal medya paylaşımlarını aşağıdaki kanıt tablosuna ekleyin; her birinde ‘eTwinning projesi’ ifadesi geçmeli."] }] }
+  ];
+  const TR_OZEL = [
+    ["Türkiye Yüzyılı Maarif Modeli", "Sosyal-duygusal öğrenme becerileri, erdem-değer-eylem çerçevesi ve okuryazarlık becerilerinden birini ya da tamamını destekleyen projeler."],
+    ["Yıllık Tema", "2026'da “Yaşam Becerileri” (okuryazarlık, matematik, bilim, dijital, vatandaşlık; en az ikisi). 2026-2028 Avrupa teması “Geleceğe Hazır Okullar” olduğu için 2027 kategorisinin buna göre ilan edilmesi beklenir."],
+    ["Engelsiz eTwinning", "Özel gereksinimli öğrencilerin (3-14 yaş) katılımını ve farkındalığı hedefleyen projeler."],
+    ["Mesleki ve Teknik Eğitim", "Meslek lisesi bölümleriyle ilgili; tüm öğretmenler meslek lisesinde."],
+    ["Erken Çocukluk Dönemi (0-6 Yaş)", "Okul öncesi; yaşa uygun teknoloji kullanan iş birlikçi projeler."],
+    ["STEM", "STEM, kodlama ve robotik temalı projeler."],
+    ["Yeşil Vatan – Benim Okulum Geleceğe Çare", "İklim değişikliği, sürdürülebilirlik, çevre ve biyoçeşitlilik; MEB'in önerdiği etkinliklerle."],
+    ["Eğitimde Yapay Zekâ", "Yapay zekânın yaratıcı ve etkili kullanımı; öğrencilerin etkileşimli öğrenmesi; yapay zekâya eleştirel bakış ve etik."],
+    ["Çocuğun Güvenliği ve Mahremiyeti", "Fiziksel/psikososyal güvenlik, mahremiyet eğitimi, dijital güvenlik ve KVKK."]];
+  const QL_GEREK = [
+    "Avrupa projesi: kurucular iki farklı ülkeden (ulusal projeler başvuramaz)",
+    "Proje tamamlandı ya da son aşamasında",
+    "Ortak hedefler ve ortakların paylaştığı bir plan var",
+    "Ortaklar birlikte ortak etkinlikler düzenledi",
+    "Öğretmen ve öğrencilerim etkinliklerin tamamına katkı verdi",
+    "Proje ana sayfasında Türkiye'de kayıtlı en fazla 10 öğretmen var",
+    "Bu dönem en fazla 4 projeyle başvuruyorum (ilk 4 başvuru değerlendirilir)",
+    "Proje kayıt tarihi başvuru döneminin kabul ettiği yıllar arasında (2026'da 2024-2026)",
+    "TwinSpace sayfaları oluşturuldu ve dolu (boş sayfalı başvurular reddedilir)",
+    "Paylaşımlarımda adım, soyadım ve okul adım yazıyor",
+    "Değerlendirme için ayrı bir öğrenci hesabı oluşturdum",
+    "Başvuru metnim bana ait; ortaklarla birebir aynı değil",
+    "Veli izinleri ve KVKK/telif gözetildi"];
+
+  function qlVarsay(Q) {
+    Q.puan ||= {}; Q.kutu ||= {}; Q.metin ||= {}; Q.gerek ||= {}; Q.ozel ||= {}; Q.kanit ||= [["", "", "", "", ""], ["", "", "", "", ""]];
+    Q.etkinlik ||= [["", "", "", "", ""], ["", "", "", "", ""]];
+    Q.sonTarih ??= "2027-07-01";
+  }
+  function qlOneri(Q, a) { // kontrol listesinden önerilen puan
+    const K = Q.kutu[a.id] || [], n = (ix) => ix.filter((i) => K[i]).length;
+    if (a.id === "2a") { const ek = n([0, 1, 2, 3]); return K[4] && ek >= 2 ? 5 : ek >= 1 ? 4 : null; }
+    if (a.id === "2c") { if (!K[0]) return n([1, 2, 3, 4]) ? 1 : null; const s = 1 + n([1, 2, 3, 4]); return s === 5 && !K[5] ? 4 : s; }
+    if (a.id === "3a") { const s = n([0, 1, 2, 3, 4]); return s === 0 ? null : s >= 4 ? (K[5] ? 5 : 4) : s + 1; }
+    if (a.id === "5c") { const ic = n([1, 2, 3]), dis = n([4, 5, 6, 7]) + (Q.kanit || []).filter((r) => r[0] === "Haber" && r[2]).length;
+      if (!K[0]) return ic || dis ? 2 : null; return ic >= 2 && dis ? 5 : ic >= 2 ? 4 : ic === 1 ? 3 : 2; }
+    return null;
+  }
+  function qlPuan(Q) {
+    const sat = QL_KRITER.map((kr) => { const ps = kr.alt.map((a) => +(Q.puan[a.id] || qlOneri(Q, a) || 0)); return { kr, ps, ort: ps.reduce((s, x) => s + x, 0) / ps.length }; });
+    const toplam = sat.reduce((s, x) => s + x.ort, 0);
+    const baraj = QL_KRITER.flatMap((kr) => kr.alt).filter((a) => a.esik).map((a) => ({ a, p: +(Q.puan[a.id] || qlOneri(Q, a) || 0) }));
+    return { sat, toplam, baraj, barajOk: baraj.every((b) => b.p >= b.a.esik) };
+  }
+  function qlAciklama(Q) {
+    const oz = TR_OZEL.filter((_, i) => Q.ozel[i]).map((o) => `eTwinning Türkiye Özel Ödülü ${o[0]} kategorisine başvuru yapmak istiyorum.`);
+    return [Q.brans ? `Branş: ${Q.brans}.` : "Branş: ……", `Değerlendirme için TwinSpace öğrenci hesabı — kullanıcı adı: ${Q.ogrKullanici || "……"} / şifre: ${Q.ogrSifre || "……"}`].concat(oz).join("\n");
+  }
+
+  function qlSayfa(id) {
+    const p = projeler.find((x) => x.id === id);
+    if (!p) { location.hash = "projeler/etwinning"; return; }
+    const Q = p.ql = p.ql || {}; qlVarsay(Q); Q.projeAdi ??= p.ad; Q.ortaklar ??= p.ortaklar || ""; Q.sonTarih = Q.sonTarih || p.sonTarih;
+    const altHTML = (a) => {
+      const sec = Q.puan[a.id] || "", oner = qlOneri(Q, a);
+      return `<div class="ql-alt"><div class="ql-alt-bas"><b>${a.id.toUpperCase()} · ${esc(a.ad)}</b>${a.esik ? `<span class="rozet milli">baraj: en az ${a.esik}</span>` : ""}<span class="rozet" data-altpuan="${a.id}"></span></div>
+        <div class="ql-olcek">${a.d.map((t, i) => `<label class="${+sec === i + 1 ? "secili" : ""}"><input type="radio" name="p-${a.id}" value="${i + 1}" data-puan="${a.id}" ${+sec === i + 1 ? "checked" : ""}><b>${i + 1}</b><span>${esc(t)}</span></label>`).join("")}</div>
+        ${a.k ? `<div class="ql-kutu">${a.k.map((t, i) => `<label><input type="checkbox" style="width:auto" data-kutu="${a.id}:${i}" ${(Q.kutu[a.id] || [])[i] ? "checked" : ""}> ${esc(t)}</label>`).join("")}<span class="not" data-oneri="${a.id}">${oner ? `Kontrol listesine göre önerilen puan: ${oner}` : ""}</span></div>` : ""}
+        <label class="odr-alan"><span class="not">${a.s.map(esc).join(" · ")}</span><textarea rows="4" data-qm="${a.id}" placeholder="Bu alt kriterde sizin katkınız ve kanıtınız (birinci tekil şahısla, somut: tarih, etkinlik adı, TwinSpace sayfası)">${esc(Q.metin[a.id] || "")}</textarea></label></div>`;
+    };
+    const tablo = (k, cols, secim) => `<div style="overflow-x:auto"><table class="odr-tablo"><tr>${cols.map((c) => `<th>${c}</th>`).join("")}<th></th></tr>${Q[k].map((r, ri) => `<tr>${cols.map((_, ci) => `<td>${secim && secim[ci]
+        ? `<select data-qt="${k}" data-r="${ri}" data-c="${ci}"><option></option>${secim[ci].map((o) => `<option ${r[ci] === o ? "selected" : ""}>${o}</option>`).join("")}</select>`
+        : `<input data-qt="${k}" data-r="${ri}" data-c="${ci}" value="${esc(r[ci] || "")}" ${ci === 2 && k === "kanit" ? 'placeholder="https://"' : ""}>`}</td>`).join("")}<td><button class="kopya" data-qsil="${k}:${ri}">×</button></td></tr>`).join("")}</table></div>
+      <button class="dugme kucuk" data-qekle="${k}" style="margin-top:6px">+ Satır</button>`;
+    $("#sahne").innerHTML = `<div class="ust-baslik"><div><a href="#projeler/etwinning">‹ Projeler</a><h1 style="margin-top:6px">Kalite Etiketi Başvurusu</h1>
+        <p>${esc(p.ad)} · Ulusal Kalite Etiketi 5 kriter × 5 puan = 25. Etiket için en az 13 puan ve baraj alt kriterleri; Avrupa Kalite Etiketi adaylığı için 20'nin üstü gerekir.</p></div></div>
+      <div class="uyari">Değerlendirici iki şeye bakar: başvuru formunda sizin yazdığınız gerekçe ve TwinSpace'te görünen kendi çalışmanız. Etiket bireyseldir; metni ortaklarla paylaşmayın, kopyalamayın (birebir aynı formlar reddedilir). Cevapları önce burada hazırlayın, sonra ESEP'teki forma kopyalayın. İngilizce önerilir, Türkçe başvuru puanı düşürmez.</div>
+      <div class="iki-sutun"><div id="qlForm">
+        <details class="kart odr-bolum" open><summary><b>Proje bilgileri ve Açıklama (Description) alanı</b></summary>
+          <label class="odr-alan"><b>Proje adı</b><input data-q="projeAdi" value="${esc(Q.projeAdi || "")}"></label>
+          <label class="odr-alan"><b>ESEP proje sayfası bağlantısı</b><input data-q="esep" value="${esc(Q.esep || "")}" placeholder="https://school-education.ec.europa.eu/..."></label>
+          <label class="odr-alan"><b>TwinSpace bağlantısı</b><input data-q="twinspace" value="${esc(Q.twinspace || "")}"></label>
+          <label class="odr-alan"><b>Kurucular ve ortak ülkeler</b><span class="not">Kurucular iki farklı ülkeden olmalı. Türkiye Özel Ödülü törenine yalnız Türkiye'de kayıtlı kurucular davet edilir; mümkünse kurucu siz olun.</span><input data-q="ortaklar" value="${esc(Q.ortaklar || "")}" placeholder="Kurucular: Türkiye (ben), Polonya · Ortaklar: İtalya, Portekiz"></label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><label class="odr-alan"><b>Öğrenci sayısı / yaş</b><input data-q="ogrenci" value="${esc(Q.ogrenci || "")}" placeholder="18 öğrenci, 9-11 yaş"></label><label class="odr-alan"><b>Son başvuru (tahmini)</b><input type="date" data-q="sonTarih" value="${Q.sonTarih || ""}"></label></div>
+          <label class="odr-alan"><b>Branşınız</b><span class="not">Rehber gereği Açıklama kısmına yazılmalı.</span><input data-q="brans" value="${esc(Q.brans || "")}" placeholder="Sınıf öğretmeni / BİLSEM ... öğretmeni"></label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><label class="odr-alan"><b>Değerlendirme öğrenci hesabı: kullanıcı adı</b><input data-q="ogrKullanici" value="${esc(Q.ogrKullanici || "")}"></label><label class="odr-alan"><b>Şifre</b><input data-q="ogrSifre" value="${esc(Q.ogrSifre || "")}"></label></div>
+          <p class="not">TwinSpace'te değerlendirme için ayrı bir öğrenci hesabı açın; gerçek öğrencilerin ya da kendi şifrenizi yazmayın. Bu bilgi yalnız bu cihazda saklanır, sitede yayımlanmaz.</p>
+          <label class="odr-alan"><b>Açıklama (Description) alanına yapıştırılacak metin</b><textarea rows="4" readonly id="qlAcik">${esc(qlAciklama(Q))}</textarea></label>
+          <button class="dugme kucuk" id="qlAcikKopya">Açıklama metnini kopyala</button></details>
+        <details class="kart odr-bolum"><summary><b>Gereklilikler ve 2026 kuralları</b><span class="rozet" id="qlGerekR"></span></summary>
+          <div class="ql-kutu">${QL_GEREK.map((t, i) => `<label><input type="checkbox" style="width:auto" data-gerek="${i}" ${Q.gerek[i] ? "checked" : ""}> ${esc(t)}</label>`).join("")}</div></details>
+        ${QL_KRITER.map((kr) => `<details class="kart odr-bolum"><summary><b>${esc(kr.ad)}</b><span class="rozet" data-krpuan="${kr.id}"></span></summary><p class="not">${esc(kr.not)}</p>${kr.alt.map(altHTML).join("")}</details>`).join("")}
+        <details class="kart odr-bolum" open><summary><b>Kanıtlar: TwinSpace sayfaları, haber ve paylaşım linkleri</b><span class="rozet" id="qlKanitR"></span></summary>
+          <p class="not">Her kanıtı ilgili alt kritere bağlayın. Haber linkleri 5c yaygınlaştırma puanını yükseltir; haberde “eTwinning projesi” ifadesi geçmeli.</p>
+          ${tablo("kanit", ["Tür", "Başlık", "Bağlantı", "Tarih", "Kriter"], { 0: ["TwinSpace sayfası", "Haber", "Okul sitesi", "MEB / il-ilçe sitesi", "Sosyal medya", "Video", "Ortak ürün", "Değerlendirme anketi"], 4: ["1a", "1b", "1c", "2a", "2b", "2c", "3a", "3b", "4a", "4b", "4c", "5a", "5b", "5c"] })}</details>
+        <details class="kart odr-bolum"><summary><b>Etkinlik günlüğü (bireysel katkı kanıtı)</b></summary>
+          <p class="not">Her ortak etkinlikte sizin ve öğrencilerinizin ne yaptığını kaydedin; başvuru metnini buradan yazmak kolaylaşır.</p>
+          ${tablo("etkinlik", ["Tarih", "Etkinlik", "Ortak ülkeler", "Benim / sınıfımın katkısı", "TwinSpace sayfası"])}</details>
+        <details class="kart odr-bolum"><summary><b>eTwinning Türkiye Özel Ödülleri</b><span class="rozet" id="qlOzelR"></span></summary>
+          <p class="not">Başvuru Kalite Etiketi formundaki Açıklama kısmına yazılan ibareyle yapılır; birden fazla kategori seçilebilir. Ölçütler: Kalite Etiketi almış olmak ve puanı, yaratıcılık ve özgünlük, öğrencilerin aktif katılımı, öğrenci ve öğretmenlerin ürettiği özgün içerik. Kategoriye uygunluk 1-5 puanlanır; projenin yalnız bir bölümünün kategoriye uyması yetmez, projenin tamamı kategoriye uygun olmalı. Her kategoride bir proje ödül alır. Kategoriler 2026 rehberindendir; 2027 listesi yayımlanınca kontrol edin.</p>
+          <div class="ql-kutu">${TR_OZEL.map((o, i) => `<label><input type="checkbox" style="width:auto" data-ozel="${i}" ${Q.ozel[i] ? "checked" : ""}> <b>${esc(o[0])}</b> — <span class="not">${esc(o[1])}</span></label>`).join("")}</div>
+          <label class="odr-alan"><b>Projeniz seçtiğiniz kategoriye bütünüyle nasıl uyuyor?</b><textarea rows="3" data-q="ozelGerekce">${esc(Q.ozelGerekce || "")}</textarea></label></details>
+      </div>
+      <div><div class="kart odr-yan"><h3>Tahmini puan</h3><div id="qlSkor"></div>
+        <div class="dugmeler" style="margin-top:14px;flex-direction:column;align-items:stretch">
+          <button class="dugme ana" id="qlBas">Başvuru raporunu yazdır / PDF</button><button class="dugme" id="qlWord">Word olarak indir (.doc)</button></div>
+        <p class="not" style="margin-top:12px">ESEP: Profilim → Projeler → proje sayfası → “Kalite etiketine başvur”. ‘Save draft’ ile taslak kaydedilir; taslak hâlinde kalan başvuru değerlendirilmez. Teslimden sonra düzenleme yapılamaz; reddedilen başvuru en fazla iki kez yeniden gönderilebilir.</p></div></div></div>`;
+    const ciz = () => {
+      const S = qlPuan(Q), ok = S.toplam >= 13 && S.barajOk;
+      $("#qlSkor").innerHTML = `<div class="sayac" style="font-size:3rem;margin:4px 0">${S.toplam.toFixed(1)}<small style="font-size:1.2rem">/25</small></div>
+        <div class="ilerleme"><i style="width:${S.toplam / 25 * 100}%"></i></div>
+        <ul class="odr-kontrol">${S.sat.map((x) => `<li class="${x.ort >= 3 ? "ok" : ""}">${esc(x.kr.ad)}: ${x.ort.toFixed(1)}</li>`).join("")}
+          ${S.baraj.map((b) => `<li class="${b.p >= b.a.esik ? "ok" : ""}">${b.p >= b.a.esik ? "✓" : "○"} Baraj ${b.a.id}: ${b.p || "—"} / en az ${b.a.esik}</li>`).join("")}
+          <li class="${ok ? "ok" : ""}">${ok ? "✓ Ulusal Kalite Etiketi eşiği geçiliyor" : "○ Ulusal etiket için 13 puan ve barajlar gerekli"}</li>
+          <li class="${S.toplam > 20 && ok ? "ok" : ""}">${S.toplam > 20 && ok ? "✓" : "○"} Avrupa Kalite Etiketi adaylığı için 20'nin üstü</li></ul>`;
+      QL_KRITER.forEach((kr) => { const x = S.sat.find((y) => y.kr === kr); const r = document.querySelector(`[data-krpuan="${kr.id}"]`); r.textContent = x.ort.toFixed(1) + "/5"; r.classList.toggle("dunya", x.ort >= 4);
+        kr.alt.forEach((a) => { const o = qlOneri(Q, a), e = document.querySelector(`[data-oneri="${a.id}"]`); if (e) e.textContent = o ? `Kontrol listesine göre önerilen puan: ${o}` : "";
+          document.querySelector(`[data-altpuan="${a.id}"]`).textContent = (Q.puan[a.id] || o) ? `puan: ${Q.puan[a.id] || o}` : "puan seçilmedi"; }); });
+      const g = QL_GEREK.filter((_, i) => Q.gerek[i]).length; $("#qlGerekR").textContent = `${g}/${QL_GEREK.length}`; $("#qlGerekR").classList.toggle("dunya", g === QL_GEREK.length);
+      $("#qlKanitR").textContent = `${doluSatir(Q.kanit).length} kanıt · ${Q.kanit.filter((r) => r[0] === "Haber" && r[2]).length} haber`;
+      $("#qlOzelR").textContent = `${Object.values(Q.ozel).filter(Boolean).length} kategori`;
+      $("#qlAcik").value = qlAciklama(Q);
+    };
+    let zaman = null;
+    const kaydet = () => { clearTimeout(zaman); zaman = setTimeout(() => { if (Q.projeAdi) p.ad = Q.projeAdi; if (!p.sonTarih) p.sonTarih = Q.sonTarih; projeKaydet(); }, 400); ciz(); };
+    const F = $("#qlForm");
+    F.addEventListener("input", (e) => { const el = e.target;
+      if (el.dataset.q) Q[el.dataset.q] = el.value;
+      if (el.dataset.qm) Q.metin[el.dataset.qm] = el.value;
+      if (el.dataset.qt) Q[el.dataset.qt][+el.dataset.r][+el.dataset.c] = el.value;
+      kaydet(); });
+    F.addEventListener("change", (e) => { const el = e.target;
+      if (el.dataset.puan) { Q.puan[el.dataset.puan] = +el.value; el.closest(".ql-olcek").querySelectorAll("label").forEach((l) => l.classList.toggle("secili", l.contains(el))); }
+      if (el.dataset.kutu) { const [a, i] = el.dataset.kutu.split(":"); (Q.kutu[a] ||= [])[+i] = el.checked; }
+      if (el.dataset.gerek) Q.gerek[el.dataset.gerek] = el.checked;
+      if (el.dataset.ozel) Q.ozel[el.dataset.ozel] = el.checked;
+      if (el.dataset.qt) Q[el.dataset.qt][+el.dataset.r][+el.dataset.c] = el.value;
+      kaydet(); });
+    F.addEventListener("click", (e) => { const ek = e.target.closest("[data-qekle]"), sil = e.target.closest("[data-qsil]");
+      if (ek) { Q[ek.dataset.qekle].push(["", "", "", "", ""]); projeKaydet(); qlSayfa(id); }
+      if (sil) { const [k, r] = sil.dataset.qsil.split(":"); Q[k].splice(+r, 1); projeKaydet(); qlSayfa(id); } });
+    $("#qlAcikKopya").onclick = async () => { try { await navigator.clipboard.writeText(qlAciklama(Q)); } catch (x) { $("#qlAcik").select(); document.execCommand("copy"); } $("#qlAcikKopya").textContent = "Kopyalandı ✓"; };
+    $("#qlBas").onclick = () => bas(`<div class="sayfa odr-sayfa"><div class="s-ust"><span>eTwinning · Ulusal Kalite Etiketi</span><span>Başvuru Hazırlık Raporu</span></div>${qlGovde(p)}</div>`);
+    $("#qlWord").onclick = () => indir(`KaliteEtiketi-${(Q.projeAdi || "proje").replace(/[^\wçğıöşüÇĞİÖŞÜ]+/g, "-")}.doc`,
+      `<html><head><meta charset="utf-8"><style>body{font-family:Calibri,Arial;font-size:11pt}table{border-collapse:collapse;width:100%}td,th{border:1px solid #444;padding:4px;vertical-align:top;text-align:left}th{background:#eee}h1{font-size:16pt}h2{font-size:13pt;margin-top:14pt}</style></head><body>${qlGovde(p, true)}</body></html>`, "application/msword");
+    ciz();
+  }
+
+  function qlGovde(p, word) {
+    const Q = p.ql, S = qlPuan(Q), P = (s) => esc(s || "—").replace(/\n/g, "<br>");
+    const link = (u) => u ? `<a href="${esc(u)}">${esc(u)}</a>` : "";
+    const kanitlar = (id) => doluSatir(Q.kanit).filter((r) => r[4] === id);
+    return `<h1>${esc(Q.projeAdi || p.ad)}</h1>
+      <table><tr><th>ESEP proje sayfası</th><td>${link(Q.esep)}</td></tr><tr><th>TwinSpace</th><td>${link(Q.twinspace)}</td></tr>
+        <tr><th>Kurucular ve ortaklar</th><td>${esc(Q.ortaklar || "")}</td></tr><tr><th>Öğrenciler</th><td>${esc(Q.ogrenci || "")}</td></tr>
+        <tr><th>Branş</th><td>${esc(Q.brans || "")}</td></tr><tr><th>Son başvuru</th><td>${Q.sonTarih ? tarihYaz(iso(Q.sonTarih)) : ""}</td></tr>
+        <tr><th>Tahmini puan</th><td><b>${S.toplam.toFixed(1)} / 25</b> · ${S.sat.map((x) => `${x.kr.id}: ${x.ort.toFixed(1)}`).join(" · ")} · Barajlar: ${S.barajOk ? "geçiyor" : "eksik"}</td></tr></table>
+      <h2>Açıklama (Description) alanı</h2><p>${P(qlAciklama(word ? { ...Q, ogrSifre: Q.ogrSifre } : Q))}</p>
+      <h2>Gereklilikler</h2><ul>${QL_GEREK.map((t, i) => `<li>${Q.gerek[i] ? "☑" : "☐"} ${esc(t)}</li>`).join("")}</ul>
+      ${QL_KRITER.map((kr) => `<h2>${esc(kr.ad)} — ${S.sat.find((x) => x.kr === kr).ort.toFixed(1)}/5</h2>${kr.alt.map((a) => {
+        const pu = Q.puan[a.id] || qlOneri(Q, a), K = (Q.kutu[a.id] || []), sec = (a.k || []).filter((_, i) => K[i]);
+        return `<p><b>${a.id.toUpperCase()} · ${esc(a.ad)}</b> (tahmini ${pu || "—"}/5${a.esik ? `, baraj ${a.esik}` : ""})</p>
+          <p>${P(Q.metin[a.id])}</p>${sec.length ? `<p><i>${sec.map(esc).join(" · ")}</i></p>` : ""}
+          ${kanitlar(a.id).length ? `<ul>${kanitlar(a.id).map((r) => `<li>${esc(r[0])}: ${esc(r[1])} ${link(r[2])} ${esc(r[3])}</li>`).join("")}</ul>` : ""}`; }).join("")}`).join("")}
+      <h2>Tüm kanıtlar ve haber linkleri</h2><table><tr><th>Tür</th><th>Başlık</th><th>Bağlantı</th><th>Tarih</th><th>Kriter</th></tr>${doluSatir(Q.kanit).map((r) => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${link(r[2])}</td><td>${esc(r[3])}</td><td>${esc(r[4])}</td></tr>`).join("")}</table>
+      <h2>Etkinlik günlüğü</h2><table><tr><th>Tarih</th><th>Etkinlik</th><th>Ortaklar</th><th>Katkım</th><th>Sayfa</th></tr>${doluSatir(Q.etkinlik).map((r) => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${esc(r[2])}</td><td>${esc(r[3])}</td><td>${link(r[4])}</td></tr>`).join("")}</table>
+      <h2>eTwinning Türkiye Özel Ödülleri</h2><p>${TR_OZEL.filter((_, i) => Q.ozel[i]).map((o) => esc(o[0])).join(", ") || "—"}</p><p>${P(Q.ozelGerekce)}</p>`;
+  }
+
+  // 2027 ödül odaklı proje taslağı: STEM + Eğitimde Yapay Zekâ + yıllık tema (Geleceğe Hazır Okullar)
+  function odulProjesi() {
+    return { id: "p" + Date.now().toString(36), tur: "etwinning", durum: "fikir",
+      ad: "Future-Ready Young Makers: Smart Sensors for Greener Schools",
+      kategori: "STEM · Eğitimde Yapay Zekâ · Yıllık tema (Geleceğe Hazır Okullar)",
+      ortaklar: "Kurucular: Türkiye (ben) + 1 Avrupa okulu · 2-3 ortak ülke, 9-12 yaş",
+      baslangic: "2026-11-09", sonTarih: "2027-07-01",
+      aciklama: "Karma uluslu öğrenci takımları okullarındaki enerji, su ya da atık sorununu sensörlerle ölçer, verileri ortak tabloda birleştirir, Tinkercad ve Arduino ile çözüm prototipleri tasarlar ve yapay zekâyı etik kurallarla kod yardımcısı olarak kullanır. Ortak ürün: her okulun bir bölüm yazdığı ve diğer okulların verisini kullandığı “Smart Sensor Recipe Book” e-kitabı.",
+      adimlar: [
+        "Kasım: ESEP'te ortak bul (2-3 ülke, 9-12 yaş); planı ve görev takvimini ortakla birlikte yaz; projeyi kurucu olarak kaydet",
+        "Aralık: TwinSpace sayfalarını kur, veli izinlerini al, e-güvenlik ve davranış kuralları sayfası; karma takımlar; Hour of Code/AI ortak etkinliği (7-13 Aralık)",
+        "Ocak: Ortak problem avı ve veri toplama; tüm okulların verisi tek ortak tabloda (matematik ve bilim)",
+        "Şubat: Güvenli İnternet Günü (9 Şubat) ortak etkinliği; karma takımlarla Tinkercad sensör tasarımları",
+        "Mart: Gerçek Arduino prototipleri; e-kitap bölümleri (her okul diğerinin verisini kullanır)",
+        "Nisan: Yapay zekâ ile prompt atölyesi ve YZ etiği tartışması; öğrencilerin yürüttüğü ortak video konferans",
+        "Mayıs: Avrupa Günü (9 Mayıs) ortak sergisi; veliler, yerel basın ve il/ilçe müdürlüğü; ön test-son test ve değerlendirme analizi",
+        "Haziran: Sonuç raporu ve yaygınlaştırma haberleri; Kalite Etiketi başvurusu (1 Temmuz'dan önce); Açıklamaya STEM, Eğitimde Yapay Zekâ ve yıllık tema özel ödül ibareleri"
+      ].map((ad) => ({ ad, tamam: false })),
+      ql: { projeAdi: "Future-Ready Young Makers: Smart Sensors for Greener Schools", ozel: { 1: true, 5: true, 7: true } } };
+  }
+
   function projeSerit() {
     return projeler.filter((p) => p.durum !== "tamam" && p.sonTarih && kalanGun(p.sonTarih) >= 0 && kalanGun(p.sonTarih) <= 30)
       .map((p) => `<a class="rozet ${PROJE_TUR[p.tur].renk}" href="#projeler/${p.tur}" style="text-decoration:none">${PROJE_TUR[p.tur].ad}: ${esc(p.ad.slice(0, 28))} · ${kalanGun(p.sonTarih)} gün</a>`).join("");
@@ -557,6 +787,7 @@
     else if (yol === "araclar") araclarSayfa();
     else if (yol === "projeler") projelerSayfa(a1 || "teknofest");
     else if (yol === "odr") odrSayfa(a1);
+    else if (yol === "ql") qlSayfa(a1);
     else if (yol === "nasil") nasilSayfa();
     else planSayfa();
     window.scrollTo(0, 0);
