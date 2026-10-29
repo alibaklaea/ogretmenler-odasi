@@ -292,3 +292,6 @@ main, .kart, .iki-sutun > div { min-width: 0; }
 @media (max-width: 440px) { .marka > span:last-child { display: none; } }
 
 @media (min-width: 761px) and (max-width: 1500px) { .marka small { display: none; } .menu a { padding: 7px 9px; font-size: .92rem; } .plan-sec button { padding: 6px 12px; } .ust { gap: 12px; } }
+
+dialog#projeDlg { width: min(620px, 96vw); max-height: 92vh; }
+@media (max-width: 760px) { .menu a { font-size: .62rem; padding: 4px 2px; } .menu a .m-ikon { font-size: 1.15rem; } }

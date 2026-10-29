@@ -134,7 +134,7 @@
     $("#bugun").innerHTML = `<span>Bugün <b>${tarihYaz(bugun)}</b></span>` +
       (t ? `<span class="rozet tatil">Tatil: ${esc(t.ad)}</span>` : "") +
       (dersVar ? `<span>${esc(PD.planlar[plan].ad)} · <a href="#hafta/${w.no}"><b>${w.no}. hafta</b> — ${esc(w.etkinlik)}</a> · ${isGunuSay(w)} iş günü</span>` : "<span>Ders yılı dışında</span>") +
-      gl.map((g) => `<span class="rozet ${g.tur}">${esc(g.ad)}</span>`).join("") + bugunDersleri();
+      gl.map((g) => `<span class="rozet ${g.tur}">${esc(g.ad)}</span>`).join("") + bugunDersleri() + projeSerit();
   }
 
   function bugunDersleri() {
@@ -147,6 +147,111 @@
   document.addEventListener("click", (e) => { const a = e.target.closest("[data-git]"); if (!a) return; e.preventDefault();
     const [k, n] = a.dataset.git.split("/"); planSec(k); location.hash = `hafta/${n}/gunluk`; });
 
+  // ---------- projeler: TEKNOFEST ve eTwinning ----------
+  const PROJE_TUR = {
+    teknofest: { ad: "TEKNOFEST", renk: "milli",
+      bilgi: "TEKNOFEST Teknoloji Yarışmaları, T3 Vakfı ve Sanayi ve Teknoloji Bakanlığı yürütücülüğünde her yıl düzenlenir. Kategoriler, yaş grupları ve rapor tarihleri her yıl şartnamede yeniden ilan edilir; başvurudan önce güncel şartnameyi okuyun.",
+      linkler: [["TEKNOFEST yarışmaları", "https://www.teknofest.org/tr/yarismalar/"], ["T3 Vakfı", "https://www.t3vakfi.org"]],
+      adimlar: ["Kategoriyi ve güncel şartnameyi incele", "Takımı ve danışman öğretmeni belirle", "Başvuruyu yap (son tarihe dikkat)", "Ön değerlendirme raporunu hazırla", "Proje detay raporunu hazırla", "Prototipi üret ve test et", "Final sunumuna ve yarışmaya hazırlan"] },
+    etwinning: { ad: "eTwinning", renk: "ab",
+      bilgi: "eTwinning, Avrupa Okul Eğitimi Platformu (ESEP) üzerinden okulların ortak proje yürüttüğü Avrupa Komisyonu ağıdır. Türkiye'de Ulusal Destek Servisi MEB YEĞİTEK bünyesindedir. Öğrencileri TwinSpace'e eklemeden önce veli izinlerini alın.",
+      linkler: [["Avrupa Okul Eğitimi Platformu", "https://school-education.ec.europa.eu/tr"], ["eTwinning Türkiye", "https://etwinning.meb.gov.tr"]],
+      adimlar: ["ESEP'te proje ortağı bul", "Proje planını ortak okulla yaz", "Projeyi kaydet ve onay al", "Veli izinlerini al, öğrencileri TwinSpace'e ekle", "Ortak etkinlikleri yürüt (aylık plan)", "Yaygınlaştır (okul sitesi, pano, veli)", "Değerlendirme anketi ve proje ürünü", "Ulusal / Avrupa Kalite Etiketi başvurusu"] }
+  };
+  const DURUM = { fikir: "Fikir", basvuru: "Başvuru aşaması", devam: "Devam ediyor", tamam: "Tamamlandı" };
+  let projeler = JSON.parse(localStorage.getItem("masa.projeler") || "null") || JSON.parse(JSON.stringify(window.PROJELER || []));
+  const projeKaydet = () => { localStorage.setItem("masa.projeler", JSON.stringify(projeler)); seritCiz(); };
+
+  function kalanGun(t) { return t ? Math.round((iso(t) - bugun) / 864e5) : null; }
+
+  function projelerSayfa(tur) {
+    const T = PROJE_TUR[tur] ? tur : "teknofest", B = PROJE_TUR[T];
+    const liste = projeler.filter((p) => p.tur === T).sort((a, b) => (a.durum === "tamam") - (b.durum === "tamam") || (a.sonTarih || "9").localeCompare(b.sonTarih || "9"));
+    $("#sahne").innerHTML = `<div class="ust-baslik"><div><h1>Projeler</h1><p>TEKNOFEST ve eTwinning projelerinizi buraya ekleyin. Yaklaşan son tarihler üst şeritte görünür.</p></div>
+        <div class="dugmeler"><button class="dugme ana" id="pYeni">+ Yeni ${B.ad} projesi</button></div></div>
+      <div class="sekmeler" role="tablist">${Object.entries(PROJE_TUR).map(([k, v]) => `<button role="tab" aria-selected="${k === T}" data-t="${k}">${v.ad} (${projeler.filter((p) => p.tur === k).length})</button>`).join("")}</div>
+      <div class="iki-sutun"><div>${liste.length ? liste.map(projeKart).join("") : `<div class="kart"><p>Henüz ${B.ad} projesi yok.</p><button class="dugme ana" id="pYeni2">+ İlk projeyi ekle</button></div>`}</div>
+        <div><div class="kart" style="margin-bottom:16px"><h3>${B.ad} hakkında</h3><p class="not" style="font-size:.92rem">${esc(B.bilgi)}</p>
+          <ol class="akis" style="margin-top:8px">${B.adimlar.map((a) => `<li style="padding:8px 0 8px 48px"><span>${esc(a)}</span></li>`).join("")}</ol>
+          <div class="dugmeler" style="margin-top:10px">${B.linkler.map(([ad, u]) => `<a class="dugme kucuk" href="${u}" target="_blank" rel="noopener">${ad} ↗</a>`).join("")}</div></div>
+        <div class="kart"><h3>Yedek ve paylaşım</h3><p class="not">Projeler bu cihazda saklanır. Telefon ile bilgisayar arasında taşımak için yedeği indirip öbür cihazda yükleyin. Sitede herkese görünmesi için “yayın dosyası”nı indirip <code>js/projeler.js</code> dosyasının yerine koyun.</p>
+          <div class="dugmeler" style="margin-top:10px"><button class="dugme kucuk" id="pYedek">Yedeği indir</button><label class="dugme kucuk" style="cursor:pointer">Yedeği yükle<input type="file" id="pYukle" accept=".json" hidden></label><button class="dugme kucuk" id="pYayin">Yayın dosyasını indir</button></div></div></div></div>`;
+    document.querySelectorAll("[data-t]").forEach((b) => b.onclick = () => location.hash = "projeler/" + b.dataset.t);
+    [$("#pYeni"), $("#pYeni2")].forEach((b) => b && (b.onclick = () => projeFormu({ tur: T })));
+    $("#sahne").querySelectorAll("[data-pd]").forEach((b) => b.onclick = () => projeFormu(projeler.find((p) => p.id === b.dataset.pd)));
+    $("#sahne").querySelectorAll("[data-psil]").forEach((b) => b.onclick = () => {
+      if (b.dataset.onay !== "1") { b.dataset.onay = "1"; b.textContent = "Emin misin? Tekrar dokun"; return; }
+      projeler = projeler.filter((p) => p.id !== b.dataset.psil); projeKaydet(); projelerSayfa(T); });
+    $("#sahne").querySelectorAll("[data-padim]").forEach((c) => c.onchange = () => {
+      const [id, i] = c.dataset.padim.split(":"), p = projeler.find((x) => x.id === id); p.adimlar[+i].tamam = c.checked; projeKaydet(); projelerSayfa(T); });
+    $("#sahne").querySelectorAll("[data-pbas]").forEach((b) => b.onclick = () => bas(projeSayfasi(projeler.find((p) => p.id === b.dataset.pbas))));
+    $("#pYedek").onclick = () => indir(`projeler-yedek-${isoYaz(bugun)}.json`, JSON.stringify(projeler, null, 2), "application/json");
+    $("#pYayin").onclick = () => indir("projeler.js", "// Sitede herkese görünen projeler (Öğretmenler Odası).\nwindow.PROJELER = " + JSON.stringify(projeler, null, 2) + ";\n", "text/javascript");
+    $("#pYukle").onchange = async (e) => { try { const v = JSON.parse(await e.target.files[0].text()); if (Array.isArray(v)) { projeler = v; projeKaydet(); projelerSayfa(T); } } catch (x) { alert("Dosya okunamadı."); } };
+  }
+
+  function projeKart(p) {
+    const k = kalanGun(p.sonTarih), biten = (p.adimlar || []).filter((a) => a.tamam).length, top = (p.adimlar || []).length;
+    return `<div class="kart gun-kart ${PROJE_TUR[p.tur].renk}" style="margin-bottom:14px">
+      <div class="gun-tarih"><span class="rozet ${p.durum === "tamam" ? "dunya" : PROJE_TUR[p.tur].renk}">${DURUM[p.durum] || "Fikir"}</span>${p.kategori ? `<b>${esc(p.kategori)}</b>` : ""}
+        ${p.sonTarih ? `<span class="rozet ${k !== null && k <= 14 && k >= 0 ? "tatil" : ""}">Son tarih: ${tarihYaz(iso(p.sonTarih))}${k >= 0 ? ` · ${k} gün kaldı` : " · geçti"}</span>` : ""}</div>
+      <h2 style="margin:8px 0 4px">${esc(p.ad)}</h2>
+      ${p.aciklama ? `<p style="margin:4px 0 8px">${esc(p.aciklama)}</p>` : ""}
+      <table class="bilgi-tablo">${p.ogrenciler ? `<tr><th>Öğrenciler</th><td>${esc(p.ogrenciler)}</td></tr>` : ""}${p.ortaklar ? `<tr><th>${p.tur === "etwinning" ? "Ortak okullar / ülkeler" : "Danışman / ekip"}</th><td>${esc(p.ortaklar)}</td></tr>` : ""}${p.baslangic ? `<tr><th>Başlangıç</th><td>${tarihYaz(iso(p.baslangic))}</td></tr>` : ""}${p.baglanti ? `<tr><th>Bağlantı</th><td><a href="${esc(p.baglanti)}" target="_blank" rel="noopener">${esc(p.baglanti.replace(/^https?:\/\//, "").slice(0, 50))}</a></td></tr>` : ""}</table>
+      ${top ? `<div style="margin-top:10px"><div class="not">İlerleme: ${biten}/${top}</div><div class="ilerleme" style="margin:6px 0 8px"><i style="width:${top ? biten / top * 100 : 0}%"></i></div>
+        ${p.adimlar.map((a, i) => `<label style="display:flex;gap:8px;align-items:center;padding:3px 0;font-size:.93rem"><input type="checkbox" style="width:auto" data-padim="${p.id}:${i}" ${a.tamam ? "checked" : ""}>${a.tamam ? `<s>${esc(a.ad)}</s>` : esc(a.ad)}</label>`).join("")}</div>` : ""}
+      <div class="dugmeler" style="margin-top:12px"><button class="dugme kucuk" data-pd="${p.id}">Düzenle</button><button class="dugme kucuk" data-pbas="${p.id}">Proje kartını yazdır</button><button class="dugme kucuk" data-psil="${p.id}">Sil</button></div></div>`;
+  }
+
+  function projeFormu(p) {
+    const yeni = !p.id, T = PROJE_TUR[p.tur];
+    const d = $("#projeDlg"), f = d.querySelector("form");
+    f.innerHTML = `<h2>${yeni ? "Yeni" : "Düzenle:"} ${T.ad} projesi</h2>
+      <label>Proje adı <input name="ad" required value="${esc(p.ad || "")}"></label>
+      <label>${p.tur === "teknofest" ? "Yarışma kategorisi" : "Proje konusu / yaş grubu"} <input name="kategori" value="${esc(p.kategori || "")}"></label>
+      <label>Durum <select name="durum">${Object.entries(DURUM).map(([k, v]) => `<option value="${k}" ${p.durum === k ? "selected" : ""}>${v}</option>`).join("")}</select></label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><label>Başlangıç <input type="date" name="baslangic" value="${p.baslangic || ""}"></label><label>Son tarih <input type="date" name="sonTarih" value="${p.sonTarih || ""}"></label></div>
+      <label>Öğrenciler <input name="ogrenciler" value="${esc(p.ogrenciler || "")}" placeholder="Takım adı ya da öğrenci adları"></label>
+      <label>${p.tur === "etwinning" ? "Ortak okullar / ülkeler" : "Danışman / ekip"} <input name="ortaklar" value="${esc(p.ortaklar || "")}"></label>
+      <label>Kısa açıklama <textarea name="aciklama" rows="3">${esc(p.aciklama || "")}</textarea></label>
+      <label>Bağlantı (TwinSpace, başvuru sayfası, video…) <input name="baglanti" value="${esc(p.baglanti || "")}"></label>
+      <label>Adımlar (her satıra bir adım) <textarea name="adimlar" rows="6">${esc((p.adimlar || T.adimlar.map((a) => ({ ad: a }))).map((a) => a.ad).join("\n"))}</textarea></label>
+      <menu><button value="iptal" formnovalidate>Vazgeç</button><button value="kaydet" class="ana">Kaydet</button></menu>`;
+    d.onclose = () => {
+      if (d.returnValue !== "kaydet") return;
+      const v = Object.fromEntries(new FormData(f));
+      const eski = Object.fromEntries((p.adimlar || []).map((a) => [a.ad, a.tamam]));
+      const kayit = { ...p, ...v, id: p.id || "p" + Date.now().toString(36), adimlar: v.adimlar.split("\n").map((s) => s.trim()).filter(Boolean).map((ad) => ({ ad, tamam: !!eski[ad] })) };
+      projeler = yeni ? projeler.concat(kayit) : projeler.map((x) => x.id === p.id ? kayit : x);
+      projeKaydet(); projelerSayfa(p.tur);
+    };
+    d.showModal();
+  }
+
+  function projeSayfasi(p) {
+    const T = PROJE_TUR[p.tur];
+    return `<div class="sayfa"><div class="s-ust"><span>${esc(ayar.okul || "BİLSEM")} · ${T.ad}</span><span>Proje Kartı</span></div>
+      <h1>${esc(p.ad)}</h1>
+      <table><tr><th>Kategori / konu</th><td>${esc(p.kategori || "")}</td><th>Durum</th><td>${DURUM[p.durum] || ""}</td></tr>
+        <tr><th>Başlangıç</th><td>${p.baslangic ? tarihYaz(iso(p.baslangic)) : ""}</td><th>Son tarih</th><td>${p.sonTarih ? tarihYaz(iso(p.sonTarih)) : ""}</td></tr>
+        <tr><th>Öğrenciler</th><td colspan="3">${esc(p.ogrenciler || "")}</td></tr>
+        <tr><th>${p.tur === "etwinning" ? "Ortaklar" : "Danışman / ekip"}</th><td colspan="3">${esc(p.ortaklar || "")}</td></tr>
+        <tr><th>Açıklama</th><td colspan="3" style="height:30mm">${esc(p.aciklama || "")}</td></tr>
+        <tr><th>Danışman öğretmen</th><td colspan="3">${esc(ayar.ogretmen || "")}</td></tr></table>
+      <table><tr><th style="width:12mm">✓</th><th>Adım</th><th style="width:40mm">Tarih / not</th></tr>${(p.adimlar || []).map((a) => `<tr><td>${a.tamam ? "✓" : ""}</td><td>${esc(a.ad)}</td><td></td></tr>`).join("")}</table>
+      <div class="s-alt"><span>${T.ad} proje takibi</span><span>Öğretmenler Odası · 2026-2027</span></div></div>`;
+  }
+
+  function indir(ad, icerik, tip) {
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([icerik], { type: tip + ";charset=utf-8" })); a.download = ad; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+
+  function projeSerit() {
+    return projeler.filter((p) => p.durum !== "tamam" && p.sonTarih && kalanGun(p.sonTarih) >= 0 && kalanGun(p.sonTarih) <= 30)
+      .map((p) => `<a class="rozet ${PROJE_TUR[p.tur].renk}" href="#projeler/${p.tur}" style="text-decoration:none">${PROJE_TUR[p.tur].ad}: ${esc(p.ad.slice(0, 28))} · ${kalanGun(p.sonTarih)} gün</a>`).join("");
+  }
+
   // ---------- yönlendirme ----------
   window.addEventListener("hashchange", yonlendir);
   function yonlendir() {
@@ -157,6 +262,7 @@
     if (yol === "hafta") haftaSayfa(+a1, a2 || "etkinlik");
     else if (yol === "gunler") gunlerSayfa(a1 || "hepsi");
     else if (yol === "araclar") araclarSayfa();
+    else if (yol === "projeler") projelerSayfa(a1 || "teknofest");
     else if (yol === "nasil") nasilSayfa();
     else planSayfa();
     window.scrollTo(0, 0);
