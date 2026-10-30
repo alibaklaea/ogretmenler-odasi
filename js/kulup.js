@@ -198,7 +198,7 @@
         "Başlangıç sırasındaki taşlar yalnızca ileri ya da çapraz 1 kare gider. Sıradan çıkan taş bir daha başlangıç sırasına dönemez.",
         "Diğer taşlar ileri, geri ya da çapraz 1 kare gider. Yana (yatay) gidilmez.",
         "Bir oyuncunun taşları yatay, dikey ya da çapraz dörtlü olamaz (arada boşluk ya da rakip taş olsa bile).",
-        "Rakip taşları kendi iki taşının arasına sıkıştıran onları alır. Arada kalanların hepsi alınmak zorundadır.",
+        "Rakip taşları kendi iki taşının arasına yatay, dikey ya da çapraz sıkıştıran onları alır. Arada kalanların hepsi alınmak zorundadır.",
         "Kendi isteğinle iki rakip taşın arasına girersen alınmazsın.", "Rakibin başlangıç sırasında aynı anda yalnızca bir taşın olabilir.", "Rakibin 4 taşını alan kazanır.", "Dokunduğun taşı oynamak zorundasın."],
       "Equilibrio": ["Kutuda 18 parça: 4 küp, 4 kare prizma, 4 dik yamuk, 2 silindir, 2 üçgen prizma, 1 köprü, 1 yarım silindir.", "Hakem şeklin numarasını söyler; önce kitapçık açılır, sonra dizilir.",
         "Yapı kartın aynısı olmalı: karttaki açıklıklar korunur, parçalar birleştirilmez.", "Bir parça düşerse toplanır, devam edilir.",

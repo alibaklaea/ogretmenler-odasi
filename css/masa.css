@@ -412,3 +412,9 @@ dialog#ayarlar { width: min(860px, 96vw); max-height: 94vh; }
 /* çocuk kulübü: baskı seçimi */
 .kl-baski { align-items: center; margin-top: 8px; }
 .baski.sb .kl-cevap { color: #000; font-weight: 700; }
+.kl-etk { padding-left: 20px; margin: 6px 0; font-size: .92rem; }
+.kl-etk li { margin-bottom: 6px; }
+.kl-etk li span { display: block; }
+.kl-etk small { color: var(--soluk); }
+.kl-ikili { display: flex; align-items: center; justify-content: center; gap: 3mm; font-size: 16pt; }
+.kl-ikili svg { margin: 0 !important; }
