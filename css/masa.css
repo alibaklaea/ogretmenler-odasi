@@ -408,3 +408,7 @@ dialog#ayarlar { width: min(860px, 96vw); max-height: 94vh; }
 .kl-dy td:nth-child(3), .kl-dy td:nth-child(4) { width: 9mm; }
 .kl-kural { font-size: 15pt; line-height: 1.55; padding-left: 8mm; }
 .kl-kural li { margin-bottom: 3mm; }
+
+/* çocuk kulübü: baskı seçimi */
+.kl-baski { align-items: center; margin-top: 8px; }
+.baski.sb .kl-cevap { color: #000; font-weight: 700; }

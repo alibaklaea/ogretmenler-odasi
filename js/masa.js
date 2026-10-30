@@ -1137,6 +1137,18 @@
 
   // ---------- Çocuk Kulübü (Cumartesi): Satranç ve Akıl Oyunları ----------
   const KL = window.KULUP, KS = window.KULUP_SATRANC || [];
+  // baskı seçimi: klSB seçili mod (cihazda saklanır), klCiz yalnız kâğıt üretilirken açıktır; tahta slaytları renkli kalır
+  let klSB = localStorage.getItem("masa.kulupBaski") === "sb", klCiz = false;
+  const klPdf = (f) => klSB ? f.replace("pdf/kulup/", "pdf/kulup/sb/") : f;
+  function klBas(uret) {
+    klCiz = klSB; let h = uret(); klCiz = false;
+    if (klSB) h = h.replace(/Yeşil halka/g, "Halka");
+    bas(h, klSB);
+  }
+  function klRenkUygula() {
+    document.querySelectorAll("[data-kl-renk]").forEach((b) => b.classList.toggle("ana", (b.dataset.klRenk === "sb") === klSB));
+    document.querySelectorAll("[data-kl-pdf]").forEach((a) => a.href = klPdf(a.dataset.klPdf));
+  }
   const klKagit = (e, ekAd) => kagitHTML(e, null, ekAd).replace(/(<div class="s-ust"><span>)[^<]*/, "$1" + esc(KL.okul));
   function kulupTarih(i) { return gunEkle(iso(KL.baslangic), 7 * i); }
   function kulupSimdi() { // bugünkü ya da sıradaki Cumartesi
@@ -1146,7 +1158,7 @@
   }
   const FIGUR = { k: "♚", q: "♛", r: "♜", b: "♝", n: "♞", p: "♟", K: "♔", Q: "♕", R: "♖", B: "♗", N: "♘", P: "♙" };
   function satrancTahta(q, cevap, boy) {
-    const sat = q.fen.split(" ")[0].split("/"), K = 30, ust = new Set(q.vurgu || []), yil = new Set(q.yildiz || []), isa = new Set(cevap ? q.isaret || [] : []);
+    const sat = q.fen.split(" ")[0].split("/"), K = 30, ust = new Set(q.vurgu || []), yil = new Set(q.yildiz || []), isa = new Set(cevap ? q.isaret || [] : []), sb = klCiz;
     let h = "";
     sat.forEach((satir, r) => { let c = 0;
       for (const ch of satir) {
@@ -1155,30 +1167,33 @@
         h += `<text x="${x + K / 2}" y="${y + K * .8}" text-anchor="middle" font-size="${K * .86}" font-family="'Segoe UI Symbol','DejaVu Sans',serif" fill="#111">${beyaz ? `<tspan fill="#fff" stroke="#fff" stroke-width="3">${FIGUR[ch.toLowerCase()]}&#xFE0E;</tspan>` : ""}</text><text x="${x + K / 2}" y="${y + K * .8}" text-anchor="middle" font-size="${K * .86}" font-family="'Segoe UI Symbol','DejaVu Sans',serif" fill="#111">${FIGUR[ch]}&#xFE0E;</text>`;
         c++;
       } });
-    let zemin = "";
+    let zemin = "", halka = "";
     for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
       const kare = "abcdefgh"[c] + (8 - r), x = c * K, y = r * K;
-      zemin += `<rect x="${x}" y="${y}" width="${K}" height="${K}" fill="${ust.has(kare) ? "#ffe066" : (r + c) % 2 ? "#b9c3cf" : "#f4f6f8"}"/>`;
-      if (yil.has(kare)) zemin += `<text x="${x + K / 2}" y="${y + K * .74}" text-anchor="middle" font-size="${K * .72}" fill="#e8590c">★</text>`;
-      if (isa.has(kare)) zemin += `<circle cx="${x + K / 2}" cy="${y + K / 2}" r="${K * .36}" fill="none" stroke="#2b8a3e" stroke-width="3"/>`;
+      zemin += `<rect x="${x}" y="${y}" width="${K}" height="${K}" fill="${sb ? (r + c) % 2 && !ust.has(kare) ? "#c4c4c4" : "#fff" : ust.has(kare) ? "#ffe066" : (r + c) % 2 ? "#b9c3cf" : "#f4f6f8"}"/>`;
+      if (sb && ust.has(kare)) zemin += `<rect x="${x + 2.5}" y="${y + 2.5}" width="${K - 5}" height="${K - 5}" fill="none" stroke="#000" stroke-width="2.5" stroke-dasharray="5 3"/>`;
+      if (yil.has(kare)) zemin += `<text x="${x + K / 2}" y="${y + K * .74}" text-anchor="middle" font-size="${K * .72}" fill="${sb ? "#000" : "#e8590c"}">★</text>`;
+      if (isa.has(kare)) halka += `${sb ? `<circle cx="${x + K / 2}" cy="${y + K / 2}" r="${K * .36}" fill="none" stroke="#fff" stroke-width="6"/>` : ""}<circle cx="${x + K / 2}" cy="${y + K / 2}" r="${K * .36}" fill="none" stroke="${sb ? "#000" : "#2b8a3e"}" stroke-width="3"/>`;
     }
     let etk = "";
     for (let i = 0; i < 8; i++) etk += `<text x="${i * K + K / 2}" y="${8 * K + 11}" text-anchor="middle" font-size="9" fill="#555">${"abcdefgh"[i]}</text><text x="-6" y="${i * K + K * .62}" text-anchor="middle" font-size="9" fill="#555">${8 - i}</text>`;
-    return `<svg viewBox="-12 0 ${8 * K + 14} ${8 * K + 14}" style="width:${boy || "100%"};display:block;margin:auto">${zemin}${h}<rect x="0" y="0" width="${8 * K}" height="${8 * K}" fill="none" stroke="#333" stroke-width="1.2"/>${etk}</svg>`;
+    return `<svg viewBox="-12 0 ${8 * K + 14} ${8 * K + 14}" style="width:${boy || "100%"};display:block;margin:auto">${zemin}${h}${halka}<rect x="0" y="0" width="${8 * K}" height="${8 * K}" fill="none" stroke="#333" stroke-width="1.2"/>${etk}</svg>`;
   }
   // Küre (7×7) ve Pentago (6×6) tahtaları: satırlar dizi; M mor, T turuncu, S siyah, B beyaz, * yıldız, x çarpı (cevapta)
   function izgaraTahta(satirlar, tur, boy) {
     const n = satirlar.length, K = 28, ara = tur === "pentago" ? 4 : 0, G = n * K + ara;
-    const renk = { M: "#7B3FD1", T: "#FF8A1F", S: "#111", B: "#fff" };
-    let h = `<rect x="0" y="0" width="${G}" height="${G}" rx="6" fill="${tur === "pentago" ? "#c92a2a" : "#e9ecef"}"/>`;
+    const sb = klCiz, renk = sb ? { M: "#111", T: "#fff", S: "#111", B: "#fff" } : { M: "#7B3FD1", T: "#FF8A1F", S: "#111", B: "#fff" };
+    const isaret = (c) => sb ? "#000" : c;
+    let h = `<rect x="0" y="0" width="${G}" height="${G}" rx="6" fill="${tur === "pentago" ? (sb ? "#8c8c8c" : "#c92a2a") : sb ? "#eee" : "#e9ecef"}"/>`;
     satirlar.forEach((s, r) => [...s].forEach((ch, c) => {
       const x = c * K + (c >= n / 2 ? ara : 0) + K / 2, y = r * K + (r >= n / 2 ? ara : 0) + K / 2;
-      h += `<circle cx="${x}" cy="${y}" r="${K * .4}" fill="${tur === "pentago" ? "#e03131" : "#fff"}" stroke="${tur === "pentago" ? "#a51111" : "#adb5bd"}"/>`;
+      h += `<circle cx="${x}" cy="${y}" r="${K * .4}" fill="${tur === "pentago" ? (sb ? "#bdbdbd" : "#e03131") : "#fff"}" stroke="${tur === "pentago" ? (sb ? "#555" : "#a51111") : sb ? "#aaa" : "#adb5bd"}"/>`;
       if (renk[ch]) h += `<circle cx="${x}" cy="${y}" r="${K * .34}" fill="${renk[ch]}" stroke="#222" stroke-width="1"/>`;
-      if (ch === "*") h += `<text x="${x}" y="${y + 6}" text-anchor="middle" font-size="17" fill="#e8590c">★</text>`;
-      if (ch === "x") h += `<path d="M${x - 8} ${y - 8}L${x + 8} ${y + 8}M${x + 8} ${y - 8}L${x - 8} ${y + 8}" stroke="#2b8a3e" stroke-width="3.5"/>`;
-      if (ch === "o") h += `<circle cx="${x}" cy="${y}" r="${K * .36}" fill="none" stroke="#2b8a3e" stroke-width="3"/>`;
-      if (ch === "^") h += `<text x="${x}" y="${y + 6}" text-anchor="middle" font-size="17" fill="#1971c2">↑</text>`;
+      if (sb && (ch === "M" || ch === "T")) h += `<text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="13" font-weight="700" fill="${ch === "M" ? "#fff" : "#000"}">${ch}</text>`;
+      if (ch === "*") h += `<text x="${x}" y="${y + 6}" text-anchor="middle" font-size="17" fill="${isaret("#e8590c")}">★</text>`;
+      if (ch === "x") h += `<path d="M${x - 8} ${y - 8}L${x + 8} ${y + 8}M${x + 8} ${y - 8}L${x - 8} ${y + 8}" stroke="${isaret("#2b8a3e")}" stroke-width="3.5"/>`;
+      if (ch === "o") h += `<circle cx="${x}" cy="${y}" r="${K * .36}" fill="none" stroke="${isaret("#2b8a3e")}" stroke-width="3"/>`;
+      if (ch === "^") h += `<text x="${x}" y="${y + 6}" text-anchor="middle" font-size="17" fill="${isaret("#1971c2")}">↑</text>`;
     }));
     return `<svg viewBox="-2 -2 ${G + 4} ${G + 4}" style="width:${boy || "100%"};display:block;margin:auto">${h}</svg>`;
   }
@@ -1204,7 +1219,8 @@
     { t: [".......", ".......", ".......", ".......", ".......", "MMM....", "...M..."], c: [".......", ".......", ".......", ".......", ".......", "MMMo...", "...M..."], s: "Mor taş ileri (yıldızın olduğu yere) gidebilir mi?", k: "Hayır, kural dışı: mor taşlar yatayda dörtlü olur." }];
   KURE_YAK[4].t[5] = "MMM*...";
   function kulupKagit(ad, cevap) {
-    const ust = (b, y, bloklar) => klKagit({ baslik: b + (cevap ? " · CEVAP ANAHTARI" : ""), yonerge: y, bloklar: [{ t: "html", x: bloklar }] }, "Akıl Oyunları");
+    const taslar = klCiz && ad.startsWith("kure") ? " Bu kâğıtta M yazan siyah taş mor, T yazan beyaz taş turuncudur. Boyarken renkli kalemin yoksa dairenin içine M ya da T yaz." : "";
+    const ust = (b, y, bloklar) => klKagit({ baslik: b + (cevap ? " · CEVAP ANAHTARI" : ""), yonerge: y + taslar, bloklar: [{ t: "html", x: bloklar }] }, "Akıl Oyunları");
     if (ad === "pentago-tanis") {
       const A = ["SSSS..", "......", "......", "......", "......", "......"], B = ["S.....", ".S....", "..S...", "...S..", "......", "......"];
       const Ac = ["SSSSo.", ...A.slice(1)], Bc = [...B.slice(0, 4), "....o.", B[5]];
@@ -1267,7 +1283,8 @@
     p = KL.programlar[p] ? p : "AKIL";
     const P = KL.programlar[p], simdi = kulupSimdi();
     $("#sahne").innerHTML = `<div class="ust-baslik"><div><h1>Çocuk Kulübü · ${esc(P.ad)}</h1><p>${esc(KL.okul)} · Her Cumartesi ${esc(P.blok)}: ${P.saatler.map(([s, d]) => `${s} ${d}`).join(" · ")} · Öğretmen: ${esc(P.ogretmen)}</p></div>
-      <div class="sekmeler" role="tablist">${Object.entries(KL.programlar).map(([k, v]) => `<a role="tab" class="dugme kucuk${k === p ? " ana" : ""}" href="#kulup/${k}">${esc(v.ad)}</a>`).join(" ")}</div></div>
+      <div class="sekmeler" role="tablist">${Object.entries(KL.programlar).map(([k, v]) => `<a role="tab" class="dugme kucuk${k === p ? " ana" : ""}" href="#kulup/${k}">${esc(v.ad)}</a>`).join(" ")}</div>
+      <div class="dugmeler kl-baski" role="group" aria-label="Baskı rengi"><b>Baskı:</b><button class="dugme kucuk" data-kl-renk="renkli">Renkli</button><button class="dugme kucuk" data-kl-renk="sb">Siyah-beyaz</button></div></div>
       <div class="iki-sutun"><div>${P.haftalar.map((w, i) => { const t = kulupTarih(i);
         return `<div class="kart gun-kart ${i === simdi ? "canva-simdi" : ""} ${w.bekliyor ? "gecmis" : ""}" id="kl${i}" style="margin-bottom:14px">
           <div class="gun-tarih"><span class="rozet dunya">${i + 1}. hafta</span><b>${tarihYaz(t)} Cumartesi</b>${i === simdi ? '<span class="rozet tatil">BU HAFTA</span>' : ""}${w.bekliyor ? '<span class="rozet tatil">kurallar bekleniyor</span>' : ""}</div>
@@ -1278,7 +1295,7 @@
           <div class="dugmeler" style="margin-top:10px"><button class="dugme kucuk ana" data-kl-video="${i}">▶ Video olarak oynat</button><button class="dugme kucuk" data-kl-sun="${i}">Tahtada sun</button>
             ${p === "SAT" && KS[i] ? `<button class="dugme kucuk" data-kl-sat="${i}">Alıştırma kâğıdı</button><button class="dugme kucuk" data-kl-satc="${i}">Cevap anahtarı</button>` : ""}
             ${(w.kagitlar || []).map((k) => `<button class="dugme kucuk" data-kl-kag="${k}">Etkinlik kâğıdı: ${esc({ "pentago-tanis": "Pentago tanışma", "kure-tanis": "Küre tanışma", "kure-yakalama": "Küre yakalama" }[k])}</button><button class="dugme kucuk" data-kl-kagc="${k}">Cevap anahtarı</button>`).join("")}
-            ${(w.pdf || []).map(([a, f]) => `<a class="dugme kucuk" href="${f}" target="_blank" rel="noopener">${esc(a)} (PDF)</a>`).join("")}
+            ${(w.pdf || []).map(([a, f]) => `<a class="dugme kucuk" href="${klPdf(f)}" data-kl-pdf="${f}" target="_blank" rel="noopener">${esc(a)} (PDF)</a>`).join("")}
             ${(w.kuralKart || []).map((o) => `<button class="dugme kucuk" data-kl-kural="${esc(o)}">Kural kartı: ${esc(o)}</button>`).join("")}</div></div>`; }).join("")}</div>
       <div><div class="kart odr-yan"><h3>Ders saatleri</h3><table class="bilgi-tablo">${P.saatler.map(([s, d]) => `<tr><th>${s}</th><td>${d}</td></tr>`).join("")}</table>
         <h3 style="margin-top:16px">Kurallar</h3>${(p === "SAT" ? [] : Object.keys(KL.kurallar)).map((o) => `<details><summary style="cursor:pointer"><b>${esc(o)}</b></summary>${KL.kurallar[o] ? `<ol style="padding-left:18px;font-size:.92rem">${KL.kurallar[o].map((k) => `<li>${esc(k)}</li>`).join("")}</ol>` : "<p class='not'>Kurallar eklenecek.</p>"}</details>`).join("")}
@@ -1286,12 +1303,16 @@
     const S = (i) => kulupSlaytlari(p, i), baslik = `Çocuk Kulübü · ${P.ad}`;
     document.querySelectorAll("[data-kl-video]").forEach((b) => b.onclick = () => sunumAc(S(+b.dataset.klVideo), 0, baslik, true, true));
     document.querySelectorAll("[data-kl-sun]").forEach((b) => b.onclick = () => sunumAc(S(+b.dataset.klSun), 0, baslik));
-    document.querySelectorAll("[data-kl-sat]").forEach((b) => b.onclick = () => bas(satrancKagit(+b.dataset.klSat, false)));
-    document.querySelectorAll("[data-kl-satc]").forEach((b) => b.onclick = () => bas(satrancKagit(+b.dataset.klSatc, true)));
-    document.querySelectorAll("[data-kl-kag]").forEach((b) => b.onclick = () => bas(kulupKagit(b.dataset.klKag, false)));
-    document.querySelectorAll("[data-kl-kagc]").forEach((b) => b.onclick = () => bas(kulupKagit(b.dataset.klKagc, true)));
-    document.querySelectorAll("[data-kl-kural]").forEach((b) => b.onclick = () => bas(kuralKarti(b.dataset.klKural)));
-    document.querySelectorAll("[data-kl-tum]").forEach((b) => b.onclick = () => bas(KS.map((_, i) => satrancKagit(i, false)).join("")));
+    document.querySelectorAll("[data-kl-sat]").forEach((b) => b.onclick = () => klBas(() => satrancKagit(+b.dataset.klSat, false)));
+    document.querySelectorAll("[data-kl-satc]").forEach((b) => b.onclick = () => klBas(() => satrancKagit(+b.dataset.klSatc, true)));
+    document.querySelectorAll("[data-kl-kag]").forEach((b) => b.onclick = () => klBas(() => kulupKagit(b.dataset.klKag, false)));
+    document.querySelectorAll("[data-kl-kagc]").forEach((b) => b.onclick = () => klBas(() => kulupKagit(b.dataset.klKagc, true)));
+    document.querySelectorAll("[data-kl-kural]").forEach((b) => b.onclick = () => klBas(() => kuralKarti(b.dataset.klKural)));
+    document.querySelectorAll("[data-kl-tum]").forEach((b) => b.onclick = () => klBas(() => KS.map((_, i) => satrancKagit(i, false)).join("")));
+    document.querySelectorAll("[data-kl-renk]").forEach((b) => b.onclick = () => {
+      klSB = b.dataset.klRenk === "sb"; localStorage.setItem("masa.kulupBaski", klSB ? "sb" : "renkli"); klRenkUygula();
+    });
+    klRenkUygula();
     const hedef = $("#kl" + (sec !== undefined && sec !== "" ? sec : simdi));
     if (hedef && (sec || simdi)) setTimeout(() => hedef.scrollIntoView({ block: "start" }), 50);
   }
@@ -1529,8 +1550,8 @@
   }
 
   // ---------- yazdırma ----------
-  function bas(html) {
-    $("#baski").innerHTML = html; document.body.classList.add("basiliyor");
+  function bas(html, sb = false) {
+    $("#baski").innerHTML = html; $("#baski").classList.toggle("sb", sb); document.body.classList.add("basiliyor");
     setTimeout(() => { window.print(); }, 60);
   }
   window.addEventListener("afterprint", () => { document.body.classList.remove("basiliyor"); $("#baski").innerHTML = ""; });
