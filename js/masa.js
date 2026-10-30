@@ -1352,6 +1352,7 @@
   // ---------- nasıl kullanılır ----------
   function nasilSayfa() {
     $("#sahne").innerHTML = `<div class="nasil"><h1>Nasıl Kullanılır?</h1>
+      <div class="kart" style="display:flex;gap:16px;align-items:center;flex-wrap:wrap"><img src="img/qr-uygulama.png" alt="" style="width:110px;image-rendering:pixelated"><div style="flex:1;min-width:220px"><h2>📱 Telefona uygulama olarak kur</h2><p>Android için APK indirme sayfası ve kurulum adımları; iPhone için Ana Ekrana Ekle yöntemi. Tahtada açıp QR kodu telefonla okutabilirsiniz.</p><a class="dugme ana" href="uygulama.html">Kurulum sayfasını aç</a></div></div>
       <div class="kart"><h2>1. Programı seçin</h2><p>Üst çubuktan <b>Destek 1</b>, <b>Destek 3</b> ya da <b>Kodlama</b>'yı seçin. Ders programınız (Salı ve Perşembe Destek 1 ve Destek 3, Çarşamba Kodlama) günlük planlarda kullanılır. Seçim bu bilgisayarda hatırlanır. Bugünün tarihine göre içinde bulunulan hafta otomatik açılır (<b>Bu Hafta</b>).</p></div>
       <div class="kart"><h2>2. Haftayı açın</h2><ol>
         <li><b>Kazanım ve Etkinlik:</b> Öğrenme çıktılarını tek dokunuşla kopyalayın (deftere, e-Okul'a). Büyük soru, giriş, ders ders akış, ölçme ve farklılaştırma burada.</li>

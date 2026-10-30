@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1c2230">
+<title>Öğretmenler Odası · Telefona Kur</title>
+<link rel="icon" href="img/ikon-192.png">
+<link rel="stylesheet" href="css/masa.css">
+<style>
+  .kur { max-width: 980px; margin: 0 auto; padding: 28px 18px 60px; }
+  .kur-bas { display: flex; gap: 18px; align-items: center; margin-bottom: 22px; }
+  .kur-bas img { width: 84px; height: 84px; border-radius: 20px; }
+  .kur-bas h1 { margin: 0; }
+  .kur-izgara { display: grid; grid-template-columns: 1.4fr 1fr; gap: 18px; }
+  .kur .indir { display: flex; justify-content: center; font-size: 1.25rem; padding: 18px; width: 100%; }
+  .kur ol li { margin-bottom: 10px; }
+  .qr { text-align: center; }
+  .qr img { width: 100%; max-width: 300px; image-rendering: pixelated; }
+  @media (max-width: 760px) { .kur-izgara { grid-template-columns: 1fr; } .qr { display: none; } }
+</style>
+</head>
+<body>
+<div class="kur">
+  <div class="kur-bas"><img src="img/ikon-192.png" alt=""><div><h1>Öğretmenler Odası</h1><p class="not" style="margin:4px 0 0">Akıl ve Zeka Oyunları Atölyesi · Android uygulaması · sürüm 1.0.0 · 1 MB</p></div></div>
+  <div class="kur-izgara">
+    <div>
+      <div class="kart" style="margin-bottom:16px">
+        <h2>Android telefon ve tablet</h2>
+        <a class="dugme ana indir" href="apk/OgretmenlerOdasi.apk" download>⬇ Uygulamayı indir (APK)</a>
+        <ol style="margin-top:16px">
+          <li><b>İndir</b> düğmesine dokun. Chrome “Bu dosya zararlı olabilir” derse <b>Yine de indir</b> de.</li>
+          <li>İndirme bitince bildirimden ya da <b>Dosyalar → İndirilenler</b>'den <b>OgretmenlerOdasi.apk</b>'ya dokun.</li>
+          <li>“Bilinmeyen uygulamaları yükle” izni istenirse <b>Ayarlar</b>'a gir, Chrome (ya da Dosyalar) için <b>Bu kaynaktan izin ver</b>'i aç ve geri dön.</li>
+          <li><b>Yükle</b>'ye dokun. Play Protect uyarı verirse <b>Ayrıntılar → Yine de yükle</b> de. (Uygulama Google Play'de olmadığı için bu uyarı normaldir.)</li>
+          <li>Ana ekranda <b>Öğretmenler Odası</b> simgesi belirir. İlk açılışta ⚙ Ayarlar'dan adını ve grup listelerini gir.</li>
+        </ol>
+        <p class="not">Android 7.0 ve üstü gerekir. Uygulama telefondaki Chrome ile çalışır; sesli anlatım, yazdırma ve PDF indirme Chrome'daki gibi çalışır. Site güncellendikçe uygulama da kendiliğinden güncellenir; yeniden kurmak gerekmez.</p>
+      </div>
+      <div class="kart">
+        <h2>iPhone ve iPad</h2>
+        <p>Apple, APK kurmaya izin vermez. Bunun yerine:</p>
+        <ol><li>Safari'de <a href="./">siteyi</a> aç.</li><li>Alttaki <b>Paylaş</b> (□↑) düğmesine dokun.</li><li><b>Ana Ekrana Ekle</b>'yi seç. Simge uygulama gibi açılır.</li></ol>
+      </div>
+    </div>
+    <div class="kart qr">
+      <h2>Telefonla okut</h2>
+      <p class="not">Bu sayfayı akıllı tahtada açın; öğretmenler telefon kamerasıyla okutup indirsin.</p>
+      <img src="img/qr-uygulama.png" alt="Uygulama indirme sayfası QR kodu">
+      <p class="not">alibaklaea.github.io/ogretmenler-odasi/uygulama.html</p>
+      <a class="dugme" href="./">‹ Siteye dön</a>
+    </div>
+  </div>
+</div>
+</body>
+</html>
