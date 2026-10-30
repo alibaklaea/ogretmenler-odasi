@@ -379,3 +379,11 @@ dialog#projeDlg { width: min(620px, 96vw); max-height: 92vh; }
 .s-adim-no { width: 9mm; text-align: center; font-size: 14pt !important; font-weight: 700; background: #f0f0f0; }
 .s-adim-k { width: 9mm; }
 .s-adim-k::after { content: ""; display: block; width: 4.5mm; height: 4.5mm; border: 1.2pt solid #222; margin: 1mm auto; }
+
+/* gruplar */
+dialog#ayarlar { width: min(860px, 96vw); max-height: 94vh; }
+.grup-alanlar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.grup-alanlar fieldset { border: 1px solid var(--cizgi); border-radius: 10px; padding: 8px 10px 10px; display: grid; gap: 6px; margin: 0; }
+.grup-alanlar legend { font-weight: 700; color: var(--vurgu); padding: 0 4px; }
+.grup-sec .dugme { white-space: nowrap; }
+@media (max-width: 760px) { .grup-alanlar { grid-template-columns: 1fr; } }

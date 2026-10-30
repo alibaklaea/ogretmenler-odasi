@@ -11,6 +11,12 @@
 
   // ---------- durum ----------
   const ayar = JSON.parse(localStorage.getItem("masa.ayar") || "{}");
+  const GRUP_PLAN = ["D1", "D3", "KOD"];
+  if (!ayar.gruplar) {
+    ayar.gruplar = { D1: { ad: ayar.grup || "", ogrenciler: ayar.ogrenciler || "" }, D3: { ad: "", ogrenciler: "" }, KOD: { ad: "", ogrenciler: "" } };
+    delete ayar.grup; delete ayar.ogrenciler;
+    localStorage.setItem("masa.ayar", JSON.stringify(ayar));
+  }
   let plan = localStorage.getItem("masa.plan") || "D1";
   const bugun = sorguTarihi() || new Date();
   bugun.setHours(12, 0, 0, 0);
@@ -913,7 +919,7 @@
       <div class="s-ust"><span>${esc(ayar.okul || "BİLİM VE SANAT MERKEZİ")}</span><span>2026-2027 Eğitim Öğretim Yılı</span></div>
       <h1 style="text-align:center">${esc(PD.planlar[plan].ad.toLocaleUpperCase("tr"))} GÜNLÜK DERS PLANI</h1>
       <table>
-        <tr><th>Tarih</th><td>${tarihYaz(gun)} (${w.no}. hafta: ${kisaTarih(w.bas, w.bit)})</td><th>Grup</th><td>${esc(ayar.grup || "")}</td></tr>
+        <tr><th>Tarih</th><td>${tarihYaz(gun)} (${w.no}. hafta: ${kisaTarih(w.bas, w.bit)})</td><th>Grup</th><td>${esc(grupAdi())}</td></tr>
         <tr><th>Tema</th><td colspan="3">${w.temaNo}. Tema: ${esc(w.tema)} — ${esc(w.icerik)}</td></tr>
         <tr><th>Etkinlik</th><td colspan="3">${esc(w.etkinlik)}</td></tr>
         <tr><th>Süre</th><td colspan="3">${sure}</td></tr>
@@ -1278,7 +1284,8 @@
 
   // ---------- tahta araçları ----------
   function araclarSayfa() {
-    $("#sahne").innerHTML = `<div class="ust-baslik"><div><h1>Tahta Araçları</h1><p>Akıllı tahtada tam ekran kullanın (⛶). Öğrenci listesini Ayarlar'dan girin.</p></div></div>
+    $("#sahne").innerHTML = `<div class="ust-baslik"><div><h1>Tahta Araçları</h1><p>Akıllı tahtada tam ekran kullanın (⛶). Kura, gruplar ve puan tablosu seçili grubun listesini kullanır.</p></div>
+      <div class="dugmeler grup-sec">${GRUP_PLAN.map((k) => `<button class="dugme ${k === plan ? "ana" : ""}" data-grup="${k}">${esc(grupAdi(k))} · ${ogrenciler(k).length} öğrenci</button>`).join("")}<button class="dugme" id="grupDuzenle">⚙ Listeleri düzenle</button></div></div>
     <div class="araclar">
       <div class="kart"><h2>Zamanlayıcı</h2><div class="sayac" id="zS">05:00</div><div class="ilerleme"><i id="zI"></i></div>
         <div class="dugmeler">${[1, 3, 5, 10, 15, 40].map((d) => `<button class="dugme kucuk" data-dk="${d}">${d} dk</button>`).join("")}</div>
@@ -1292,6 +1299,8 @@
       <div class="kart"><h2>Grup Puan Tablosu</h2><div class="puanlar" id="pT"></div><div class="dugmeler" style="margin-top:10px"><button class="dugme" id="pS">Sıfırla</button></div></div>
       <div class="kart"><h2>Boş Tahta</h2><p class="not">Tam ekran yazı tahtası: beyin fırtınası, kelime bulutu, çizim.</p><button class="dugme ana" id="bT">Boş tahtayı aç</button></div>
     </div>`;
+    document.querySelectorAll("[data-grup]").forEach((b) => b.onclick = () => planSec(b.dataset.grup));
+    $("#grupDuzenle").onclick = ayarAc;
     // zamanlayıcı
     let top = 300, kalan = 300, t = null;
     const yaz = () => { $("#zS").textContent = zamanYaz(kalan); $("#zI").style.width = (kalan / top * 100) + "%"; $("#zS").classList.toggle("bitti", kalan === 0); };
@@ -1305,10 +1314,10 @@
       const d = () => { $("#dAsama").textContent = A[a][0]; $("#dS").textContent = zamanYaz(k); };
       d(); const it = setInterval(() => { k--; if (k < 0) { zil(); a++; if (a >= A.length) { clearInterval(it); $("#dAsama").textContent = "Bitti"; return; } k = A[a][1]; } d(); }, 1000); };
     // kura
-    const kNot = () => $("#kN").textContent = ogrenciler().length ? `Kalan: ${kuraKalan().length} / ${ogrenciler().length} öğrenci (seçilen tekrar çıkmaz)` : "Öğrenci listesi boş — ⚙ Ayarlar'dan ekleyin.";
+    const kNot = () => $("#kN").textContent = ogrenciler().length ? `Kalan: ${kuraKalan().length} / ${ogrenciler().length} öğrenci (seçilen tekrar çıkmaz)` : `${grupAdi()} listesi boş — ⚙ Ayarlar'dan ekleyin.`;
     $("#kB").onclick = () => { const L = ogrenciler(); if (!L.length) return kNot(); let n = 0;
       const it = setInterval(() => { $("#kS").textContent = L[Math.floor(Math.random() * L.length)]; if (++n > 16) { clearInterval(it); $("#kS").textContent = kuraCek(); kNot(); } }, 70); };
-    $("#kR").onclick = () => { kuraHavuz = null; kNot(); $("#kS").textContent = "—"; };
+    $("#kR").onclick = () => { delete kuraHavuz[plan]; kNot(); $("#kS").textContent = "—"; };
     $("#kL").onclick = ayarAc; kNot();
     // gruplar
     $("#gB").onclick = () => { const L = karistir(ogrenciler()), n = +$("#gN").value; if (!L.length) { $("#gC").innerHTML = '<p class="not">Önce öğrenci listesini girin.</p>'; return; }
@@ -1316,14 +1325,14 @@
       $("#gC").innerHTML = G.map((g, i) => `<div><b>${i + 1}. Grup</b>${g.map(esc).join("<br>")}</div>`).join(""); puanGruplar(n); };
     // puan
     puanCiz();
-    $("#pS").onclick = () => { localStorage.removeItem("masa.puan"); puanCiz(); };
+    $("#pS").onclick = () => { localStorage.removeItem("masa.puan." + plan); puanCiz(); };
     $("#bT").onclick = () => sunumAc([`<div class="etiket">Boş tahta · ✎ ile yazın</div>`], 0, "Boş tahta");
   }
-  function puanGruplar(n) { localStorage.setItem("masa.puan", JSON.stringify(Array.from({ length: n }, (_, i) => ({ ad: `${i + 1}. Grup`, p: 0 })))); puanCiz(); }
+  function puanGruplar(n) { localStorage.setItem("masa.puan." + plan, JSON.stringify(Array.from({ length: n }, (_, i) => ({ ad: `${i + 1}. Grup`, p: 0 })))); puanCiz(); }
   function puanCiz() {
-    const P = JSON.parse(localStorage.getItem("masa.puan") || "null") || [1, 2, 3, 4].map((i) => ({ ad: `${i}. Grup`, p: 0 }));
+    const P = JSON.parse(localStorage.getItem("masa.puan." + plan) || "null") || [1, 2, 3, 4].map((i) => ({ ad: `${i}. Grup`, p: 0 }));
     $("#pT").innerHTML = P.map((g, i) => `<div class="puan-satir"><span>${esc(g.ad)}</span><button data-p="${i}" data-d="-1">−</button><strong>${g.p}</strong><button data-p="${i}" data-d="1">+</button></div>`).join("");
-    $("#pT").querySelectorAll("button").forEach((b) => b.onclick = () => { P[b.dataset.p].p += +b.dataset.d; localStorage.setItem("masa.puan", JSON.stringify(P)); puanCiz(); });
+    $("#pT").querySelectorAll("button").forEach((b) => b.onclick = () => { P[b.dataset.p].p += +b.dataset.d; localStorage.setItem("masa.puan." + plan, JSON.stringify(P)); puanCiz(); });
   }
 
   function zamanYaz(s) { return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`; }
@@ -1333,10 +1342,11 @@
         g.gain.setValueAtTime(.0001, a.currentTime + d); g.gain.exponentialRampToValueAtTime(.4, a.currentTime + d + .02); g.gain.exponentialRampToValueAtTime(.0001, a.currentTime + d + .3);
         o.start(a.currentTime + d); o.stop(a.currentTime + d + .32); }); } catch (e) { /* ses kapalı olabilir */ }
   }
-  function ogrenciler() { return (ayar.ogrenciler || "").split("\n").map((s) => s.trim()).filter(Boolean); }
+  function ogrenciler(p = plan) { return ((ayar.gruplar[p] || {}).ogrenciler || "").split("\n").map((s) => s.trim()).filter(Boolean); }
+  function grupAdi(p = plan) { return (ayar.gruplar[p] || {}).ad || PD.planlar[p].ad; }
   function karistir(a) { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-  let kuraHavuz = null;
-  function kuraKalan() { if (!kuraHavuz || !kuraHavuz.length) kuraHavuz = karistir(ogrenciler()); return kuraHavuz; }
+  const kuraHavuz = {};
+  function kuraKalan() { if (!kuraHavuz[plan] || !kuraHavuz[plan].length) kuraHavuz[plan] = karistir(ogrenciler()); return kuraHavuz[plan]; }
   function kuraCek() { return kuraKalan().pop() || "—"; }
 
   // ---------- nasıl kullanılır ----------
@@ -1380,14 +1390,19 @@
 
   // ---------- ayarlar / tam ekran ----------
   function ayarAc() {
-    const f = $("#ayarlar form"); for (const k of ["ogretmen", "okul", "mudur", "grup", "ogrenciler"]) f.elements[k].value = ayar[k] || "";
+    const f = $("#ayarlar form"); for (const k of ["ogretmen", "okul", "mudur"]) f.elements[k].value = ayar[k] || "";
+    for (const k of GRUP_PLAN) { f.elements["ad_" + k].value = ayar.gruplar[k].ad || ""; f.elements["ogr_" + k].value = ayar.gruplar[k].ogrenciler || ""; }
+    sayacGuncelle();
     $("#ayarlar").showModal();
   }
   $("#ayarlar").addEventListener("close", () => {
     if ($("#ayarlar").returnValue !== "kaydet") return;
-    const f = $("#ayarlar form"); for (const k of ["ogretmen", "okul", "mudur", "grup", "ogrenciler"]) ayar[k] = f.elements[k].value;
-    localStorage.setItem("masa.ayar", JSON.stringify(ayar)); kuraHavuz = null; yonlendir();
+    const f = $("#ayarlar form"); for (const k of ["ogretmen", "okul", "mudur"]) ayar[k] = f.elements[k].value;
+    for (const k of GRUP_PLAN) { ayar.gruplar[k] = { ad: f.elements["ad_" + k].value.trim(), ogrenciler: f.elements["ogr_" + k].value }; delete kuraHavuz[k]; }
+    localStorage.setItem("masa.ayar", JSON.stringify(ayar)); seritCiz(); yonlendir();
   });
+  function sayacGuncelle() { for (const k of GRUP_PLAN) { const n = $("#ayarlar form").elements["ogr_" + k].value.split("\n").filter((x) => x.trim()).length; $("#say_" + k).textContent = `${n} öğrenci`; } }
+  $("#ayarlar form").addEventListener("input", sayacGuncelle);
   $("#btnAyar").onclick = ayarAc;
   $("#btnTam").onclick = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
 

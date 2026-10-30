@@ -73,8 +73,13 @@
     <label>Öğretmen adı soyadı <input name="ogretmen"></label>
     <label>Okul / BİLSEM <input name="okul"></label>
     <label>Okul müdürü <input name="mudur"></label>
-    <label>Grup / sınıf adı <input name="grup" placeholder="Örn. D1-A"></label>
-    <label>Öğrenci listesi (her satıra bir ad) <textarea name="ogrenciler" rows="7"></textarea></label>
+    <h3 style="margin:8px 0 0">Gruplarım ve öğrenci listeleri</h3>
+    <p class="not">Her program için ayrı liste. Üstten hangi program seçiliyse kura, gruplar ve günlük plan o grubu kullanır. Her satıra bir ad yazın.</p>
+    <div class="grup-alanlar">
+      <fieldset><legend>Destek 1</legend><input name="ad_D1" placeholder="Grup adı (ör. D1-Salı)"><textarea name="ogr_D1" rows="8"></textarea><span class="not" id="say_D1"></span></fieldset>
+      <fieldset><legend>Destek 3</legend><input name="ad_D3" placeholder="Grup adı (ör. D3-Perşembe)"><textarea name="ogr_D3" rows="8"></textarea><span class="not" id="say_D3"></span></fieldset>
+      <fieldset><legend>Kodlama</legend><input name="ad_KOD" placeholder="Grup adı (ör. Kodlama-Çarşamba)"><textarea name="ogr_KOD" rows="8"></textarea><span class="not" id="say_KOD"></span></fieldset>
+    </div>
     <menu><button value="iptal">Vazgeç</button><button value="kaydet" class="ana">Kaydet</button></menu>
   </form>
 </dialog>
