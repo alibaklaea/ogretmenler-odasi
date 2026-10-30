@@ -28,6 +28,7 @@
     <a href="#bu-hafta" class="vurgu"><span class="m-ikon">★</span>Bu Hafta</a>
     <a href="#gunler"><span class="m-ikon">◷</span>Belirli Gün & AB</a>
     <a href="#projeler"><span class="m-ikon">◆</span>Projeler</a>
+    <a href="#canva"><span class="m-ikon">✦</span>Canva</a>
     <a href="#araclar"><span class="m-ikon">⏱</span>Tahta Araçları</a>
     <a href="#nasil"><span class="m-ikon">?</span>Nasıl Kullanılır?</a>
   </nav>
@@ -42,9 +43,12 @@
 
 <!-- tahta modu: öğrenci sunumu -->
 <div id="sunum" class="sunum" hidden>
+  <div class="sunum-ilerleme"><i id="sIlerleme"></i></div>
   <div class="sunum-ust">
     <span id="sunumBaslik"></span>
     <div class="sunum-araclar">
+      <button data-s="oynat" title="Video olarak oynat (K)">▶</button>
+      <button data-s="ses" title="Türkçe sesli anlatım">🔇</button>
       <button data-s="zaman" title="Zamanlayıcı">⏱</button>
       <button data-s="kura" title="Rastgele öğrenci">🎲</button>
       <button data-s="kalem" title="Tahtaya yaz">✎</button>
@@ -65,7 +69,7 @@
 <dialog id="ayarlar">
   <form method="dialog">
     <h2>Ayarlar</h2>
-    <p class="not">Bu bilgiler yalnızca bu bilgisayarda saklanır; günlük planların imza alanına yazılır.</p>
+    <p class="not">Bu bilgiler yalnızca bu cihazda saklanır; günlük planların imza alanına yazılır. <a href="#nasil">Nasıl kullanılır?</a></p>
     <label>Öğretmen adı soyadı <input name="ogretmen"></label>
     <label>Okul / BİLSEM <input name="okul"></label>
     <label>Okul müdürü <input name="mudur"></label>
@@ -86,6 +90,7 @@
 <script src="js/gunler.js"></script>
 <script src="js/kodlama.js"></script>
 <script src="js/projeler.js"></script>
+<script src="js/canva.js"></script>
 <script src="js/masa.js"></script>
 </body>
 </html>

@@ -785,6 +785,7 @@
     if (yol === "hafta") haftaSayfa(+a1, a2 || "etkinlik");
     else if (yol === "gunler") gunlerSayfa(a1 || "hepsi");
     else if (yol === "araclar") araclarSayfa();
+    else if (yol === "canva") canvaSayfa(a1);
     else if (yol === "projeler") projelerSayfa(a1 || "teknofest");
     else if (yol === "odr") odrSayfa(a1);
     else if (yol === "ql") qlSayfa(a1);
@@ -869,8 +870,9 @@
         <tr><th>Ölçme-değerlendirme</th><td>${esc(w.olcme)}</td></tr>
         <tr><th>Disiplinler arası</th><td>${esc(w.disiplin)}</td></tr>
         <tr><th>Materyaller</th><td>${esc(w.materyal)}</td></tr>
-        <tr><th>Belirli gün ve haftalar</th><td>${esc(w.gunler || "—")}</td></tr></table>
-        <div class="dugmeler" style="margin-top:14px"><a class="dugme ana" href="#hafta/${w.no}/sunum">Tahtada sun</a><a class="dugme" href="#hafta/${w.no}/gunluk">Günlük plan</a><a class="dugme" href="#hafta/${w.no}/kagit">Çalışma kâğıtları</a></div></div>`;
+        <tr><th>Belirli gün ve haftalar</th><td>${esc(w.gunler || "—")}</td></tr>
+        ${canvaAyi(w.bas) ? `<tr><th>Bu ayın Canva etkinliği</th><td><a href="#canva/${window.CANVA.etkinlikler.indexOf(canvaAyi(w.bas))}">${esc(canvaAyi(w.bas).ad)}</a></td></tr>` : ""}</table>
+        <div class="dugmeler" style="margin-top:14px"><a class="dugme ana" href="#hafta/${w.no}/sunum">▶ Video sunum</a><a class="dugme" href="#hafta/${w.no}/gunluk">Günlük plan</a><a class="dugme" href="#hafta/${w.no}/kagit">Çalışma kâğıtları</a></div></div>`;
     return `<div class="iki-sutun"><div>${sol}</div><div>${sag}</div></div>`;
   }
 
@@ -930,47 +932,118 @@
     </div>`;
   }
 
-  // ---------- öğrenci sunumu ----------
+  // ---------- öğrenci sunumu (video modu) ----------
+  // Slayt: { tur, html, anlat }. Video modunda öğeler animasyonla gelir, isteğe göre Türkçe sesli anlatılır ve slaytlar kendiliğinden ilerler.
+  const sl = (tur, html, anlat) => ({ tur, html, anlat: anlat || "" });
+  const duzMetin = (h) => { const d = document.createElement("div"); d.innerHTML = h; return d.textContent.replace(/\s+/g, " ").trim(); };
+
+  function adimlarOlustur(p) { // öğrenciye dönük “nasıl yapacağız?” adımları
+    if (p.sorular) { // MEB etkinliği: öğretmen anlatımı yerine tartış → ekler → paylaş akışı
+      const A = [];
+      if (p.soru) A.push({ baslik: "Tartışalım", metin: p.soru, sure: "10 dk" });
+      p.ekler.forEach((e) => A.push({ baslik: `${e.ad}: ${e.baslik || "Çalışma kâğıdı"}`, metin: "Kâğıdı al ve yönergeyi sesli oku. Grubunla birlikte tamamla. Takılırsan önce grubuna, sonra öğretmenine sor.", sure: "20 dk" }));
+      A.push({ baslik: "Paylaş ve değerlendir", metin: "Ürününü sınıfa kısaca sun; arkadaşlarından iki güçlü yön ve bir öneri al.", sure: "10 dk" });
+      return A;
+    }
+    return p.dersler.map((d) => ({ baslik: d.baslik.replace(/^\d+\. ders · /, ""), metin: p.ozgun ? d.metin : ogrenciCumleleri(d.metin, 2), sure: "" }));
+  }
+
+  function yolHaritasi(baslik, A) {
+    return sl("yol", `<div class="etiket">${esc(baslik)} · Nasıl yapacağız?</div><h2>Yol haritamız</h2><ol class="yol">${A.map((a, i) => `<li><b>${i + 1}</b><span>${esc(a.baslik)}</span></li>`).join("")}</ol>`,
+      `${baslik} etkinliğini ${A.length} adımda yapacağız. ` + A.map((a, i) => `${i + 1}: ${a.baslik}.`).join(" "));
+  }
+  function adimSlayti(baslik, A, i) {
+    const a = A[i];
+    return sl("adim", `<div class="adim-ust"><span class="adim-no">${i + 1}<small>/${A.length}</small></span><div><div class="etiket">${esc(baslik)} · Adım ${i + 1}</div><h2>${esc(a.baslik)}</h2></div></div>
+      <div class="gorev-kutu"><p>${esc(a.metin)}</p></div>${a.sure ? `<div class="adim-alt">⏱ ${esc(a.sure)}</div>` : ""}
+      <div class="adim-cubuk">${A.map((_, j) => `<i class="${j < i ? "bitti" : j === i ? "simdi" : ""}"></i>`).join("")}</div>`, `Adım ${i + 1}. ${a.baslik}. ${a.metin}`);
+  }
+
   function slaytlar(w, P, gunler) {
-    const S = [];
-    const temaAd = `${w.temaNo}. Tema · ${w.tema}`;
-    S.push(`<div class="etiket">${w.no}. Hafta · ${kisaTarih(w.bas, w.bit)}</div><h1>${esc(w.etkinlik.replace(/\s*\(2 saat\)/g, ""))}</h1><div class="kapak-alt"><span>${esc(temaAd)}</span><span>${esc(PD.planlar[plan].ad)}</span></div>`);
-    gunler.filter((g) => g.tur === "milli" && g.anahtar).slice(0, 2).forEach((g) => S.push(`<div class="etiket">Bu hafta</div><h2>${esc(g.ad)}</h2><p>${esc(g.amac)}</p>`));
+    const S = [], ad = w.etkinlik.replace(/\s*\(2 saat\)/g, "");
+    S.push(sl("kapak", `<div class="etiket">${w.no}. Hafta · ${kisaTarih(w.bas, w.bit)}</div><h1>${esc(ad)}</h1><div class="kapak-alt"><span>${w.temaNo}. Tema · ${esc(w.tema)}</span><span>${esc(PD.planlar[plan].ad)}</span></div>`,
+      `${w.no}. hafta. Bugünkü etkinliğimiz: ${ad.toLocaleLowerCase("tr")}.`));
+    gunler.filter((g) => g.tur === "milli" && g.anahtar).slice(0, 2).forEach((g) => S.push(sl("bilgi", `<div class="etiket">Bu hafta</div><h2>${esc(g.ad)}</h2><p>${esc(g.amac)}</p>`, `Bu hafta ${g.ad}. ${g.amac}`)));
     P.forEach((p) => {
-      if (p.soru) S.push(`<div class="etiket">Büyük soru · Önce düşün, sonra konuş</div><div class="soru-buyuk">${esc(p.soru)}</div>`);
-      (p.sorular || []).slice(1, 4).forEach((q) => S.push(`<div class="etiket">Tartışalım</div><div class="soru-buyuk">${esc(q)}</div>`));
+      if (p.soru) S.push(sl("soru", `<div class="etiket">Büyük soru · Önce düşün, sonra konuş</div><div class="soru-buyuk">${esc(p.soru)}</div><div class="dusun" data-sayac="60">1 dakika sessizce düşün</div>`, `Büyük sorumuz: ${p.soru} Bir dakika sessizce düşün.`));
+      (p.sorular || []).slice(1, 3).forEach((q) => S.push(sl("soru", `<div class="etiket">Tartışalım</div><div class="soru-buyuk">${esc(q)}</div>`, q)));
     });
-    S.push(`<div class="etiket">Bu hafta neler yapacağız?</div><ul>${w.kazanimlar.map((k) => `<li>${esc(k.replace(/^DEP\.\d+\.\d+\s*/, ""))}</li>`).join("")}</ul>`);
+    const hedef = w.kazanimlar.map((k) => k.replace(/^DEP\.\d+\.\d+\s*/, ""));
+    if (hedef.length) S.push(sl("liste", `<div class="etiket">Bu hafta neler öğreneceğiz?</div><ul>${hedef.map((k) => `<li>${esc(k)}</li>`).join("")}</ul>`, "Bu hafta şunları öğreneceğiz. " + hedef.join(" ")));
     P.forEach((p) => {
-      if (!p.ozgun && !p.sorular) p.dersler.forEach((d, i) => S.push(`<div class="etiket">${esc(p.ad)}</div><h2><span class="ders-no">${i + 1}</span>${esc(d.baslik)}</h2><p>${esc(ilkCumleler(d.metin, 2))}</p>`));
-      if (p.ozgun) p.dersler.forEach((d, i) => S.push(`<div class="etiket">${esc(p.ad)} · Görev ${i + 1}</div><h2>${esc(d.baslik)}</h2><div class="gorev-kutu"><p>${esc(d.metin)}</p></div>`));
-      p.ekler.forEach((e) => S.push(`<div class="etiket">Çalışma kâğıdı</div><h2>${esc((e.ad || "Ek") + " · " + e.baslik)}</h2>${e.yonerge ? `<div class="gorev-kutu"><p>${esc(e.yonerge)}</p></div>` : `<p>Çalışma kâğıdını al, yönergeyi oku ve grubunla başla.</p>`}`));
-      if (p.urun) S.push(`<div class="etiket">Ürünümüz</div><h1>${esc(p.urun)}</h1>`);
+      const A = adimlarOlustur(p);
+      if (A.length) { S.push(yolHaritasi(p.ad, A)); A.forEach((_, i) => S.push(adimSlayti(p.ad, A, i))); }
+      if (!p.sorular) p.ekler.forEach((e) => S.push(sl("kagit", `<div class="etiket">Çalışma kâğıdı</div><h2>${esc((e.ad || "Ek") + " · " + e.baslik)}</h2><div class="gorev-kutu"><p>${esc(e.yonerge || "Kâğıdı al, yönergeyi oku ve grubunla başla.")}</p></div>`,
+        `Çalışma kâğıdı: ${e.baslik}. ${e.yonerge || "Kâğıdı al, yönergeyi oku ve grubunla başla."}`)));
+      if (p.urun) S.push(sl("urun", `<div class="etiket">Ürünümüz</div><h1>${esc(p.urun)}</h1>`, `Bu hafta ortaya çıkaracağımız ürün: ${p.urun}.`));
     });
-    gunler.filter((g) => g.tur !== "milli").slice(0, 2).forEach((g) => S.push(`<div class="etiket">${g.tur === "ab" ? "Avrupa'da bu hafta" : "Dünyada bu hafta"}</div><h2>${esc(g.ad)}</h2><p>${esc(g.amac)}</p>`));
-    S.push(`<div class="etiket">Çıkış bileti</div><div class="bilet"><div><b>3</b><p>Bugün öğrendiğim üç şey</p></div><div><b>2</b><p>İlginç bulduğum iki şey</p></div><div><b>1</b><p>Hâlâ merak ettiğim bir soru</p></div></div>`);
+    const cv = canvaAyi(w.bas);
+    if (cv) S.push(sl("bilgi", `<div class="etiket">Bu ayın Canva etkinliği</div><h2>${esc(cv.ad)}</h2><p>${esc(cv.amac)}</p>`, `Bu ayın Canva etkinliği: ${cv.ad}. ${cv.amac}`));
+    gunler.filter((g) => g.tur !== "milli").slice(0, 2).forEach((g) => S.push(sl("bilgi", `<div class="etiket">${g.tur === "ab" ? "Avrupa'da bu hafta" : "Dünyada bu hafta"}</div><h2>${esc(g.ad)}</h2><p>${esc(g.amac)}</p>`, `${g.ad}. ${g.amac}`)));
+    S.push(sl("bilet", `<div class="etiket">Çıkış bileti</div><div class="bilet"><div><b>3</b><p>Bugün öğrendiğim üç şey</p></div><div><b>2</b><p>İlginç bulduğum iki şey</p></div><div><b>1</b><p>Hâlâ merak ettiğim bir soru</p></div></div>`,
+      "Çıkış bileti. Bugün öğrendiğin üç şeyi, ilginç bulduğun iki şeyi ve hâlâ merak ettiğin bir soruyu yaz."));
     return S;
   }
+  // öğretmene hitap eden cümleleri (“Öğretmen … ister.”) öğrenci ekranından çıkarır
+  function ogrenciCumleleri(t, n) { const c = (t.match(/[^.!?]+[.!?]+/g) || [t]).map((x) => x.trim()).filter((x) => !/^Öğretmen/.test(x)); return (c.length ? c : [t]).slice(0, n).join(" "); }
   function ilkCumleler(t, n) { const c = t.match(/[^.!?]+[.!?]+/g) || [t]; return c.slice(0, n).join(" ").trim(); }
 
+  function sunumOnizleme(S) {
+    return `<div class="haftalar">${S.map((s, i) => `<button class="hafta-kart onizleme tur-${s.tur}" data-i="${i}"><div class="hk-ust"><span class="hk-no">${i + 1}</span><span>${{ kapak: "Kapak", soru: "Soru", yol: "Yol haritası", adim: "Adım", kagit: "Kâğıt", urun: "Ürün", bilet: "Çıkış bileti", liste: "Hedefler", bilgi: "Bilgi" }[s.tur] || ""}</span></div><div class="onizleme-slayt">${s.html.replace(/<h[12]/g, "<h3").replace(/<\/h[12]>/g, "</h3>")}</div></button>`).join("")}</div>`;
+  }
   function sunumSekme(ic, w, P, gunler) {
-    const S = slaytlar(w, P, gunler);
-    ic.innerHTML = `<div class="ust-baslik"><p>${S.length} slayt. Ok tuşları / tıklama ile ilerleyin. Sunumda zamanlayıcı, rastgele öğrenci ve tahtaya yazma araçları var.</p>
-      <div class="dugmeler"><button class="dugme ana" id="sunBasla">▶ Tahtada sunumu başlat</button></div></div>
-      <div class="haftalar">${S.map((s, i) => `<button class="hafta-kart" data-i="${i}" style="min-height:150px;font-size:.6rem;overflow:hidden"><div class="hk-ust"><span class="hk-no">${i + 1}</span></div><div class="onizleme-slayt">${s.replace(/<h1/g, "<h3").replace(/<\/h1>/g, "</h3>").replace(/<h2/g, "<h3").replace(/<\/h2>/g, "</h3>")}</div></button>`).join("")}</div>`;
-    $("#sunBasla").onclick = () => sunumAc(S, 0, `${w.no}. Hafta · ${w.etkinlik}`);
-    ic.querySelectorAll("[data-i]").forEach((b) => b.onclick = () => sunumAc(S, +b.dataset.i, `${w.no}. Hafta · ${w.etkinlik}`));
+    const S = slaytlar(w, P, gunler), bas_ = `${w.no}. Hafta · ${w.etkinlik}`;
+    ic.innerHTML = `<div class="ust-baslik"><p>${S.length} slayt · yaklaşık ${Math.round(S.reduce((t, s) => t + slaytSuresi(s), 0) / 60000)} dakikalık video. <b>Video olarak oynat</b> slaytları animasyonla ve Türkçe sesli anlatımla kendiliğinden ilerletir. <b>Adım adım sun</b> ise siz ilerletirsiniz.</p>
+      <div class="dugmeler"><button class="dugme ana" id="sunVideo">▶ Video olarak oynat (sesli)</button><button class="dugme" id="sunBasla">Tahtada adım adım sun</button></div></div>${sunumOnizleme(S)}`;
+    $("#sunVideo").onclick = () => sunumAc(S, 0, bas_, true, true);
+    $("#sunBasla").onclick = () => sunumAc(S, 0, bas_);
+    ic.querySelectorAll("[data-i]").forEach((b) => b.onclick = () => sunumAc(S, +b.dataset.i, bas_));
   }
 
-  let sun = { S: [], i: 0 };
-  function sunumAc(S, i, baslik) {
-    sun = { S, i }; $("#sunum").hidden = false; $("#sunumBaslik").textContent = baslik;
-    tuvalHazirla(); slaytGoster();
+  let sun = { S: [], i: 0, oto: false, ses: false, t: null, sayac: null };
+  function turkceSes() {
+    const V = ("speechSynthesis" in window ? speechSynthesis.getVoices() : []).filter((v) => /^tr/i.test(v.lang));
+    return V.find((v) => /natural|online|neural/i.test(v.name)) || V[0] || null;
+  }
+  function slaytSuresi(s) { return Math.max(5000, s.anlat.split(/\s+/).length * 430 + 1800); }
+  function sunumAc(S, i, baslik, oto, ses) {
+    clearTimeout(sun.t);
+    sun = { S: S.map((x) => typeof x === "string" ? sl("bilgi", x, duzMetin(x)) : x), i, oto: !!oto, ses: ses === undefined ? sun.ses : !!ses, t: null, sayac: null };
+    $("#sunum").hidden = false; $("#sunumBaslik").textContent = baslik;
+    tuvalHazirla(); oynatDugmeleri(); slaytGoster();
+    if (sun.ses && !turkceSes()) sesUyari();
     if (document.documentElement.requestFullscreen && !document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
   }
-  function slaytGoster() { $("#slayt").innerHTML = sun.S[sun.i]; $("#sSayac").textContent = `${sun.i + 1} / ${sun.S.length}`; tuvalSil(); }
+  function sesUyari() { const m = $("#sunumMini"); m.hidden = false; m.innerHTML = `Türkçe ses bulunamadı<small>Edge tarayıcısında ya da Windows'a Türkçe ses paketi ekleyerek açın · dokun: kapat</small>`; m.onclick = miniDur; }
+  function slaytGoster() {
+    clearTimeout(sun.t); clearInterval(sun.sayac); if ("speechSynthesis" in window) speechSynthesis.cancel();
+    const s = sun.S[sun.i], el = $("#slayt");
+    el.className = "slayt tur-" + s.tur; el.innerHTML = s.html; void el.offsetWidth; el.classList.add("giris");
+    $("#sSayac").textContent = `${sun.i + 1} / ${sun.S.length}`;
+    $("#sIlerleme").style.width = ((sun.i + 1) / sun.S.length * 100) + "%";
+    tuvalSil();
+    const d = el.querySelector("[data-sayac]");
+    if (d) { let k = +d.dataset.sayac; d.onclick = (e) => { e.stopPropagation(); if (sun.sayac) return; sun.sayac = setInterval(() => { k--; d.textContent = k > 0 ? `Düşünme süresi: ${k} sn` : "Şimdi paylaş!"; if (k <= 0) { clearInterval(sun.sayac); zil(); } }, 1000); }; d.title = "Dokun: sayacı başlat"; }
+    if (sun.oto || sun.ses) anlatVeIlerle(s);
+  }
+  function anlatVeIlerle(s) {
+    const sonraki = () => { if (!sun.oto || $("#sunum").hidden) return; if (sun.i < sun.S.length - 1) slaytGit(1); else { sun.oto = false; oynatDugmeleri(); } };
+    const v = sun.ses && s.anlat && turkceSes();
+    if (v) {
+      const u = new SpeechSynthesisUtterance(s.anlat); u.lang = "tr-TR"; u.voice = v; u.rate = 0.95;
+      u.onend = () => { sun.t = setTimeout(sonraki, 1200); }; u.onerror = () => { sun.t = setTimeout(sonraki, slaytSuresi(s)); };
+      speechSynthesis.speak(u);
+    } else if (sun.oto) sun.t = setTimeout(sonraki, slaytSuresi(s));
+  }
+  function oynatDugmeleri() {
+    const o = document.querySelector('[data-s="oynat"]'), s = document.querySelector('[data-s="ses"]');
+    o.textContent = sun.oto ? "⏸" : "▶"; o.classList.toggle("acik", sun.oto); o.title = sun.oto ? "Videoyu duraklat (K)" : "Video olarak oynat (K)";
+    s.textContent = sun.ses ? "🔊" : "🔇"; s.classList.toggle("acik", sun.ses); s.title = sun.ses ? "Sesli anlatımı kapat" : "Türkçe sesli anlatımı aç";
+    document.querySelector(".sunum").classList.toggle("video", sun.oto);
+  }
   function slaytGit(d) { const n = sun.i + d; if (n >= 0 && n < sun.S.length) { sun.i = n; slaytGoster(); } }
-  function sunumKapat() { $("#sunum").hidden = true; miniDur(); if (document.fullscreenElement) document.exitFullscreen(); }
+  function sunumKapat() { clearTimeout(sun.t); clearInterval(sun.sayac); sun.oto = false; if ("speechSynthesis" in window) speechSynthesis.cancel(); $("#sunum").hidden = true; miniDur(); if (document.fullscreenElement) document.exitFullscreen(); }
+  if ("speechSynthesis" in window) speechSynthesis.onvoiceschanged = () => {};
   $("#sOnce").onclick = () => slaytGit(-1);
   $("#sSonra").onclick = () => slaytGit(1);
   $("#slayt").onclick = () => slaytGit(1);
@@ -981,8 +1054,80 @@
     if ($("#sunum").hidden) return;
     if (["ArrowRight", "PageDown", " "].includes(e.key)) { e.preventDefault(); slaytGit(1); }
     if (["ArrowLeft", "PageUp"].includes(e.key)) slaytGit(-1);
+    if (e.key === "k" || e.key === "K") { sun.oto = !sun.oto; oynatDugmeleri(); slaytGoster(); }
     if (e.key === "Escape") sunumKapat();
   });
+  document.querySelectorAll("[data-s]").forEach((b) => b.addEventListener("click", () => {
+    const s = b.dataset.s;
+    if (s === "oynat") { sun.oto = !sun.oto; oynatDugmeleri(); slaytGoster(); }
+    if (s === "ses") { sun.ses = !sun.ses; oynatDugmeleri(); if (sun.ses && !turkceSes()) sesUyari(); slaytGoster(); }
+  }));
+
+  // ---------- adım adım yönerge kartı (her hafta) ----------
+  function yonergeKarti(w, P) {
+    const bl = [];
+    P.forEach((p) => {
+      const A = adimlarOlustur(p);
+      if (p.soru) bl.push({ t: "boxes", cols: 1, h: 18, items: [`Büyük soru: ${p.soru}`] });
+      if (A.length) bl.push({ t: "adim", baslik: P.length > 1 ? p.ad : "", items: A.map((a) => [a.baslik, a.metin]) });
+      if (p.urun) bl.push({ t: "p", x: `Ürünümüz: ${p.urun}` });
+    });
+    bl.push({ t: "p", x: `Malzemeler: ${w.materyal}` });
+    bl.push({ t: "boxes", cols: 3, h: 22, items: ["Takıldığımda 1: Yönergeyi tekrar okurum", "2: Grubuma sorarım", "3: Öğretmenime sorarım"] });
+    bl.push({ t: "ticket" });
+    return kagitHTML({ baslik: `ADIM ADIM YÖNERGE KARTI · ${w.etkinlik.replace(/\s*\(2 saat\)/g, "")}`, yonerge: "Her adımı bitirince kutusunu işaretle. Sıradaki adıma geçmeden önce grubunla kontrol edin.", bloklar: bl }, w, "Yönerge");
+  }
+
+  // ---------- Canva Atölyesi ----------
+  const CANVA_PLAN = [
+    [{ t: "boxes", cols: 2, h: 24, items: ["Takma adım", "İlgi alanlarım (3 tane)", "Hayalim", "Seçtiğim 2-3 renk"] }, { t: "boxes", cols: 1, h: 70, items: ["Kartımın taslak çizimi"] }],
+    [{ t: "lines", label: "Sloganım (başlık):", n: 1 }, { t: "lines", label: "Kayan yazı cümlem:", n: 2 }, { t: "boxes", cols: 1, h: 62, items: ["Afiş taslağı: başlık nerede, kayan yazı nereden nereye geçecek? (okla göster)"] }],
+    [{ t: "table", cols: ["Yıl", "Olay", "Simge (çiz)"], rows: 5 }, { t: "lines", label: "Kaynağım:", n: 1 }],
+    [{ t: "grid", n: 6, marks: { "0,0": "🤖", "5,5": "⚑", "1,1": "■", "1,3": "■", "3,2": "■", "4,4": "■", "2,5": "■" } }, { t: "lines", label: "Algoritmam (↑ → ↓ ←):", n: 2 }],
+    [{ t: "boxes", cols: 3, h: 38, items: ["Sahne 1", "Sahne 2", "Sahne 3", "Sahne 4", "Sahne 5", "Sahne 6"] }, { t: "table", cols: ["Sahne", "Söyleyeceğim / yazacağım cümle", "Süre (sn)"], rows: 6 }],
+    [{ t: "table", cols: ["Kural", "Slogan (en çok 5 kelime)", "Simge"], rows: [["Dur"], ["Düşün"], ["Sor"]] }, { t: "check", items: ["Görselleri Canva'nın ücretsiz öğelerinden seçtim", "İnternetten görsel kopyalamadım", "Kişisel bilgi kullanmadım"] }],
+    [{ t: "boxes", cols: 3, h: 46, items: ["Kapak", "Giriş", "Gelişme 1", "Gelişme 2", "Gelişme 3", "Sonuç"] }, { t: "lines", label: "Karakterimin adı ve özelliği:", n: 1 }],
+    [{ t: "boxes", cols: 4, h: 34, items: ["Kare 1", "Kare 2", "Kare 3", "Kare 4", "Kare 5", "Kare 6", "Kare 7", "Kare 8"] }, { t: "lines", label: "Her karede ne kadar kayacak? Kare süresi kaç saniye?", n: 1 }],
+    [{ t: "boxes", cols: 2, h: 30, items: ["Problem ne?", "Ne yaptık?", "Nasıl çalışıyor?", "Kime faydalı?"] }, { t: "boxes", cols: 1, h: 46, items: ["Poster taslağı (QR kodun yerini işaretle)"] }],
+    [{ t: "table", cols: ["Çalışmam", "Ay", "Ne öğrendim?"], rows: 4 }, { t: "lines", label: "Gelecek yıl hedefim:", n: 2 }]
+  ];
+  const AY_SIRA = [8, 9, 10, 11, 0, 1, 2, 3, 4, 5];
+  function canvaAyi(d) { return window.CANVA.etkinlikler.find((c) => c.ay === d.getMonth()); }
+  function canvaSlaytlari(c) {
+    const A = c.adimlar.map(([b, m]) => ({ baslik: b, metin: m, sure: "" }));
+    return [
+      sl("kapak", `<div class="etiket">${AYLAR[c.ay]} · Canva Atölyesi</div><h1>${esc(c.ad)}</h1><div class="kapak-alt"><span>${esc(c.beceri)}</span><span>${esc(c.gun)}</span></div>`, `${AYLAR[c.ay]} ayı Canva etkinliğimiz: ${c.ad}.`),
+      sl("bilgi", `<div class="etiket">Bugün ne yapacağız?</div><h2>${esc(c.amac)}</h2><div class="gorev-kutu"><p><b>Ürünümüz:</b> ${esc(c.urun)}</p></div>`, `${c.amac} Ürünümüz: ${c.urun}.`),
+      sl("liste", `<div class="etiket">Canva'da kullanacağımız araçlar</div><ul>${c.araclar.map((a) => `<li>${esc(a)}</li>`).join("")}</ul>`, "Canva'da şu araçları kullanacağız. " + c.araclar.map((a) => a.replace(/\(.*?\)/g, "")).join(", ") + "."),
+      yolHaritasi(c.ad, A), ...A.map((_, i) => adimSlayti(c.ad, A, i)),
+      sl("liste", `<div class="etiket">Kontrol listesi · Teslim etmeden önce</div><ul>${c.kontrol.map((k) => `<li>☐ ${esc(k)}</li>`).join("")}</ul>`, "Teslim etmeden önce kontrol et. " + c.kontrol.join(". ") + "."),
+      sl("bilet", `<div class="etiket">Çıkış bileti</div><div class="bilet"><div><b>3</b><p>Canva'da öğrendiğim üç araç</p></div><div><b>2</b><p>Zorlandığım iki adım</p></div><div><b>1</b><p>Bir dahaki tasarımımda deneyeceğim bir şey</p></div></div>`, "Çıkış bileti: Canva'da öğrendiğin üç aracı, zorlandığın iki adımı ve bir dahaki tasarımında deneyeceğin bir şeyi yaz.")];
+  }
+  function canvaKagitlari(c, ix) {
+    return kagitHTML({ baslik: `${c.ad} · PLANLAMA`, yonerge: `${c.amac} Canva'yı açmadan önce bu sayfayı doldur.`, bloklar: CANVA_PLAN[ix] }, null, `Canva Atölyesi · ${AYLAR[c.ay]}`)
+      + kagitHTML({ baslik: `${c.ad} · ADIM ADIM CANVA`, yonerge: "Her adımı bitirince kutusunu işaretle. Menü adları Canva sürümüne göre biraz farklı olabilir; parantez içinde İngilizce adı yazıyor.",
+        bloklar: [{ t: "adim", items: c.adimlar }, { t: "scale", items: c.kontrol }] }, null, `Canva Atölyesi · ${AYLAR[c.ay]}`);
+  }
+  function canvaSayfa(sec) {
+    const C = window.CANVA, simdi = canvaAyi(bugun);
+    const liste = AY_SIRA.map((a) => C.etkinlikler.findIndex((c) => c.ay === a)).filter((i) => i >= 0);
+    $("#sahne").innerHTML = `<div class="ust-baslik"><div><h1>Canva Atölyesi</h1><p>Her ay farklı bir dijital üretim becerisi: tasarım, kayan yazı, animasyon, video, GIF, sesli kitap, kare kare animasyon, QR kodlu tanıtım ve portfolyo sitesi. Her etkinlik tahtada adım adım anlatılır; çalışma kâğıdı planlama sayfası ve işaretli adım listesinden oluşur.</p></div></div>
+      <div class="iki-sutun"><div>${liste.map((ix) => { const c = C.etkinlikler[ix];
+        return `<div class="kart gun-kart dunya ${c === simdi ? "canva-simdi" : ""}" id="cv${ix}" style="margin-bottom:14px">
+          <div class="gun-tarih"><span class="rozet dunya">${AYLAR[c.ay]}</span><b>${esc(c.beceri)}</b><span>· ${esc(c.gun)}</span>${c === simdi ? '<span class="rozet tatil">BU AY</span>' : ""}<span>· ${c.sure}</span></div>
+          <h2 style="margin:8px 0 4px">${esc(c.ad)}</h2><p style="margin:0 0 6px">${esc(c.amac)}</p><p class="not"><b>Ürün:</b> ${esc(c.urun)}</p>
+          <details><summary class="not" style="cursor:pointer">Adımları göster (${c.adimlar.length})</summary><ol>${c.adimlar.map(([b, m]) => `<li><b>${esc(b)}:</b> ${esc(m)}</li>`).join("")}</ol><p class="not"><b>Zenginleştirme:</b> ${esc(c.zengin)}</p></details>
+          <div class="dugmeler" style="margin-top:10px"><button class="dugme kucuk ana" data-cv-video="${ix}">▶ Video olarak oynat</button><button class="dugme kucuk" data-cv-sun="${ix}">Tahtada adım adım sun</button><button class="dugme kucuk" data-cv-bas="${ix}">Çalışma kâğıdını yazdır (2 sayfa)</button></div></div>`; }).join("")}</div>
+      <div><div class="kart odr-yan"><h3>Öğretmen hazırlığı</h3><ol style="padding-left:18px;font-size:.92rem">${C.hazirlik.map((h) => `<li style="margin-bottom:6px">${esc(h)}</li>`).join("")}</ol>
+        <div class="dugmeler"><a class="dugme kucuk" href="https://www.canva.com/education/" target="_blank" rel="noopener">Canva Eğitim ↗</a></div></div></div></div>`;
+    const S = (ix) => canvaSlaytlari(C.etkinlikler[ix]);
+    document.querySelectorAll("[data-cv-video]").forEach((b) => b.onclick = () => sunumAc(S(+b.dataset.cvVideo), 0, "Canva Atölyesi", true, true));
+    document.querySelectorAll("[data-cv-sun]").forEach((b) => b.onclick = () => sunumAc(S(+b.dataset.cvSun), 0, "Canva Atölyesi"));
+    document.querySelectorAll("[data-cv-bas]").forEach((b) => b.onclick = () => bas(canvaKagitlari(C.etkinlikler[+b.dataset.cvBas], +b.dataset.cvBas)));
+    const hedef = sec !== undefined && sec !== "" ? $("#cv" + sec) : (simdi && $("#cv" + C.etkinlikler.indexOf(simdi)));
+    if (hedef) setTimeout(() => hedef.scrollIntoView({ block: "start" }), 50);
+  }
+
   document.querySelectorAll("[data-s]").forEach((b) => b.onclick = () => {
     const s = b.dataset.s;
     if (s === "kapat") sunumKapat();
@@ -1024,11 +1169,13 @@
 
   // ---------- çalışma kâğıtları ----------
   function kagitSekme(ic, w, P) {
-    let html = "";
+    let html = `<div class="parca-baslik"><h2 style="margin:0">Adım adım yönerge kartı</h2><span class="rozet">her hafta</span></div>
+      <p class="not">Öğrencinin işaretleyerek ilerlediği tek sayfalık kart: büyük soru, adımlar, malzemeler, takıldığında ne yapacağı ve çıkış bileti.</p>
+      <div class="dugmeler" style="margin-bottom:12px"><button class="dugme ana" id="yonergeBas">Yönerge kartını yazdır</button></div><div class="ekran-onizleme">${yonergeKarti(w, P)}</div>`;
     P.forEach((p, pi) => {
       html += `<div class="parca-baslik"><h2 style="margin:0">${esc(p.ad)}</h2><span class="rozet">${esc(p.kaynak)}</span></div>`;
       if (p.ozgun) {
-        html += `<div class="dugmeler" style="margin-bottom:12px"><button class="dugme ana" data-bas-hepsi="${pi}">Tüm kâğıtları yazdır (${p.ekler.length} sayfa)</button></div><div class="ekran-onizleme">${p.ekler.map((e, i) => kagitHTML(e, w, `Ek ${i + 1}`)).join("")}</div>`;
+        html += `<div class="dugmeler" style="margin-bottom:12px"><button class="dugme ana" data-bas-hepsi="${pi}">Tüm kâğıtları yazdır (yönerge kartı + ${p.ekler.length} sayfa)</button></div><div class="ekran-onizleme">${p.ekler.map((e, i) => kagitHTML(e, w, `Ek ${i + 1}`)).join("")}</div>`;
       } else if (p.pdf) {
         html += `<div class="dugmeler" style="margin-bottom:12px">${p.pdfEk ? `<a class="dugme ana" href="${p.pdfEk}" target="_blank">Yalnız ekleri aç / yazdır</a>` : ""}<a class="dugme ${p.pdfEk ? "" : "ana"}" href="${p.pdf}" target="_blank">Etkinliğin tamamını aç (PDF)</a></div>
           <div class="ek-liste">${p.ekler.map((e) => `<div class="ek-kart"><span class="ek-ad">${esc(e.ad)}</span><b>${esc(e.baslik || "Çalışma kâğıdı")}</b><span class="not">Kitap PDF sayfası ${e.sayfa}</span><a class="dugme kucuk" href="${e.pdf}#page=${e.sayfa - (p.sayfalar ? p.sayfalar[0] - 1 : 0)}" target="_blank">Aç</a></div>`).join("") || '<p class="not">Bu etkinlikte ayrı çalışma kâğıdı yok.</p>'}</div>`;
@@ -1036,14 +1183,15 @@
     });
     html += `<div class="parca-baslik"><h2 style="margin:0">Her hafta kullanılabilir</h2></div><div class="dugmeler"><button class="dugme" id="biletBas">Çıkış bileti (6'lı, kes-dağıt)</button><button class="dugme" id="ozBas">Öz değerlendirme formu</button></div>`;
     ic.innerHTML = html;
-    ic.querySelectorAll("[data-bas-hepsi]").forEach((b) => b.onclick = () => bas(P[+b.dataset.basHepsi].ekler.map((e, i) => kagitHTML(e, w, `Ek ${i + 1}`)).join("")));
+    ic.querySelectorAll("[data-bas-hepsi]").forEach((b) => b.onclick = () => bas(yonergeKarti(w, P) + P[+b.dataset.basHepsi].ekler.map((e, i) => kagitHTML(e, w, `Ek ${i + 1}`)).join("")));
+    $("#yonergeBas").onclick = () => bas(yonergeKarti(w, P));
     $("#biletBas").onclick = () => bas(biletSayfasi(w));
     $("#ozBas").onclick = () => bas(kagitHTML({ baslik: "ÖZ DEĞERLENDİRME FORMU", yonerge: `${w.etkinlik} etkinliğinde kendini değerlendir.`, bloklar: [{ t: "scale", items: w.kazanimlar.map((k) => k.replace(/^DEP\.\d+\.\d+\s*/, "")).concat(["Grubumla iş birliği yaptım.", "Fikirlerimi gerekçeleriyle açıkladım."]) }, { t: "lines", label: "Bu etkinlikte en çok zorlandığım:", n: 2 }, { t: "ticket" }] }, w, "Form"));
   }
 
   function kagitHTML(e, w, ekAd) {
     const ust = w ? `${w.no}. HAFTA · ${ekAd}` : ekAd;
-    return `<div class="sayfa"><div class="s-ust"><span>${esc(ayar.okul || "BİLSEM")} · ${esc(PD.planlar[plan].ad)}</span><span>${esc(ust)}</span></div>
+    return `<div class="sayfa"><div class="s-ust"><span>${esc(ayar.okul || "BİLSEM")}${w ? " · " + esc(PD.planlar[plan].ad) : ""}</span><span>${esc(ust)}</span></div>
       <h1>${esc(e.baslik)}</h1>
       <div class="s-kimlik"><span>Adı Soyadı:</span><span>Grup:</span><span>Tarih:</span></div>
       ${e.yonerge ? `<div class="s-yonerge">${esc(e.yonerge)}</div>` : ""}
@@ -1053,6 +1201,7 @@
 
   function blok(b) {
     if (b.t === "p") return `<p>${esc(b.x)}</p>`;
+    if (b.t === "adim") return `${b.baslik ? `<b>${esc(b.baslik)}</b>` : ""}<table class="s-adim">${b.items.map(([t, m], i) => `<tr><td class="s-adim-no">${i + 1}</td><td><b>${esc(t)}</b><br>${esc(m)}</td><td class="s-adim-k"></td></tr>`).join("")}</table>`;
     if (b.t === "boxes") return `<div class="s-kutular" style="grid-template-columns:repeat(${b.cols || 2},1fr)">${b.items.map((x) => `<div style="min-height:${b.h || 30}mm">${esc(x)}</div>`).join("")}</div>`;
     if (b.t === "lines") return `<div class="s-cizgi">${b.label ? `<b>${esc(b.label)}</b>` : ""}${"<i></i>".repeat(b.n || 3)}</div>`;
     if (b.t === "cards") return `<div class="s-kartlar ${b.blank ? "bos" : ""}">${b.items.map((x) => `<div>${esc(x)}</div>`).join("")}</div>`;
