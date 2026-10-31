@@ -174,7 +174,7 @@
     const T = PROJE_TUR[tur] ? tur : "teknofest", B = PROJE_TUR[T];
     const liste = projeler.filter((p) => p.tur === T).sort((a, b) => (a.durum === "tamam") - (b.durum === "tamam") || (a.sonTarih || "9").localeCompare(b.sonTarih || "9"));
     $("#sahne").innerHTML = `<div class="ust-baslik"><div><h1>Projeler</h1><p>TEKNOFEST ve eTwinning projelerinizi buraya ekleyin. Yaklaşan son tarihler üst şeritte görünür.</p></div>
-        <div class="dugmeler">${T === "etwinning" ? '<button class="dugme" id="pOdul">2027 ödül odaklı proje taslağı</button>' : ""}<button class="dugme ana" id="pYeni">+ Yeni ${B.ad} projesi</button></div></div>
+        <div class="dugmeler">${T === "etwinning" ? '<button class="dugme ana" id="pPlan">2026-27 projelerimi ekle</button><button class="dugme" id="pOdul">2027 ödül odaklı proje taslağı</button>' : ""}<button class="dugme ana" id="pYeni">+ Yeni ${B.ad} projesi</button></div></div>
       <div class="sekmeler" role="tablist">${Object.entries(PROJE_TUR).map(([k, v]) => `<button role="tab" aria-selected="${k === T}" data-t="${k}">${v.ad} (${projeler.filter((p) => p.tur === k).length})</button>`).join("")}</div>
       <div class="iki-sutun"><div>${liste.length ? liste.map(projeKart).join("") : `<div class="kart"><p>Henüz ${B.ad} projesi yok.</p><button class="dugme ana" id="pYeni2">+ İlk projeyi ekle</button></div>`}</div>
         <div><div class="kart" style="margin-bottom:16px"><h3>${B.ad} hakkında</h3><p class="not" style="font-size:.92rem">${esc(B.bilgi)}</p>
@@ -184,6 +184,7 @@
           <div class="dugmeler" style="margin-top:10px"><button class="dugme kucuk" id="pYedek">Yedeği indir</button><label class="dugme kucuk" style="cursor:pointer">Yedeği yükle<input type="file" id="pYukle" accept=".json" hidden></label><button class="dugme kucuk" id="pYayin">Yayın dosyasını indir</button></div></div></div></div>`;
     document.querySelectorAll("[data-t]").forEach((b) => b.onclick = () => location.hash = "projeler/" + b.dataset.t);
     [$("#pYeni"), $("#pYeni2")].forEach((b) => b && (b.onclick = () => projeFormu({ tur: T })));
+    if ($("#pPlan")) $("#pPlan").onclick = () => { const var_ = new Set(projeler.map((p) => p.id)); projeler = projeler.concat(JSON.parse(JSON.stringify(window.ETWINNING_PLAN || [])).filter((p) => !var_.has(p.id))); projeKaydet(); projelerSayfa("etwinning"); };
     if ($("#pOdul")) $("#pOdul").onclick = () => { projeler = projeler.concat(odulProjesi()); projeKaydet(); projelerSayfa("etwinning"); };
     $("#sahne").querySelectorAll("[data-pd]").forEach((b) => b.onclick = () => projeFormu(projeler.find((p) => p.id === b.dataset.pd)));
     $("#sahne").querySelectorAll("[data-psil]").forEach((b) => b.onclick = () => {
@@ -194,7 +195,7 @@
     $("#sahne").querySelectorAll("[data-pbas]").forEach((b) => b.onclick = () => bas(projeSayfasi(projeler.find((p) => p.id === b.dataset.pbas))));
     $("#pYedek").onclick = () => indir(`projeler-yedek-${isoYaz(bugun)}.json`, JSON.stringify(projeler, null, 2), "application/json");
     $("#pYayin").onclick = () => indir("projeler.js", "// Sitede herkese görünen projeler (Öğretmenler Odası).\nwindow.PROJELER = " + JSON.stringify(projeler.map(({ odr, ql, ...acik }) => acik), null, 2) + ";\n", "text/javascript");
-    $("#pYukle").onchange = async (e) => { try { const v = JSON.parse(await e.target.files[0].text()); if (Array.isArray(v)) { projeler = v; projeKaydet(); projelerSayfa(T); } } catch (x) { alert("Dosya okunamadı."); } };
+    $("#pYukle").onchange = async (e) => { try { const v = JSON.parse(await e.target.files[0].text()); if (Array.isArray(v)) { const yeni = new Map(v.map((p) => [p.id, p])); projeler = projeler.map((p) => yeni.has(p.id) ? { ...p, ...yeni.get(p.id) } : p).concat(v.filter((p) => !projeler.some((x) => x.id === p.id))); projeKaydet(); projelerSayfa(T); } } catch (x) { alert("Dosya okunamadı."); } };
   }
 
   function projeKart(p) {

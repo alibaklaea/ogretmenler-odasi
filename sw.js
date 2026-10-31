@@ -1,6 +1,6 @@
 // Çevrim dışı kullanım: uygulama kabuğu önceden, PDF'ler açıldıkça önbelleğe alınır.
-const SURUM = "masa-v20";
-const KABUK = ["./", "index.html", "css/masa.css", "js/plan-data.js", "js/takvim.js", "js/ozgun-etkinlikler.js", "js/gunler.js", "js/kodlama.js", "js/projeler.js", "js/canva.js", "js/kulup.js", "js/kulup-satranc.js", "js/kulup-etkinlik.js", "js/kulup-banka.js", "js/kulup-banka-satranc.js", "js/masa.js",
+const SURUM = "masa-v21";
+const KABUK = ["./", "index.html", "css/masa.css", "js/plan-data.js", "js/takvim.js", "js/ozgun-etkinlikler.js", "js/gunler.js", "js/kodlama.js", "js/projeler.js", "js/etwinning-plan.js", "js/canva.js", "js/kulup.js", "js/kulup-satranc.js", "js/kulup-etkinlik.js", "js/kulup-banka.js", "js/kulup-banka-satranc.js", "js/masa.js",
   "manifest.webmanifest", "img/ikon-192.png", "img/ikon-512.png"];
 
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(SURUM).then((c) => c.addAll(KABUK))); self.skipWaiting(); });
