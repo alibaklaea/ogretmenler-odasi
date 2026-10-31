@@ -421,3 +421,22 @@ dialog#ayarlar { width: min(860px, 96vw); max-height: 94vh; }
 .kl-madde { font-size: clamp(1rem, 2vw, 1.55rem); line-height: 1.35; text-align: left; }
 .kl-madde li { margin-bottom: .6em; }
 .kl-beyaz { background: #fff; border-radius: 12px; padding: 10px; }
+.kl-cift svg { max-width: 100%; }
+.kl-slayt .cevap-t { display: none; }
+.kl-slayt.acik .cevap-t { display: block; }
+.kl-slayt.acik .soru-t { display: none; }
+/* akıllı tahta satrancı */
+.ct-tahta { position: relative; width: min(68vh, 92vw); flex: none; background: #fff; border-radius: 10px; }
+.ct-iz { position: absolute; left: 4.72%; top: 0; width: 94.49%; height: 94.49%; display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); }
+.ct-k { all: unset; cursor: pointer; display: block; width: 100%; height: 100%; touch-action: manipulation; }
+.ct-k.sec { background: rgba(25, 113, 194, .45); box-shadow: inset 0 0 0 3px #1971c2; }
+.ct-k.dogru { background: rgba(43, 138, 62, .5); box-shadow: inset 0 0 0 3px #2b8a3e; }
+.ct-k.yanlis { background: rgba(224, 49, 49, .5); box-shadow: inset 0 0 0 3px #e03131; }
+.ct-yan { max-width: 42vw; }
+.ct-yan h2 { max-width: none; }
+.ct-yan .dugme { font-size: 1.1rem; padding: 12px 18px; }
+.ct-secenek { margin-bottom: 12px; }
+.ct-sonuc { font-size: 1.7rem; font-weight: 700; min-height: 2.2em; margin-top: 12px; }
+.ct-sonuc.iyi { color: #2b8a3e; }
+.ct-sonuc.kotu { color: #c92a2a; }
+.ct-cv { font-size: 1.2rem; }

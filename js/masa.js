@@ -1053,7 +1053,7 @@
   if ("speechSynthesis" in window) speechSynthesis.onvoiceschanged = () => {};
   $("#sOnce").onclick = () => slaytGit(-1);
   $("#sSonra").onclick = () => slaytGit(1);
-  $("#slayt").onclick = () => slaytGit(1);
+  $("#slayt").onclick = (e) => { if (!e.target.closest("button,a,summary,details,video,.ct")) slaytGit(1); };
   let dokunX = null; // telefonda/tahtada parmakla kaydırma
   $("#slayt").addEventListener("touchstart", (e) => dokunX = e.touches[0].clientX, { passive: true });
   $("#slayt").addEventListener("touchend", (e) => { if (dokunX === null) return; const d = e.changedTouches[0].clientX - dokunX; dokunX = null; if (Math.abs(d) > 50) slaytGit(d < 0 ? 1 : -1); });
@@ -1136,7 +1136,7 @@
   }
 
   // ---------- Çocuk Kulübü (Cumartesi): Satranç ve Akıl Oyunları ----------
-  const KL = window.KULUP, KS = window.KULUP_SATRANC || [], KE = window.KULUP_ETK || {};
+  const KL = window.KULUP, KS = window.KULUP_SATRANC || [], KE = window.KULUP_ETK || {}, KT = window.KULUP_SATRANC_TAHTA || [];
   // baskı seçimi: klSB seçili mod (cihazda saklanır), klCiz yalnız kâğıt üretilirken açıktır; tahta slaytları renkli kalır
   let klSB = localStorage.getItem("masa.kulupBaski") === "sb", klCiz = false;
   const klPdf = (f) => klSB ? f.replace("pdf/kulup/", "pdf/kulup/sb/") : f;
@@ -1257,8 +1257,9 @@
     const S = KS[i], w = KL.programlar.SAT.haftalar[i];
     if (!S) return "";
     const kutu = (q, j) => `<div class="kl-soru"><div class="kl-soru-m"><b>${j + 1})</b> ${esc(q.soru)}</div>${satrancTahta(q, cevap, "47mm")}<div class="kl-cizgi">${cevap ? `<b class="kl-cevap">${esc(q.cevap)}</b>` : "Cevabım: ................................................"}</div></div>`;
-    return klKagit({ baslik: `${w.ad.toLocaleUpperCase("tr")} · ALIŞTIRMA` + (cevap ? " · CEVAP ANAHTARI" : ""), yonerge: cevap ? "Yeşil halkalar doğru kareleri gösterir." : w.amac,
-      bloklar: [{ t: "html", x: `<div class="kl-iki">${S.map(kutu).join("")}</div>` }] }, `Satranç · ${i + 1}. hafta`);
+    const sayfa = (L, b, n) => klKagit({ baslik: `${w.ad.toLocaleUpperCase("tr")} · ALIŞTIRMA ${n}` + (cevap ? " · CEVAP ANAHTARI" : ""), yonerge: cevap ? "Yeşil halkalar doğru kareleri gösterir." : w.amac,
+      bloklar: [{ t: "html", x: `<div class="kl-iki">${L.map((q, j) => kutu(q, b + j)).join("")}</div>` }] }, `Satranç · ${i + 1}. hafta`);
+    return sayfa(S.slice(0, 6), 0, 1) + sayfa(S.slice(6), 6, 2);
   }
   // kural etkinlikleri: siyah-beyaz baskı için çizilmiş tahtalar (toner az, taşlar harfli)
   function etkTahta(t, boy) {
@@ -1299,6 +1300,60 @@
       ${K ? `<ol class="kl-kural">${K.map((k) => `<li>${esc(k)}</li>`).join("")}</ol>` : `<p style="font-size:14pt">Kurallar eklenecek.</p>`}
       <div class="s-alt"><span>Kaynak: TAZOF turnuva kuralları</span><span>Öğretmenler Odası · 2026-2027</span></div></div>`;
   }
+  const siraSende = (ad) => sl("bilgi", `<div class="etiket">Şimdi sıra sende</div><h1>Kâğıdı çöz</h1><h2>${esc(ad)}</h2>`, `Şimdi sıra sende. Kâğıdı çöz: ${ad}.`);
+  function etkSlayt(o, E, q, j) {
+    const kutu = (a, b) => `<div class="kl-beyaz kl-cift" style="width:${q.tahta2 ? "min(44vh,40vw)" : "min(54vh,90vw)"}">${a}</div>`;
+    const ciz = (t, t2) => !t ? "" : kutu(t2 ? `<div class="kl-ikili">${etkTahta(t, "45%")}<span>→</span>${etkTahta(t2, "45%")}</div>` : etkTahta(t, "100%"));
+    return sl("bilgi", `<div class="etiket">Birlikte yapalım · ${esc(o)}: ${esc(E.ad)} · ${j + 1}/${E.birlikte.length}</div><div class="kl-slayt"><div class="soru-t">${ciz(q.tahta, q.tahta2)}</div>${q.tahtaC || q.tahta2C ? `<div class="cevap-t">${ciz(q.tahtaC || q.tahta, q.tahta2C)}</div>` : ""}
+      <div><h2>${esc(q.metin)}</h2><details ontoggle="this.closest('.kl-slayt').classList.toggle('acik',this.open)"><summary>Cevabı göster</summary><p><b>${esc(q.cevap)}</b></p></details></div></div>`, q.metin);
+  }
+  // akıllı tahta satrancı: öğrenci karelere dokunur, kenardaki düğmeyle kontrol edilir
+  const KARELER = [..."87654321"].flatMap((r) => [..."abcdefgh"].map((c) => c + r));
+  const ctIzgara = () => `<div class="ct-iz">${KARELER.map((k) => `<button class="ct-k" data-k="${k}" aria-label="${k}"></button>`).join("")}</div>`;
+  function ctSlayt(q, j) {
+    return sl("bilgi", `<div class="etiket">Birlikte yapalım · ${j + 1}/10</div><div class="kl-slayt ct" data-dogru='${q.isaret ? JSON.stringify(q.isaret) : ""}' data-sec="${esc(q.dogru || "")}">
+      <div class="ct-tahta">${satrancTahta(q, false)}${ctIzgara()}</div>
+      <div class="ct-yan"><h2>${esc(q.soru)}</h2>${q.secenek ? `<div class="dugmeler ct-secenek">${q.secenek.map((a) => `<button class="dugme" data-cs="${esc(a)}">${esc(a)}</button>`).join("")}</div>` : ""}
+        <div class="dugmeler"><button class="dugme ana" data-ct="kontrol">Doğru mu?</button><button class="dugme" data-ct="cevap">Cevabı göster</button><button class="dugme" data-ct="temizle">Temizle</button></div>
+        <div class="ct-sonuc"></div><p class="ct-cv" hidden><b>${esc(q.cevap)}</b></p></div></div>`, q.soru);
+  }
+  let serbest = null;
+  function serbestSlayt() { return sl("bilgi", `<div class="etiket">Serbest tahta</div><div class="kl-slayt ct ct-serbest"><div class="ct-tahta">${satrancTahta({ fen: BASLA_FEN }, false)}${ctIzgara()}</div>
+      <div class="ct-yan"><h2>Taşa dokun, sonra gideceği kareye dokun.</h2><p class="ct-sonuc"></p><div class="dugmeler"><button class="dugme" data-ct="basa">Başa dön</button><button class="dugme" data-ct="bos">Tahtayı boşalt</button></div></div></div>`, ""); }
+  const BASLA_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
+  function fenAc(fen) { const T = {}; fen.split("/").forEach((sat, r) => { let c = 0; for (const ch of sat) { if (/\d/.test(ch)) c += +ch; else T["abcdefgh"[c++] + (8 - r)] = ch; } }); return T; }
+  function fenKur(T) { return [..."87654321"].map((r) => { let s = "", b = 0; for (const c of "abcdefgh") { const t = T[c + r]; if (t) { if (b) s += b; b = 0; s += t; } else b++; } return s + (b || ""); }).join("/"); }
+  function serbestCiz(ct, sec) {
+    const t = ct.querySelector(".ct-tahta"); t.innerHTML = satrancTahta({ fen: fenKur(serbest), vurgu: sec ? [sec] : [] }, false) + ctIzgara();
+  }
+  $("#slayt").addEventListener("click", (e) => {
+    const ct = e.target.closest(".ct"); if (!ct) return;
+    const sonuc = ct.querySelector(".ct-sonuc"), yaz = (m, c) => { sonuc.textContent = m; sonuc.className = "ct-sonuc " + (c || ""); };
+    const k = e.target.dataset.k, cs = e.target.dataset.cs, d = e.target.dataset.ct;
+    if (ct.classList.contains("ct-serbest")) {
+      serbest = serbest || fenAc(BASLA_FEN);
+      if (d === "basa" || d === "bos") { serbest = d === "basa" ? fenAc(BASLA_FEN) : {}; ct.dataset.sec = ""; serbestCiz(ct); yaz(""); return; }
+      if (!k) return;
+      const s = ct.dataset.sec;
+      if (s) { if (s !== k) { serbest[k] = serbest[s]; delete serbest[s]; } ct.dataset.sec = ""; serbestCiz(ct); yaz(`Kare: ${k}`); }
+      else if (serbest[k]) { ct.dataset.sec = k; serbestCiz(ct, k); yaz(`Seçili kare: ${k}`); } else yaz(`Kare: ${k}`);
+      return;
+    }
+    if (k) { e.target.classList.remove("yanlis", "dogru"); e.target.classList.toggle("sec"); yaz(""); return; }
+    if (cs) { ct.querySelectorAll("[data-cs]").forEach((b) => b.classList.toggle("ana", b === e.target)); yaz(""); return; }
+    if (!d) return;
+    const dk = ct.dataset.dogru ? JSON.parse(ct.dataset.dogru) : null, kareler = [...ct.querySelectorAll(".ct-k")];
+    if (d === "temizle") { kareler.forEach((b) => b.classList.remove("sec", "yanlis", "dogru")); ct.querySelectorAll("[data-cs]").forEach((b) => b.classList.remove("ana")); ct.querySelector(".ct-cv").hidden = true; yaz(""); }
+    if (d === "cevap") { ct.querySelector(".ct-cv").hidden = false; if (dk) kareler.forEach((b) => { b.classList.remove("sec", "yanlis"); b.classList.toggle("dogru", dk.includes(b.dataset.k)); }); if (ct.dataset.sec) ct.querySelectorAll("[data-cs]").forEach((b) => b.classList.toggle("ana", b.dataset.cs === ct.dataset.sec)); }
+    if (d === "kontrol") {
+      if (ct.dataset.sec) { const a = ct.querySelector("[data-cs].ana"); if (!a) return yaz("Önce bir cevap seç."); return a.dataset.cs === ct.dataset.sec ? yaz("✓ Doğru!", "iyi") : yaz("✗ Yanlış. Tekrar dene.", "kotu"); }
+      const secili = kareler.filter((b) => b.classList.contains("sec")).map((b) => b.dataset.k);
+      const fazla = secili.filter((x) => !dk.includes(x)), eksik = dk.filter((x) => !secili.includes(x));
+      kareler.forEach((b) => { if (fazla.includes(b.dataset.k)) b.classList.add("yanlis"); });
+      if (!fazla.length && !eksik.length) { kareler.forEach((b) => { if (secili.includes(b.dataset.k)) { b.classList.remove("sec"); b.classList.add("dogru"); } }); yaz("✓ Doğru!", "iyi"); }
+      else yaz(fazla.length ? `✗ ${fazla.length} kare yanlış. Tekrar dene.` : `Biraz daha: ${eksik.length} kare eksik.`, "kotu");
+    }
+  });
   function kulupSlaytlari(p, i) {
     const P = KL.programlar[p], w = P.haftalar[i], t = kulupTarih(i), S = [];
     S.push(sl("kapak", `<div class="etiket">${tarihYaz(t)} · ${esc(P.ad)} · ${i + 1}. hafta</div><h1>${esc(w.ad)}</h1><div class="kapak-alt"><span>${esc(KL.okul)}</span></div>`, `${P.ad} kulübüne hoş geldiniz. Bugünkü konumuz: ${w.ad}.`));
@@ -1311,9 +1366,8 @@
     });
     (w.video || []).filter((v) => v.src).forEach((v) => S.push(sl("bilgi", `<div class="etiket">Video</div><h2 style="margin-bottom:12px">${esc(v.ad)}</h2><video src="${v.src}" controls playsinline style="max-height:62vh;max-width:100%;border-radius:12px;background:#000"></video>`, "")));
     (w.video || []).filter((v) => v.yt).forEach((v) => S.push(sl("bilgi", `<div class="etiket">Video</div><h2>${esc(v.ad)}</h2><p><a class="dugme ana" href="${v.yt}" target="_blank" rel="noopener">YouTube'da aç ↗</a></p>`, "")));
-    (w.tahtaSoru || []).forEach(([o, e, j], n) => { const q = KE[o][e].sorular[j];
-      S.push(sl("bilgi", `<div class="etiket">Birlikte düşünelim · ${n + 1} · ${esc(o)}</div><div class="kl-slayt"><div class="kl-beyaz" style="width:min(54vh,90vw)">${etkTahta(q.tahta, "100%")}</div><div><h2>${esc(q.metin)}</h2><div class="dusun" data-sayac="30">Düşünme süresi: 30 sn</div><details><summary>Cevabı göster</summary><p><b>${esc(q.cevap)}</b></p></details></div></div>`, q.metin)); });
-    if (p === "SAT" && KS[i]) KS[i].slice(0, 3).forEach((q, j) => S.push(sl("bilgi", `<div class="etiket">Birlikte düşünelim · ${j + 1}</div><div class="kl-slayt"><div style="width:min(54vh,90vw)">${satrancTahta(q, false)}</div><div><h2>${esc(q.soru)}</h2><div class="dusun" data-sayac="30">Düşünme süresi: 30 sn</div><details><summary>Cevabı göster</summary><p><b>${esc(q.cevap)}</b></p></details></div></div>`, q.soru)));
+    if (p === "SAT") { S.splice(2, 0, serbestSlayt()); (KT[i] || []).forEach((q, j) => S.push(ctSlayt(q, j))); if (KT[i]) S.push(siraSende("Alıştırma kâğıdı")); }
+    (w.etk || []).forEach(([o, e]) => { const E = KE[o][e]; E.birlikte.forEach((q, j) => S.push(etkSlayt(o, E, q, j))); S.push(siraSende(`${o}: ${E.ad}`)); });
     S.push(sl("bilet", `<div class="etiket">Çıkış bileti</div><div class="bilet"><div><b>3</b><p>Bugün öğrendiğim üç şey</p></div><div><b>2</b><p>Zorlandığım iki şey</p></div><div><b>1</b><p>Haftaya denemek istediğim bir şey</p></div></div>`, "Çıkış bileti: bugün öğrendiğin üç şeyi, zorlandığın iki şeyi ve haftaya denemek istediğin bir şeyi söyle."));
     return S;
   }
@@ -1329,9 +1383,9 @@
           <h2 style="margin:8px 0 4px">${esc(w.ad)}</h2><p style="margin:0 0 6px">${esc(w.amac)}</p>
           ${w.oyunsuz ? `<p class="not"><b>Bu hafta oyun takımı yok:</b> akıllı tahta ve çıktılarla işlenir.</p>` : ""}${(w.etk || []).length ? `<p class="not"><b>Kâğıtlar:</b> ${w.etk.map(([o, e]) => `${esc(o)} ${e + 1}: ${esc(KE[o][e].ad)}`).join(" · ")}</p>` : ""}
           ${w.oyunlar ? `<p class="not"><b>Oyunlar:</b> ${w.oyunlar.map(esc).join(", ")}</p>` : ""}${w.oyun ? `<p class="not"><b>Haftanın oyunu:</b> ${esc(w.oyun)}</p>` : ""}
-          <details${i === simdi ? " open" : ""}><summary class="not" style="cursor:pointer">Ders akışı (${w.dersler.length} adım)</summary><ol>${w.dersler.map(([b, m]) => `<li><b>${esc(b)}:</b> ${esc(m)}</li>`).join("")}</ol></details>
+          <details${i === simdi ? " open" : ""}><summary class="not" style="cursor:pointer">Öğretmen: ders akışı (${w.dersler.length} adım)</summary><ol>${w.dersler.map(([b, m]) => `<li><b>${esc(b)}:</b> ${esc(m)}</li>`).join("")}</ol></details>
           ${(w.video || []).length ? `<div class="kl-video">${w.video.map((v) => v.src ? `<figure><video src="${v.src}" controls preload="metadata" playsinline></video><figcaption>${esc(v.ad)}</figcaption></figure>` : `<a class="dugme kucuk" href="${v.yt}" target="_blank" rel="noopener">▶ ${esc(v.ad)} ↗</a>`).join("")}</div>` : ""}
-          <div class="dugmeler" style="margin-top:10px"><button class="dugme kucuk ana" data-kl-video="${i}">▶ Video olarak oynat</button><button class="dugme kucuk" data-kl-sun="${i}">Tahtada sun</button>
+          <div class="dugmeler" style="margin-top:10px"><button class="dugme kucuk ana" data-kl-video="${i}">▶ Video olarak oynat</button><button class="dugme kucuk" data-kl-sun="${i}">${p === "SAT" ? "♟ Tahtada çöz (10 soru)" : "Tahtada sun"}</button>
             ${p === "SAT" && KS[i] ? `<button class="dugme kucuk" data-kl-sat="${i}">Alıştırma kâğıdı</button><button class="dugme kucuk" data-kl-satc="${i}">Cevap anahtarı</button>` : ""}
             ${(w.kagitlar || []).map((k) => `<button class="dugme kucuk" data-kl-kag="${k}">Etkinlik kâğıdı: ${esc({ "pentago-tanis": "Pentago tanışma", "kure-tanis": "Küre tanışma", "kure-yakalama": "Küre yakalama" }[k])}</button><button class="dugme kucuk" data-kl-kagc="${k}">Cevap anahtarı</button>`).join("")}
             ${(w.pdf || []).map(([a, f]) => `<a class="dugme kucuk" href="${klPdf(f)}" data-kl-pdf="${f}" target="_blank" rel="noopener">${esc(a)} (PDF)</a>`).join("")}
@@ -1340,7 +1394,7 @@
       <div><div class="kart odr-yan"><h3>Ders saatleri</h3><table class="bilgi-tablo">${P.saatler.map(([s, d]) => `<tr><th>${s}</th><td>${d}</td></tr>`).join("")}</table>
         <h3 style="margin-top:16px">Kurallar</h3>${(p === "SAT" ? [] : Object.keys(KL.kurallar)).map((o) => `<details><summary style="cursor:pointer"><b>${esc(o)}</b></summary>${KL.kurallar[o] ? `<ol style="padding-left:18px;font-size:.92rem">${KL.kurallar[o].map((k) => `<li>${esc(k)}</li>`).join("")}</ol>` : "<p class='not'>Kurallar eklenecek.</p>"}</details>`).join("")}
         ${p === "SAT" ? "" : Object.keys(KE).map((o) => `<h3 style="margin-top:16px">${esc(o)}: kural etkinlikleri</h3><p class="not">Siyah-beyaz baskıya göre çizildi. Her kâğıt bir ya da iki kuralı çalıştırır.</p><ol class="kl-etk">${KE[o].map((e, i) => `<li><span>${esc(e.ad)} <small>kural ${e.kurallar.join(", ")}</small></span><button class="dugme kucuk" data-etk="${esc(o)}" data-no="${i}">Yazdır</button> <button class="dugme kucuk" data-etk="${esc(o)}" data-no="${i}" data-cv="1">Cevap</button></li>`).join("")}</ol><div class="dugmeler"><button class="dugme kucuk" data-etk-tum="${esc(o)}">10 kâğıdı yazdır</button><button class="dugme kucuk" data-etk-tum="${esc(o)}" data-cv="1">10 cevap anahtarı</button></div>`).join("")}
-        ${p === "SAT" ? `<p class="not">Satranç alıştırmalarının cevapları bilgisayarla tek tek doğrulandı. Videolar YouTube'da açılır; bağlantı dersi YouTube'da arar.</p><div class="dugmeler"><button class="dugme kucuk" data-kl-tum="SAT">12 haftanın alıştırmalarını yazdır</button></div>` : `<p class="not">Videolar kendi kural videolarımız (@ankara_zeka_ve_bilim_akademisi). Slaytlardaki kurallar: ${esc(KL.tazofKaynak)}.</p>`}</div></div></div>`;
+        ${p === "SAT" ? `<p class="not">Satranç alıştırmalarının cevapları bilgisayarla tek tek doğrulandı. Videolar YouTube'da açılır; bağlantı dersi YouTube'da arar.</p><div class="dugmeler"><button class="dugme kucuk" data-kl-tum="SAT">12 haftanın alıştırmalarını yazdır</button><button class="dugme kucuk ana" data-kl-serbest>♟ Serbest satranç tahtası</button></div>` : `<p class="not">Videolar kendi kural videolarımız (@ankara_zeka_ve_bilim_akademisi). Slaytlardaki kurallar: ${esc(KL.tazofKaynak)}.</p>`}</div></div></div>`;
     const S = (i) => kulupSlaytlari(p, i), baslik = `Çocuk Kulübü · ${P.ad}`;
     document.querySelectorAll("[data-kl-video]").forEach((b) => b.onclick = () => sunumAc(S(+b.dataset.klVideo), 0, baslik, true, true));
     document.querySelectorAll("[data-kl-sun]").forEach((b) => b.onclick = () => sunumAc(S(+b.dataset.klSun), 0, baslik));
@@ -1350,6 +1404,7 @@
     document.querySelectorAll("[data-kl-kagc]").forEach((b) => b.onclick = () => klBas(() => kulupKagit(b.dataset.klKagc, true)));
     document.querySelectorAll("[data-kl-kural]").forEach((b) => b.onclick = () => klBas(() => kuralKarti(b.dataset.klKural)));
     document.querySelectorAll("[data-kl-tum]").forEach((b) => b.onclick = () => klBas(() => KS.map((_, i) => satrancKagit(i, false)).join("")));
+    document.querySelectorAll("[data-kl-serbest]").forEach((b) => b.onclick = () => { serbest = null; sunumAc([serbestSlayt()], 0, "Satranç tahtası"); });
     document.querySelectorAll("[data-hf-etk]").forEach((b) => b.onclick = () => bas(P.haftalar[+b.dataset.hfEtk].etk.map(([o, e]) => etkKagit(o, e, !!b.dataset.cv)).join(""), true));
     document.querySelectorAll("[data-etk]").forEach((b) => b.onclick = () => bas(etkKagit(b.dataset.etk, +b.dataset.no, !!b.dataset.cv), true));
     document.querySelectorAll("[data-etk-tum]").forEach((b) => b.onclick = () => bas(KE[b.dataset.etkTum].map((_, i) => etkKagit(b.dataset.etkTum, i, !!b.dataset.cv)).join(""), true));

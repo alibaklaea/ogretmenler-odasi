@@ -28,9 +28,9 @@ function dolgu(b, n, yasak) { // dengeyi bozmadan rastgele taş serper
   while (k < n) { const i = rnd(36); if (b[i] || yasak.has(i)) continue; b[i] = k % 2 ? 1 : 2; k++; }
 }
 
-function p1() {
+function p1(L = ['B2', 'E2', 'B5', 'F6']) {
   const sorular = [{ metin: 'Tahtayı say: Kaç çukur var? Kaç tabla var?', tahta: pt(Array(36).fill(0)), alt: 'Çukur: ........  Tabla: ........', cevap: '36 çukur, 4 tabla.' }];
-  for (const ad of ['B2', 'E2', 'B5', 'F6']) {
+  for (const ad of L) {
     const i = hucreNo(ad);
     sorular.push({ metin: 'Yıldızlı çukurun adı ne? Hangi tablada?', tahta: pt(Array(36).fill(0), [[i, '*']]), alt: 'Adı: ......  Tabla: ....................', cevap: `${ad}, ${tablaAd(i)} tabla.` });
   }
@@ -38,9 +38,9 @@ function p1() {
   sorular.push({ metin: 'C4 çukuruna halka çiz. Hangi tablada?', tahta: pt(Array(36).fill(0)), tahtaC: pt(Array(36).fill(0), [[i, 'o']]), alt: 'Tabla: ....................', cevap: `C4, ${tablaAd(i)} tabla.` });
   return { ad: 'Tablalar ve çukurlar', kurallar: [1], yonerge: 'Tahta 6 × 6 ve dört 3 × 3 tabladan oluşur. Çukurun adı önce harf, sonra sayı ile okunur: C4 gibi.', sorular };
 }
-function p2() {
+function p2(L = [[3, 3], [4, 3], [5, 4], [6, 6], [2, 1], [7, 7]]) {
   const sorular = [];
-  for (const [s, b] of [[3, 3], [4, 3], [5, 4], [6, 6], [2, 1], [7, 7]]) {
+  for (const [s, b] of L) {
     const t = Array(36).fill(0);
     let k = 0; while (k < s + b) { const i = rnd(36); if (t[i]) continue; t[i] = k < s ? 1 : 2; k++; }
     birak(!has5(t, 1) && !has5(t, 2), 'p2 beşli');
@@ -49,14 +49,14 @@ function p2() {
   return { ad: 'Sıra kimde?', kurallar: [2, 3], yonerge: 'Siyah başlar, sonra sırayla oynanır. Bilye sayılarına bakarak sıranın kimde olduğunu bulabilirsin.', sorular };
 }
 const tablaDon = (s, d) => { const r = [[], [], []]; for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) { if (d === 1) r[j][2 - i] = s[i][j]; else r[2 - j][i] = s[i][j]; } return r.map((x) => x.join('')); };
-function p3() {
-  const sorular = [[['SS.', '..B', 'S..'], 1], [['S..', 'S..', 'B.B'], 1], [['.B.', 'S.S', '...'], -1], [['SSB', '...', '...'], -1], [['S.B', '.B.', '..S'], 1], [['BS.', 'S..', '..B'], -1]].map(([s, d]) => ({
+function p3(L = [[['SS.', '..B', 'S..'], 1], [['S..', 'S..', 'B.B'], 1], [['.B.', 'S.S', '...'], -1], [['SSB', '...', '...'], -1], [['S.B', '.B.', '..S'], 1], [['BS.', 'S..', '..B'], -1]]) {
+  const sorular = L.map(([s, d]) => ({
     metin: `Tablayı ${yon(d)} 90° çevir. Bilyeleri sağdaki boş tablaya çiz.`, tahta: { tur: 'p3', s }, tahta2: { tur: 'p3', s: ['...', '...', '...'] }, tahta2C: { tur: 'p3', s: tablaDon(s, d) }, cevap: 'Doğru çizim yanda.' }));
   return { ad: 'Tablayı çevir', kurallar: [3], yonerge: 'Bir tabla 90° döner: saat yönünde ↻ ya da tersine ↺. Köşedeki bilye köşede, kenardaki kenarda kalır; ortadaki yerinden oynamaz.', sorular };
 }
-function p4() {
+function p4(L = [['A1', 0, 1], ['C1', 0, -1], ['B3', 0, 1], ['D2', 1, 1], ['F4', 3, -1], ['B6', 2, -1]]) {
   const sorular = [];
-  for (const [ad, q, d] of [['A1', 0, 1], ['C1', 0, -1], ['B3', 0, 1], ['D2', 1, 1], ['F4', 3, -1], ['B6', 2, -1]]) {
+  for (const [ad, q, d] of L) {
     const i = hucreNo(ad), t = Array(36).fill(0);
     t[i] = 1; dolgu(t, 5, new Set([i]));
     const iz = t.map((_, k) => k === i ? 9 : 0), son = rotate(iz, q, d).indexOf(9);
@@ -65,15 +65,14 @@ function p4() {
   }
   return { ad: 'Çevirince nereye gider?', kurallar: [3], yonerge: 'Bilyeler tablayla birlikte döner. Tablayı kafanda çevir ya da parmağınla izle.', sorular };
 }
-function p5() {
-  const D = [
+function p5(D = [
     ['......', 'SSSSS.', '.BB...', '..BB..', '......', '......'],
     ['.B....', '.B.S..', '.BS...', '.B....', '.B.S..', '......'],
     ['S.....', '.S..B.', '..S...', '...S.B', '....S.', '......'],
     ['SS.SSS', 'BB.BB.', '......', '......', '......', '......'],
     ['......', '....B.', '...B..', '..B.S.', '.B.S..', 'B.S...'],
     ['S.....', 'S.BB..', 'S.....', '......', 'S.....', 'S.BB..'],
-  ];
+  ]) {
   const sorular = D.map((s) => {
     const b = coz(s), F = besli(b);
     birak(F.length <= 1, 'p5 birden çok beşli');
@@ -83,15 +82,14 @@ function p5() {
   return { ad: 'Beşli avı', kurallar: [4], yonerge: 'Yatay, dikey ya da çapraz, arada boşluk olmadan 5 bilye yan yana olmalı.', sorular };
 }
 function tekCukur(b, p) { const r = []; for (let i = 0; i < 36; i++) { if (b[i]) continue; const c = b.slice(); c[i] = p; if (has5(c, p)) r.push(i); } return r; }
-function p6() {
-  const D = [
+function p6(D = [
     ['......', '......', 'SSSS..', 'BB....', '.B....', '......'],
     ['...S..', '...S..', '...S..', '......', '...S..', 'BB.B..'],
     ['S.....', '.S.B..', '..S.B.', '......', '....S.', '......'],
     ['.....S', '....S.', '.B.S..', '.BS...', '......', '......'],
     ['B.....', 'B.S...', '......', 'B.S...', 'B.S...', '..S...'],
     ['......', '.SSSS.', '.BBB..', '......', 'B.....', '......'],
-  ];
+  ]) {
   const sorular = D.map((s) => {
     const b = coz(s), C = tekCukur(b, 1);
     birak(!has5(b, 1) && !has5(b, 2), 'p6 hazır beşli'); birak(C.length >= 1, 'p6 yok');
@@ -99,22 +97,21 @@ function p6() {
   });
   return { ad: 'Tek bilye kaldı', kurallar: [4, 5], yonerge: 'Bilyeyi koyunca 5 olduysa oyun biter; tablayı çevirmeye gerek yoktur.', sorular };
 }
-function p7() {
-  const D = [
+function p7(D = [
     [['SSSS..', '......', '.BB...', '.B....', '......', '......'], 'E1'],
     [['SSS...', '......', '.BB...', '.B....', '......', '......'], 'D1'],
     [['..S...', '..S...', '..S...', '..S...', 'BB....', 'B.....'], 'C5'],
     [['..S...', '..S...', '......', '..S...', 'BB....', 'B.....'], 'C3'],
     [['S.....', '.S....', '..S...', '...S..', 'BB....', 'B.B...'], 'E5'],
     [['S.....', '.S....', '..S...', '......', 'BB....', 'B.B...'], 'D4'],
-  ];
+  ], bek = 3) {
   let evet = 0;
   const sorular = D.map(([s, ad]) => {
     const b = coz(s), i = hucreNo(ad); birak(!b[i], 'p7 dolu');
     const c = b.slice(); c[i] = 1; const f = has5(c, 1); evet += f;
     return { metin: `Siyah ${ad}'ye koyuyor. 5 oldu mu? Tablayı çevirmesi gerekir mi?`, tahta: pt(b, [[i, '*']]), tahtaC: pt(c), alt: '5 oldu mu: ......  Çevirir mi: ......', cevap: f ? 'Evet 5 oldu. Hayır, çevirmez: oyun biter.' : 'Hayır, 5 olmadı. Evet, bir tablayı çevirmek zorunda.' };
   });
-  birak(evet === 3, 'p7 denge');
+  birak(evet === bek, 'p7 denge');
   return { ad: 'Çevirmeli miyim?', kurallar: [3, 5], yonerge: 'Bilyeni koy. 5 olduysa kazandın, oyun biter. 5 olmadıysa bir tablayı çevirmek zorundasın.', sorular };
 }
 function hazirCevir(q, d, cikar) { // çevirince siyah 5 olan konum kurar
@@ -130,9 +127,9 @@ function hazirCevir(q, d, cikar) { // çevirince siyah 5 olan konum kurar
   }
   throw new Error('kurulamadı');
 }
-function p8() {
+function p8(L = [[0, 1], [1, -1], [2, 1], [3, -1], [0, -1], [3, 1]]) {
   const sorular = [];
-  for (const [q, d] of [[0, 1], [1, -1], [2, 1], [3, -1], [0, -1], [3, 1]]) {
+  for (const [q, d] of L) {
     for (let n = 0; ; n++) {
       birak(n < 300000, 'p8 bulunamadı');
       const t = hazirCevir(q, d, false);
@@ -147,7 +144,7 @@ function p8() {
   return { ad: 'Çevirerek kazan', kurallar: [3, 4], yonerge: 'Bilyeler 5 değilken bir çevirme hepsini aynı çizgiye getirebilir. Aşağıdaki tahtalarda tam bir doğru çevirme var.', sorular };
 }
 function sonuc(R) { const s = has5(R, 1), b = has5(R, 2); return s && b ? 'Berabere' : s ? 'Siyah kazanır' : b ? 'Beyaz kazanır' : 'Oyun sürer'; }
-function p9() {
+function p9(alt) {
   // çevrilen tablada dikey iki sütun: çevirince yatay iki sıra olur
   const berabere = (q, d, r1, r2, ok) => { // çevirmeden sonra r1 siyah, r2 beyaz yatay 5
     const iz = Array(36).fill(0);
@@ -162,16 +159,16 @@ function p9() {
     [(() => { const t = berabere(1, -1, 1, 2, 1); t[hucreNo('B2')] = 0; return t; })(), 1, -1, 'Beyaz kazanır'],
     [(() => { const t = berabere(2, 1, 4, 5, 0); t[hucreNo('E5')] = 0; t[hucreNo('E6')] = 0; return t; })(), 2, 1, 'Oyun sürer'],
   ];
-  const sorular = O.map(([t, q, d, bek]) => {
+  const sorular = (alt ? [[berabere(3, -1, 3, 4, 1), 3, -1, 'Berabere'], [(() => { const t = berabere(3, -1, 3, 4, 1); t[hucreNo('C5')] = 0; return t; })(), 3, -1, 'Siyah kazanır']] : O).map(([t, q, d, bek]) => {
     const R = rotate(t, q, d), S = sonuc(R);
     birak(S === bek, `p9 ${S} / ${bek}`); birak(!has5(t, 1) && !has5(t, 2), 'p9 çevirmeden beşli');
     return { metin: `Bilye kondu, şimdi ${QNAME[q]} tabla ${yon(d)} çevriliyor. Sonuç ne olur?`, tahta: pt(t), tahtaC: pt(R, besli(R).flatMap((f) => f.L.map((i) => [i, 'o']))), alt: 'Siyah  /  Beyaz  /  Berabere  /  Oyun sürer', cevap: `${S}.` };
   });
   return { ad: 'Berabere mi, kazandım mı?', kurallar: [4, 6], yonerge: 'Çevirme sonunda 5\'lere bakılır. İki oyuncunun da 5\'i varsa oyun berabere biter. Önce çevir, sonra çiz, sonra karar ver.', sorular };
 }
-function p10() {
+function p10(L = [true, false, true, false, false, false]) {
   const sorular = [], gorulen = new Set();
-  for (const erken of [true, false, true, false, false, false]) {
+  for (const erken of L) {
     for (let n = 0; ; n++) {
       birak(n < 500000, 'p10 bulunamadı');
       let t;
@@ -255,39 +252,33 @@ function hareketSoru(s, a) {
   const [r, c] = yer(a), k = s[r][c], G = gidis(s, r, c);
   return { metin: `${a}'deki ${adK(k).toLocaleLowerCase('tr')} taş nerelere gidebilir? Halka çiz.`, tahta: kt(s, [[r, c, 'n']]), tahtaC: kt(s, [[r, c, 'n'], ...G.map(([x, y]) => [x, y, 'o'])]), alt: 'Kaç kare? ........', cevap: `${G.length} kare: ${G.map(([x, y]) => adi(x, y)).join(', ')}.` };
 }
-function k3() {
-  const D = [['M:D7', 'D7'], ['M:A7', 'A7'], ['M:D7 T:D6', 'D7'], ['M:C7,B6 T:D6', 'C7'], ['T:D1', 'D1'], ['M:G1 T:F1,E1', 'G1']];
+function k3(D = [['M:D7', 'D7'], ['M:A7', 'A7'], ['M:D7 T:D6', 'D7'], ['M:C7,B6 T:D6', 'C7'], ['T:D1', 'D1'], ['M:G1 T:F1,E1', 'G1']]) {
   return { ad: 'Başlangıç sırası', kurallar: [4], yonerge: 'Başlangıç sırasındaki taş yalnızca ileri ya da çapraz ileri 1 kare gider. Morlar yukarı, turuncular aşağı ilerler. Gri sıralar başlangıç sıralarıdır. Ajan taş da aynı kuralla oynar: rakibin sırasından tahtanın içine doğru gider.', sorular: D.map(([p, a]) => hareketSoru(tk(p), a)) };
 }
-function k4() {
-  const D = [['M:D4', 'D4'], ['M:A4', 'A4'], ['T:D4 M:D5', 'D4'], ['M:C3,B4 T:D2', 'C3'], ['T:E4,E3 M:F5', 'E4'], ['M:G4,G3 T:F5', 'G4']];
+function k4(D = [['M:D4', 'D4'], ['M:A4', 'A4'], ['T:D4 M:D5', 'D4'], ['M:C3,B4 T:D2', 'C3'], ['T:E4,E3 M:F5', 'E4'], ['M:G4,G3 T:F5', 'G4']]) {
   return { ad: 'Ortadaki taş', kurallar: [5], yonerge: 'Başlangıç sırasından çıkan taş ileri, geri ya da çapraz 1 kare gider. Yana gidemez, başka taşın üstüne çıkamaz.', sorular: D.map(([p, a]) => hareketSoru(tk(p), a)) };
 }
-function k5() {
-  const D = [['M:D6', 'D6'], ['M:A6', 'A6'], ['T:D2', 'D2'], ['M:D5', 'D5'], ['M:D6 T:D5', 'D6'], ['T:C2,B3 M:C3', 'C2']];
+function k5(D = [['M:D6', 'D6'], ['M:A6', 'A6'], ['T:D2', 'D2'], ['M:D5', 'D5'], ['M:D6 T:D5', 'D6'], ['T:C2,B3 M:C3', 'C2']]) {
   return { ad: 'Geri dönüş yok', kurallar: [4, 5], yonerge: 'Sıradan çıkan taş bir daha kendi başlangıç sırasına dönemez. Gri sıraya bitişik taşlara dikkat et!', sorular: D.map(([p, a]) => hareketSoru(tk(p), a)) };
 }
-function k6() {
-  const D = [['M:A3,B3,C3,D4', 'D4', 'D3'], ['M:A3,C3,F3,E4', 'E4', 'E3'], ['M:A4,B4,D4,F5 T:C4', 'F5', 'F4'], ['M:A3,B3,D4', 'D4', 'D3'], ['M:D2,D3,D5,C5', 'C5', 'D4'], ['M:B6,C5,E3,D5', 'D5', 'D4']];
+function k6(D = [['M:A3,B3,C3,D4', 'D4', 'D3'], ['M:A3,C3,F3,E4', 'E4', 'E3'], ['M:A4,B4,D4,F5 T:C4', 'F5', 'F4'], ['M:A3,B3,D4', 'D4', 'D3'], ['M:D2,D3,D5,C5', 'C5', 'D4'], ['M:B6,C5,E3,D5', 'D5', 'D4']]) {
   const sorular = D.map(([p, m, h]) => {
     const s = tk(p), [r0, c0] = yer(m), [r, c] = yer(h);
     birak(gidis(s, r0, c0).some(([a, e]) => a === r && e === c), 'k6 gidiş ' + m);
     const son = hamle(s, m, h), L = dorDortlu(son, 'M', r, c), Y = Object.entries(L).find(([, v]) => v >= 4);
     return { metin: `${m}'deki mor taş yıldızlı ${h} karesine gidebilir mi? Neden?`, tahta: kt(s, [[r, c, '*'], [r0, c0, 'n']]), alt: 'Evet  /  Hayır: ..........................', cevap: Y ? `Hayır: ${Y[0]} dörtlü olur (boşluk ya da rakip taş fark etmez).` : 'Evet: dörtlü olmaz.' };
   });
-  birak(sorular.filter((q) => q.cevap.startsWith('Evet')).length === 1, 'k6 denge');
+  
   return { ad: 'Dörtlü yasağı', kurallar: [6], yonerge: 'Taşların yatay, dikey ya da çapraz doğrultuda dörtlü olamaz. Arada boşluk ya da rakip taş olsa bile dörtlü yapmak hatalı hamledir.', sorular };
 }
 function yakalaSoru(p, m, h, ek) {
   const s = tk(p), [r0, c0] = yer(m), [r, c] = yer(h), A = netYakala(s, m, h), son = hamle(s, m, h), k = s[r0][c0];
   return { metin: `${m}'deki ${adK(k).toLocaleLowerCase('tr')} taş ${h}'e gidiyor. Hangi taşlar alınır? Çarpı koy.`, tahta: kt(s, [[r0, c0, 'n'], [r, c, '*']]), tahtaC: kt(sonRows(son), A.map(([x, y]) => [x, y, 'x'])), alt: 'Alınanlar: ......................', cevap: A.length ? `${A.map(([x, y]) => adi(x, y)).join(', ')} alınır.` : `Hiçbiri: ${ek || 'sıkıştırma yok'}.` };
 }
-function k7() {
-  const D = [['M:D3,D6 T:D4', 'D6', 'D5'], ['M:B4,D5 T:C4', 'D5', 'D4'], ['M:B3,E6 T:C4', 'E6', 'D5'], ['T:C3,E4 M:D4', 'E4', 'E5'], ['M:A4,D5 T:C4', 'D5', 'D4', 'arada boşluk var'], ['M:D2,D5 T:D4', 'D2', 'D3']];
+function k7(D = [['M:D3,D6 T:D4', 'D6', 'D5'], ['M:B4,D5 T:C4', 'D5', 'D4'], ['M:B3,E6 T:C4', 'E6', 'D5'], ['T:C3,E4 M:D4', 'E4', 'E5'], ['M:A4,D5 T:C4', 'D5', 'D4', 'arada boşluk var'], ['M:D2,D5 T:D4', 'D2', 'D3']]) {
   return { ad: 'Sıkıştır ve al', kurallar: [7], yonerge: 'Rakip taşı kendi iki taşının arasına alan, hamlesiyle onu yakalar. Taş yatay, dikey ya da çapraz sıkışabilir. Hamle ileri de olabilir, geri de.', sorular: D.map((d) => yakalaSoru(...d)) };
 }
-function k8() {
-  const D = [['M:B4,E5 T:C4,D4', 'E5', 'E4'], ['M:B4,F5 T:C4,D4,E4', 'F5', 'F4'], ['M:B2,F6 T:C3,D4', 'F6', 'E5'], ['M:B4,D2,D5 T:C4,D3', 'D5', 'D4'], ['M:B4,E5 T:C4', 'E5', 'E4', 'C4 ile E4 arasında boşluk var'], ['T:B4,E3 M:C4,D4', 'E3', 'E4']];
+function k8(D = [['M:B4,E5 T:C4,D4', 'E5', 'E4'], ['M:B4,F5 T:C4,D4,E4', 'F5', 'F4'], ['M:B2,F6 T:C3,D4', 'F6', 'E5'], ['M:B4,D2,D5 T:C4,D3', 'D5', 'D4'], ['M:B4,E5 T:C4', 'E5', 'E4', 'C4 ile E4 arasında boşluk var'], ['T:B4,E3 M:C4,D4', 'E3', 'E4']]) {
   return { ad: 'Çoklu yakalama', kurallar: [7], yonerge: 'Arada kalan rakip taşların hepsi alınmak zorundadır. Birini seçip bırakamazsın. Bir hamle iki yönde birden de sıkıştırabilir.', sorular: D.map((d) => yakalaSoru(...d)) };
 }
 function k9() {
@@ -329,10 +320,29 @@ const KULUP_ETK = {
   Pentago: [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10].map((f) => f()),
   'Küre': [k1, k2, k3, k4, k5, k6, k7, k8, k9, k10].map((f) => f()),
 };
+// slaytta birlikte çözülen sorular: kâğıttakilerle aynı tür, farklı konum
+const ayni = (q, e) => e.sorular.some((x) => JSON.stringify([x.metin, x.tahta]) === JSON.stringify([q.metin, q.tahta]));
+const BIRLIKTE = {
+  Pentago: [p1(['D5', 'A3']).sorular.slice(1, 3), p2([[4, 4], [3, 2]]).sorular, p3([[['S.S', '...', 'B..'], 1], [['.S.', 'B..', '..S'], -1]]).sorular, p4([['A3', 0, 1], ['E1', 1, -1]]).sorular,
+    p5([['......', '..S...', '..S.B.', '..S.B.', '..S.B.', '..S...'], ['B.BBBB', '......', 'SS....', '......', '......', '......']]).sorular,
+    p6([['......', '.BB...', '.B....', 'SS.SS.', '......', '......'], ['.S....', '..S...', '...S..', '.B..S.', '.B....', '......']]).sorular,
+    p7([[['.SSSS.', '......', 'BB....', 'B.....', '......', '......'], 'F2'.replace('F2', 'A1')], [['.SS...', '......', 'BB....', 'B.....', '......', '......'], 'D1']], 1).sorular,
+    p8([[1, 1], [2, -1]]).sorular, p9(true).sorular, p10([true, false]).sorular],
+  'Küre': [[{ metin: 'Mor ajan taş nerede? Bul ve söyle.', tahta: kt(['TTTTTTM', ...Array(5).fill('.......'), 'TMMMMMM']), cevap: "G1: turuncunun sağında." }, { metin: 'Turuncu ajan taş nerede? Bul ve söyle.', tahta: kt(['TTTTTTM', ...Array(5).fill('.......'), 'TMMMMMM']), cevap: "A7: morun solunda." }],
+    [{ metin: 'Oyunda 4 hamle oynandı. 5. hamle kimin?', cevap: 'Mor: tek numaralı hamleler morun.' }, { metin: 'Ada bir taşa dokundu, ama başka taş oynamak istiyor. Olur mu?', cevap: 'Hayır. Kurallı hamlesi varsa dokunduğu taşı oynamak zorunda.' }],
+    k3([['M:F7', 'F7'], ['T:B1 M:B2', 'B1']]).sorular, k4([['M:E4', 'E4'], ['T:C3 M:C2', 'C3']]).sorular, k5([['M:F6', 'F6'], ['T:E2,E3', 'E2']]).sorular,
+    k6([['M:B4,C4,D4,E5', 'E5', 'E4'], ['M:B4,C4,E5', 'E5', 'E4']]).sorular, k7([['M:C3,C6 T:C4', 'C6', 'C5'], ['M:E3,E5 T:D4,F2', 'E5', 'E4', 'hiçbir taş iki morun arasında değil']]).sorular,
+    k8([['M:C3,F4 T:D3,E3', 'F4', 'F3'], ['M:B3,F4 T:C3,D3,E3', 'F4', 'F3']]).sorular,
+    (() => { const a = k9().sorular[0]; const s = tk('T:F3 M:E4,G4'); return [
+      { metin: "F3'teki turuncu taş iki morun arasına giriyor. Mor taşlar onu alabilir mi?", tahta: kt(s, [[2, 5, 'n'], [3, 5, '*']]), cevap: 'Hayır. Kendi isteğiyle araya giren taşı rakip alamaz.' },
+      { metin: "B2'deki mor taş rakibin sırasındaki B1'e gidebilir mi?", tahta: kt(tk('M:B2 T:D1,E1'), [[1, 1, 'n'], [0, 1, '*']]), cevap: 'Evet: orada hiç mor taş yok.' }]; })(),
+    (() => { const a = k10().sorular; return [a[0].metin ? (() => { const q = k7([['M:E3,E6 T:E4', 'E6', 'E5']]).sorular[0]; q.metin = "Mor daha önce 3 taş aldı. E6'daki taş E5'e gidiyor. Kazandı mı?"; q.cevap = '4 taş oldu, kazandı!'; return q; })() : a[0]]; })()],
+};
+for (const [o, L] of Object.entries(BIRLIKTE)) L.forEach((b, i) => { birak(b.length >= 1, 'birlikte boş'); b.forEach((q) => birak(!ayni(q, KULUP_ETK[o][i]), `kâğıtla aynı: ${o} ${i} ${q.metin}`)); KULUP_ETK[o][i].birlikte = b; });
 const yol = new URL('../js/kulup-etkinlik.js', import.meta.url);
 // Türkçe ekler: D4'e, E1'e, A2'ye, C6'ya; D4'teki, E1'deki, C6'daki
 const YON = { 1: "e", 2: "ye", 3: "e", 4: "e", 5: "e", 6: "ya", 7: "ye" }, BUL = { 1: "deki", 2: "deki", 3: "teki", 4: "teki", 5: "teki", 6: "daki", 7: "deki" };
 const ek = (t) => t.replace(/\b([A-G])([1-7])'(ye|e)(?![a-zçğıöşü])/g, (_, h, n) => `${h}${n}'${YON[n]}`).replace(/\b([A-G])([1-7])'(deki|teki)/g, (_, h, n) => `${h}${n}'${BUL[n]}`);
-for (const L of Object.values(KULUP_ETK)) for (const e of L) for (const q of e.sorular) { q.metin = ek(q.metin); q.cevap = ek(q.cevap); }
+for (const L of Object.values(KULUP_ETK)) for (const e of L) for (const q of [...e.sorular, ...e.birlikte]) { q.metin = ek(q.metin); q.cevap = ek(q.cevap); }
 fs.writeFileSync(yol, '// Üretildi: node araclar/etkinlik-uret.mjs. Cevaplar kural motorlarından hesaplandı; elle değiştirmeyin.\nwindow.KULUP_ETK = ' + JSON.stringify(KULUP_ETK) + ';\n');
-for (const [o, L] of Object.entries(KULUP_ETK)) L.forEach((e, i) => { console.log(`\n${o} ${i + 1}. ${e.ad} (kural ${e.kurallar})`); e.sorular.forEach((q, j) => console.log(`  ${j + 1}) ${q.metin} → ${q.cevap}`)); });
+for (const [o, L] of Object.entries(KULUP_ETK)) L.forEach((e, i) => { console.log(`\n${o} ${i + 1}. ${e.ad} (kural ${e.kurallar})`); e.sorular.forEach((q, j) => console.log(`  ${j + 1}) ${q.metin} → ${q.cevap}`)); e.birlikte.forEach((q) => console.log(`  B) ${q.metin} → ${q.cevap}`)); });

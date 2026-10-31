@@ -181,8 +181,213 @@ H.append([mat1("6k1/5ppp/8/8/8/8/8/3R2K1 w - - 0 1", "Son yatay matı!"), mat1("
           {"fen": "6k1/5ppp/8/8/8/8/5PPP/6K1", "soru": "Son yatay matından korunmanın iki yolunu yaz.", "cevap": "1) Şahın önündeki bir piyonu ilerlet, kaçış karesi aç (ör. h3). 2) Son yatayı kale ya da vezirle koru."},
           {"fen": chess.STARTING_BOARD_FEN, "soru": "Bu dönem en sevdiğin taktik hangisi? Bir örneğini çiz.", "cevap": "Kişisel cevap (çatal, açmaz, son yatay matı, çoban matı…)"}])
 
+# ---------- akıllı tahta soruları: her hafta 10 etkileşimli soru (dokun ya da seç), kâğıt 10 soruya tamamlanır ----------
+import random
+R = random.Random(20261031)
+HARF, BASLA = "abcdefgh", chess.STARTING_BOARD_FEN
+KOSE = ["a1", "h1", "a8", "h8"]
+
+
+def kare_rastgele(a=0, b=7, c=0, d=7): return HARF[R.randint(a, b)] + str(R.randint(c + 1, d + 1))
+
+
+def konum(tas):
+    b = chess.Board(None)
+    for sq, sem in tas.items(): b.set_piece_at(chess.parse_square(sq), chess.Piece.from_symbol(sem))
+    return b.board_fen()
+
+
+def dokun(q):
+    q = dict(q); q["soru"] = q["soru"].replace("X ile işaretle, kaç kare olduğunu yaz.", "Karelere dokun.").replace("X ile işaretle.", "Karelere dokun.")
+    return q
+
+
+def sec(fen, soru, secenek, dogru, cevap, **k):
+    assert dogru in secenek
+    return {"fen": fen, "soru": soru, "secenek": secenek, "dogru": dogru, "cevap": cevap, **k}
+
+
+def havuz_git(sem, ad_, n, yol=None):
+    Q, gor = [], set()
+    while len(Q) < n:
+        sq = kare_rastgele(1, 6, 1, 6); tas = {sq: sem}
+        for _ in range(R.randint(1, 3)):
+            k = kare_rastgele(0, 7, 1, 6)
+            if k not in tas: tas[k] = R.choice("PN" if sem.isupper() else "pn") if R.random() < .4 else R.choice("pnb" if sem.isupper() else "PNB")
+        f = konum(tas)
+        if f in gor or len(gidebilir(f, sq)) < 3: continue
+        gor.add(f); q = git(f, sq, f"{sq} karesindeki {ad_} hangi karelere gidebilir? Karelere dokun."); Q.append(q)
+    return Q
+
+
+def t1():
+    Q = []
+    for sq in ["c5", "f2", "h7", "a4", "d6", "g1"]: Q.append({"fen": "8/8/8/8/8/8/8/8", "soru": f"{sq} karesine dokun.", "cevap": sq, "isaret": [sq]})
+    Q += [{"fen": BASLA, "soru": "Beyaz vezire dokun.", "cevap": "d1", "isaret": ["d1"]}, {"fen": BASLA, "soru": "Siyah kalelere dokun.", "cevap": "a8 ve h8", "isaret": ["a8", "h8"]},
+          {"fen": BASLA, "soru": "Beyaz şaha dokun.", "cevap": "e1", "isaret": ["e1"]}, {"fen": BASLA, "soru": "Siyah atlara dokun.", "cevap": "b8 ve g8", "isaret": ["b8", "g8"]},
+          {"fen": BASLA, "soru": "Beyaz fillere dokun.", "cevap": "c1 ve f1", "isaret": ["c1", "f1"]}, {"fen": "8/8/8/8/8/8/8/8", "soru": "Yıldızlı karenin adı ne?", "yildiz": ["d3"], "secenek": ["c3", "d3", "d4", "e3"], "dogru": "d3", "cevap": "d3"},
+          sec("8/8/8/8/8/8/8/8", "Yıldızlı kare hangi renk?", ["Açık", "Koyu"], "Açık" if not chess.BB_DARK_SQUARES & chess.BB_H1 else "Koyu", "Sağ alt köşedeki h1 açık renktir.", yildiz=["h1"]),
+          {"fen": "8/8/8/8/8/8/8/8", "soru": "Tahtanın sağ alt köşesindeki kareye dokun.", "cevap": "h1", "isaret": ["h1"]}, {"fen": "8/8/8/8/8/8/8/8", "soru": "Dört köşe kareye de dokun.", "cevap": "a1, h1, a8, h8", "isaret": KOSE},
+          {"fen": BASLA, "soru": "Siyah vezire dokun.", "cevap": "d8", "isaret": ["d8"]}]
+    return Q
+
+
+def t_at():
+    Q = havuz_git("N", "at", 10)
+    for a, h in [("a1", "c5"), ("b1", "e3"), ("g1", "f7"), ("d4", "e5")]:
+        n = at_mesafe(a, h); Q.append(sec(konum({a: "N"}), f"At {a}'den yıldızlı {h} karesine en az kaç hamlede gider?", ["1", "2", "3", "4"], str(n), f"{n} hamle", yildiz=[h]))
+    return Q
+
+
+def t_piyon():
+    Q = []
+    for sq, eng in [("c2", None), ("g2", None), ("d3", None), ("f4", "e5"), ("b5", "c6"), ("d4", "c5"), ("e3", "f4"), ("c4", "d5"), ("h2", None)]:
+        tas = {"e8": "k", "e1": "K", sq: "P"}
+        if eng: tas[eng] = "p"
+        Q.append(git(konum(tas) + " w - - 0 1", sq, f"{sq}'teki piyon nereye gidebilir? Karelere dokun."))
+    Q += [git("4k3/8/8/4pP2/8/8/8/4K3 w - e6 0 1", "f5", "Siyah piyon e7'den e5'e geldi. f5'teki piyon nereye gidebilir? Karelere dokun."),
+          git("4k3/8/8/8/4Pp2/8/8/4K3 b - e3 0 1", "f4", "Beyaz piyon e2'den e4'e geldi. f4'teki siyah piyon nereye gidebilir? Karelere dokun."),
+          {"fen": "4k3/6P1/8/8/8/8/8/4K3 w - - 0 1", "soru": "Piyon hangi kareye çıkınca terfi eder? Dokun.", "cevap": "g8: son yataya varınca terfi eder.", "isaret": ["g8"]},
+          sec("4k3/P7/8/8/8/8/8/4K3 w - - 0 1", "Piyon a8'e çıkınca hangisi olamaz?", ["Vezir", "Kale", "Şah", "At"], "Şah", "Piyon şah olamaz; vezir, kale, fil ya da at olur."),
+          git("4k3/8/8/8/8/3p4/3P4/4K3 w - - 0 1", "d2", "Bu piyon nereye gidebilir?")]
+    Q[-1]["soru"] += " Kareye dokun, gidemiyorsa Doğru mu'ya bas."
+    return Q
+
+
+def durum_havuz():
+    kota = {"MAT": 4, "PAT": 3, "ŞAH": 4, "YOK": 3}; Q, gor = [], set(); ETK = ["Şah", "Mat", "Pat", "Hiçbiri"]
+    while any(kota.values()):
+        ks = R.choice(["a8", "h8", "a1", "h1", "e8", "a5", "h4", "d8", "g8"])
+        tas = {ks: "k"}; km = kare_rastgele(); s = R.choice("QR"); ks2 = kare_rastgele()
+        if km == ks or ks2 in (ks, km): continue
+        tas[km] = "K"; tas[ks2] = s
+        b = chess.Board(konum(tas) + " b - - 0 1")
+        if not b.is_valid(): continue
+        k = "MAT" if b.is_checkmate() else "PAT" if b.is_stalemate() else "ŞAH" if b.is_check() else "YOK"
+        if kota[k] == 0 or b.fen() in gor: continue
+        gor.add(b.fen()); kota[k] -= 1
+        Q.append(sec(b.fen(), "Sıra siyahta. Bu durum hangisi?", ETK, {"MAT": "Mat", "PAT": "Pat", "ŞAH": "Şah", "YOK": "Hiçbiri"}[k], durum(b.fen())))
+    R.shuffle(Q); return Q
+
+
+def rok_havuz():
+    F = ["4k3/8/8/8/8/8/8/R3K3 w Q - 0 1", "4k3/8/8/8/8/8/5PPP/4K2R w K - 0 1", "4k3/8/8/8/8/6b1/8/4K2R w K - 0 1", "4k3/8/8/8/1b6/8/8/4K2R w K - 0 1", "5r1k/8/8/8/8/8/8/4K2R w K - 0 1", "6rk/8/8/8/8/8/8/4K2R w K - 0 1", "4k3/8/8/8/8/8/8/4KN1R w K - 0 1"]
+    Q = []
+    for f in F:
+        if "w Q" in f:
+            ok = any(chess.Board(f).is_castling(m) for m in chess.Board(f).legal_moves)
+            Q.append(sec(f, "Beyaz uzun rok yapabilir mi?", ["Evet", "Hayır"], "Evet" if ok else "Hayır", "Evet: şahla kale arası boş, kareler güvende." if ok else "Hayır.")); continue
+        q = rok(f); ok = q["cevap"].startswith("EVET")
+        Q.append(sec(f, "Beyaz kısa rok yapabilir mi?", ["Evet", "Hayır"], "Evet" if ok else "Hayır", q["cevap"]))
+    for f in ["r3k3/ppp5/8/8/8/8/PP6/1N1QK3 w - - 0 1", "1q2k3/8/8/8/8/8/PPP5/R3K3 w - - 0 1", "3rk3/pp6/8/8/8/8/P7/3RK3 w - - 0 1", "2b1k3/1n6/8/8/8/8/3R4/4K3 w - - 0 1", "4k3/8/5n2/8/8/2B5/8/4K3 w - - 0 1", "q3k3/8/8/8/8/8/8/R2QK3 w - - 0 1", "3rk3/8/8/8/8/8/PPPPPP2/4K3 w - - 0 1"]:
+        q = materyal(f); c = q["cevap"]; d = "Eşit" if "eşit" in c else "Beyaz" if ": beyaz" in c else "Siyah"
+        Q.append(sec(f, "Taş değerlerini topla. Kim önde?", ["Beyaz", "Siyah", "Eşit"], d, c))
+    R.shuffle(Q); return Q
+
+
+def mat_havuz(sem, n):
+    Q, gor = [], set()
+    while len(Q) < n:
+        ks = R.choice(["g8", "a8", "h8", "b8", "h4", "a5", "e8", "c8"]); km = kare_rastgele(); s = kare_rastgele()
+        if len({ks, km, s}) < 3: continue
+        b = chess.Board(konum({ks: "k", km: "K", s: sem}) + " w - - 0 1")
+        if not b.is_valid(): continue
+        r = [m for m in b.legal_moves if b.gives_check(m) and (b.push(m) or b.is_checkmate(), b.pop())[0]]
+        if len(r) != 1 or b.fen() in gor: continue
+        gor.add(b.fen()); Q.append(mat1(b.fen()))
+    return Q
+
+
+def tuzak_havuz():
+    Q, gor = [], set()
+    H1 = [["e4", None, "Bc4", None, "Qh5", None], ["e4", None, "Qf3", None, "Bc4", None], ["e4", None, "Bc4", None, "Qf3", None], ["e4", None, "Qh5", None, "Bc4", None]]
+    while len(Q) < 10:
+        b = chess.Board(); P = R.choice(H1); ok = True
+        for h in P:
+            try: b.push(b.parse_san(h) if h else R.choice([m for m in b.legal_moves if chess.square_rank(m.to_square) >= 4]))
+            except ValueError: ok = False; break
+        if not ok or b.is_game_over(): continue
+        r = []
+        for m in b.legal_moves:
+            b.push(m); e = b.is_checkmate(); b.pop()
+            if e: r.append(m)
+        if len(r) != 1 or b.fen() in gor: continue
+        gor.add(b.fen()); Q.append(mat1(b.fen(), "Çoban matını bul!"))
+    Q += [{"fen": "8/8/8/8/8/8/8/8", "soru": "Merkezdeki dört kareye dokun.", "cevap": "d4, e4, d5, e5", "isaret": ["d4", "e4", "d5", "e5"]},
+          {"fen": BASLA, "soru": "Açılışta önce hangi iki piyon merkeze çıkar? Dokun.", "cevap": "d2 ve e2 piyonları.", "isaret": ["d2", "e2"]},
+          sec(BASLA, "Açılışta hangisi yapılmaz?", ["Merkezi tut", "Atları çıkar", "Veziri erken çıkar", "Rok yap"], "Veziri erken çıkar", "Veziri erken çıkarmak yanlıştır: rakip onu kovalar."),
+          {"fen": "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/8/PPPP1PPP/RNBQK1NR w KQkq - 0 1", "soru": "Çoban matının hedefindeki siyah piyona dokun.", "cevap": "f7: yalnız şah korur.", "isaret": ["f7"]}]
+    return Q
+
+
+def catal_havuz(n):
+    Q, gor = [], set()
+    while len(Q) < n:
+        t = {"h1": "K"}; ks = kare_rastgele(0, 7, 4, 7); k2 = kare_rastgele(0, 7, 3, 7); na = kare_rastgele(1, 6, 1, 5)
+        if len({ks, k2, na}) < 3 or "h1" in (ks, k2, na): continue
+        t = {"g1": "K", ks: "k", k2: R.choice("rq"), na: "N"}
+        b = chess.Board(konum(t) + " w - - 0 1")
+        if not b.is_valid() or b.fen() in gor or b.is_check(): continue
+        try: q = catal(b.fen())
+        except AssertionError: continue
+        m = chess.parse_square(q["isaret"][0]); kor = b.is_attacked_by(chess.BLACK, m)
+        if kor: continue
+        gor.add(b.fen()); q["soru"] = "Atınla çatal yap! At hangi kareye gitmeli? Dokun."; Q.append(q)
+    return Q
+
+
+def acmaz_havuz(n):
+    Q, gor = [], set()
+    while len(Q) < n:
+        sat = R.choice("RBQ"); ks = kare_rastgele(0, 7, 5, 7); ar = kare_rastgele(1, 6, 2, 6); uz = kare_rastgele(0, 7, 0, 2)
+        if len({ks, ar, uz}) < 3: continue
+        b = chess.Board(konum({"h1": "K", ks: "k", ar: R.choice("nbrp"), uz: sat}) + " b - - 0 1")
+        if chess.parse_square(ks) == b.king(chess.BLACK) and not b.is_valid(): continue
+        if b.fen() in gor or b.is_check():continue
+        try: q = acmaz(b.fen())
+        except AssertionError: continue
+        gor.add(b.fen()); q["soru"] = "Siyahın açmazdaki taşına dokun."; Q.append(q)
+    return Q
+
+
+def sonyatay_havuz(n):
+    Q, gor = [], set()
+    while len(Q) < n:
+        p = R.choice([("g8", "fgh"), ("b8", "abc"), ("h8", "gh")]); ks, pa = p; s = kare_rastgele(0, 7, 0, 5); kg = kare_rastgele(0, 7, 0, 1)
+        t = {ks: "k", s: R.choice("RQ"), kg: "K"}
+        for h in pa: t[h + "7"] = "p"
+        if len(t) < 3 + len(pa): continue
+        b = chess.Board(konum(t) + " w - - 0 1")
+        if not b.is_valid() or b.fen() in gor: continue
+        r = []
+        for m in b.legal_moves:
+            b.push(m); e = b.is_checkmate(); b.pop()
+            if e: r.append(m)
+        if len(r) != 1 or chess.square_rank(r[0].to_square) != 7: continue
+        gor.add(b.fen()); Q.append(mat1(b.fen(), "Son yatay matını yap!"))
+    return Q
+
+
+K = 14  # tahta 10 + kâğıda 4
+T = [t1(), havuz_git("R", "kale", 7) + havuz_git("B", "fil", 7), havuz_git("Q", "vezir", 8) + [git(konum({"e8": "k", k: "K", s: "r"}) + " w - - 0 1", k, "Beyaz şah nereye gidebilir? Karelere dokun.") for k, s in [("e1", "d8"), ("c3", "a4"), ("g2", "f8"), ("d4", "b5"), ("b2", "h3"), ("f3", "e8")]],
+     t_at(), t_piyon(), durum_havuz(), rok_havuz(), mat_havuz("R", 7) + mat_havuz("Q", 7), tuzak_havuz(), catal_havuz(K), acmaz_havuz(K), sonyatay_havuz(K)]
+for i, L in enumerate(T):
+    del L[K:]
+    assert len(L) == K, (i, len(L))
+    if i in (1, 2, 7): R.shuffle(L)
+    L[:] = [dokun(q) for q in L]
+    for q in L:
+        assert q.get("isaret") is not None or q.get("secenek"), q
+        if i != 0 and "isaret" in q: assert all(len(x) == 2 for x in q["isaret"])
+TAHTA = [L[:10] for L in T]
+for w, L in zip(H, T):
+    for q in L[10:]: w.append({k: v for k, v in q.items() if k not in ("secenek", "dogru")} | {"soru": q["soru"].replace("Karelere dokun.", "X ile işaretle.").replace("Dokun.", "Kareyi işaretle.").replace(" dokun.", " yıldız çiz.")})
+for i, (w, t) in enumerate(zip(H, TAHTA)):
+    an = {(q["fen"], q["soru"]) for q in w}
+    assert not any((q["fen"], q["soru"]) in an for q in t), i
+
 for i, w in enumerate(H, 1):
     for q in w: chess.Board(tam(q["fen"]))
-    print(i, " | ".join(q["cevap"][:30] for q in w))
+    print(i, " | ".join(q["cevap"][:26] for q in TAHTA[i - 1][:4]))
 pathlib.Path(__file__).resolve().parent.parent.joinpath("js", "kulup-satranc.js").write_text(
-    "// Otomatik üretildi: araclar/satranc_sorulari.py (cevaplar python-chess ile hesaplandı). Elle düzenlemeyin.\nwindow.KULUP_SATRANC = " + json.dumps(H, ensure_ascii=False) + ";\n", encoding="utf-8")
+    "// Otomatik üretildi: araclar/satranc_sorulari.py (cevaplar python-chess ile hesaplandı). Elle düzenlemeyin.\nwindow.KULUP_SATRANC = " + json.dumps(H, ensure_ascii=False) + ";\nwindow.KULUP_SATRANC_TAHTA = " + json.dumps(TAHTA, ensure_ascii=False) + ";\n", encoding="utf-8")
