@@ -1224,7 +1224,7 @@
     const taslar = klCiz && ad.startsWith("kure") ? " Bu kâğıtta M yazan siyah taş mor, T yazan beyaz taş turuncudur. Boyarken renkli kalemin yoksa dairenin içine M ya da T yaz." : "";
     const ust = (b, y, bloklar) => klKagit({ baslik: b + (cevap ? " · CEVAP ANAHTARI" : ""), yonerge: y + taslar, bloklar: [{ t: "html", x: bloklar }] }, "Akıl Oyunları");
     if (ad === "pentago-tanis") {
-      const A = ["SSSS..", "......", "......", "......", "......", "......"], B = ["S.....", ".S....", "..S...", "...S..", "......", "......"];
+      const A = ["SSSS..", "......", "......", "BBB...", "B.....", "......"], B = ["S....B", ".S...B", "..S...", "...S..", "......", "BB...."];
       const Ac = ["SSSSo.", ...A.slice(1)], Bc = [...B.slice(0, 4), "....o.", B[5]];
       return ust("PENTAGO · TANIŞMA", "Siyah başlar. Bilyeni koy, sonra bir tablayı 90° çevir (saat yönünde ya da tersine). Yatay, dikey ya da çapraz 5 bilye dizen kazanır.",
         `<h3>1. Doğru mu, yanlış mı?</h3>${cevap ? `<p class="kl-cevap">${dyCevap(PENTAGO_DY)}</p>` : dyTablo(PENTAGO_DY)}
@@ -1314,15 +1314,18 @@
       <div><h2>${esc(q.metin)}</h2><details ontoggle="this.closest('.kl-slayt').classList.toggle('acik',this.open)"><summary>Cevabı göster</summary><p><b>${esc(q.cevap)}</b></p></details></div></div>`, q.metin);
   }
   // dokunarak etkinlik: kâğıt gerekmez, cevaplar q.do'dan denetlenir
-  const DKO = () => { const L = KT.map((Q, i) => ({ ad: `${i + 1}. hafta: ${KL.programlar.SAT.haftalar[i].ad}`, yonerge: "", sorular: Q.map((q) => ({ ...q, metin: q.soru, do: { kare: q.isaret, alanlar: q.secenek ? [{ ad: "Cevap", secenek: q.secenek, dogru: q.dogru }] : [] } })) }));
-    return { Pentago: KE.Pentago, "Küre": KE["Küre"], "Satranç": KE["Satranç"], "Satranç 50 Soru": window.KULUP_SATRANC_50 || [], "Satranç Haftaları": L }; };
+  let dkoHafiza = null;
+  const DKO = () => { if (dkoHafiza) return dkoHafiza;
+    const KB = window.KULUP_BANKA || {}, KS2 = window.KULUP_BANKA_S || { sayfalar: [], haftalar: [] }, ban = (L, B) => L.map((e, i) => ({ ...e, dy: null, sorular: B[i] || e.sorular }));
+    return dkoHafiza = { Pentago: ban(KE.Pentago, KB.Pentago || []), "Küre": ban(KE["Küre"], KB["Küre"] || []), "Satranç": ban(KE["Satranç"], KS2.sayfalar), "Satranç 50 Soru": window.KULUP_SATRANC_50 || [],
+      "Satranç Haftaları": KT.map((Q, i) => ({ ad: `${i + 1}. hafta: ${KL.programlar.SAT.haftalar[i].ad}`, yonerge: "", sorular: KS2.haftalar[i] || [] })) }; };
   const dkDurum = JSON.parse(localStorage.getItem("masa.dokun") || "{}");
   function dokunSayfa(oyun, no) {
     const O = DKO();
     if (oyun && O[oyun] && no !== undefined && no !== "" && O[oyun][+no]) return dokunEtkinlik(oyun, +no);
     if (oyun && O[oyun]) {
       $("#sahne").innerHTML = `<div class="ust-baslik"><div><h1>${esc(oyun)}</h1><p>Bir etkinliğe dokun.</p></div><div class="dugmeler"><a class="dugme" href="#dokun">‹ Oyunlar</a></div></div>
-        <div class="dk-izgara">${O[oyun].map((e, i) => { const d = dkDurum[oyun + i]; return `<a class="dk-kart${d ? " bitti" : ""}" href="#dokun/${encodeURIComponent(oyun)}/${i}"><b>${i + 1}</b><span>${esc(e.ad)}</span><small>${d ? `✓ ${d}` : `${dkSorular(e).length} soru`}</small></a>`; }).join("")}</div>`;
+        <div class="dk-izgara">${O[oyun].map((e, i) => { const d = dkDurum[oyun + i]; return `<a class="dk-kart${d ? " bitti" : ""}" href="#dokun/${encodeURIComponent(oyun)}/${i}"><b>${i + 1}</b><span>${esc(e.ad)}</span><small>${d ? `✓ ${d}` : dkDurum[oyun + i + "#"] ? `${dkDurum[oyun + i + "#"] + 1}. soruda kaldı` : `${dkSorular(e).length} soru`}</small></a>`; }).join("")}</div>`;
       return;
     }
     $("#sahne").innerHTML = `<div class="ust-baslik"><div><h1>Dokunarak Etkinlik</h1><p>Kâğıt yok, internet yok: öğrenci tahtaya gelir, dokunarak çözer, Doğru mu? ile kontrol eder.</p></div></div>
@@ -1334,7 +1337,9 @@
     return [...E.sorular.map((q) => ({ ...q, metin: dil(q.metin || q.soru) })), ...(E.dy || []).map(([m, d]) => ({ metin: `Doğru mu, yanlış mı? ${m}`, cevap: d ? "Doğru" : "Yanlış", do: { alanlar: [{ ad: "Cevap", secenek: ["Doğru", "Yanlış"], dogru: d ? "Doğru" : "Yanlış" }] } }))];
   }
   function dokunEtkinlik(oyun, no) {
-    const E = DKO()[oyun][no], Q = dkSorular(E); let i = 0, ilk = 0, hata = false, dz = null, dzSec = null;
+    const E = DKO()[oyun][no], Q = dkSorular(E), kayit = oyun + no + "#"; let i = dkDurum[kayit] || 0, ilk = 0, hata = false, dz = null, dzSec = null;
+    if (i >= Q.length) i = 0;
+    const sakla = () => { dkDurum[kayit] = i; localStorage.setItem("masa.dokun", JSON.stringify(dkDurum)); };
     const dzCiz = (kilit) => { $(".ct-tahta").innerHTML = satrancTahta({ fen: fenKur(dz), vurgu: dzSec ? [dzSec] : [] }, false) + ctIzgara(); if (kilit) $(".ct-iz").style.pointerEvents = "none"; };
     function tahtaCiz(q) {
       if (q.fen) return `<div class="ct-tahta">${satrancTahta(q, false)}${ctIzgara()}</div>`;
@@ -1345,7 +1350,7 @@
     const dkCizim = (q) => `<div class="dk-c3">${[0, 1, 2].flatMap((r) => [0, 1, 2].map((c) => `<button class="dk-c" data-c="${r}${c}"></button>`)).join("")}</div>`;
     function ciz() {
       const q = Q[i], A = q.do || {}; hata = false; dz = A.duzelt ? fenAc(q.fen) : null; dzSec = null;
-      $("#sahne").innerHTML = `<div class="dk-ust"><a class="dugme" href="#dokun/${encodeURIComponent(oyun)}">‹ Liste</a><b>${esc(oyun)}: ${esc(E.ad)}</b><span>Soru ${i + 1} / ${Q.length}</span></div>
+      $("#sahne").innerHTML = `<div class="dk-ust"><a class="dugme" href="#dokun/${encodeURIComponent(oyun)}">‹ Liste</a><b>${esc(oyun)}: ${esc(E.ad)}</b><span>Soru ${i + 1} / ${Q.length}${i ? ` <button class="dugme kucuk" data-d="basa">Başa dön</button>` : ""}</span></div>
         <div class="dk-alan${q.tahta || q.fen ? "" : " yazi"}">${tahtaCiz(q)}<div class="dk-yan"><h2>${esc(q.metin)}</h2>${E.yonerge && i === 0 ? `<p class="not">${esc(E.yonerge)}</p>` : ""}
           ${(A.alanlar || []).map((a, j) => `<div class="dk-grup" data-g="${j}">${A.alanlar.length > 1 ? `<small>${esc(a.ad)}</small>` : ""}<div>${a.secenek.map((x) => `<button class="dugme" data-v="${esc(x)}">${esc(x)}</button>`).join("")}</div></div>`).join("")}
           ${A.kare && !A.kare.length ? `<p class="not">Alınan taş yoksa hiçbir yere dokunma, Doğru mu?'ya bas.</p>` : ""}
@@ -1353,7 +1358,7 @@
           <div class="dugmeler"><button class="dugme ana" data-d="kontrol">Doğru mu?</button><button class="dugme" data-d="cevap">Cevabı göster</button><button class="dugme" data-d="temizle">Temizle</button><button class="dugme" data-d="sonraki">Sonraki ›</button></div></div></div>`;
     }
     function bitir() {
-      dkDurum[oyun + no] = `${ilk}/${Q.length}`; localStorage.setItem("masa.dokun", JSON.stringify(dkDurum));
+      delete dkDurum[kayit]; dkDurum[oyun + no] = `${ilk}/${Q.length}`; localStorage.setItem("masa.dokun", JSON.stringify(dkDurum));
       $("#sahne").innerHTML = `<div class="dk-son"><h1>Aferin!</h1><p>${Q.length} sorunun ${ilk} tanesini ilk denemede bildiniz.</p><div class="dugmeler"><a class="dugme ana" href="#dokun/${encodeURIComponent(oyun)}">Etkinlik listesi</a>${DKO()[oyun][no + 1] ? `<a class="dugme" href="#dokun/${encodeURIComponent(oyun)}/${no + 1}">Sonraki etkinlik ›</a>` : ""}</div></div>`;
     }
     function dogruKareler(q) { return (q.do.kare || []); }
@@ -1393,7 +1398,8 @@
       if (d === "kontrol") kontrol();
       if (d === "cevap") goster();
       if (d === "temizle") ciz();
-      if (d === "sonraki") { if (++i < Q.length) ciz(); else bitir(); }
+      if (d === "basa") { i = 0; delete dkDurum[kayit]; sakla(); ciz(); }
+      if (d === "sonraki") { if (++i < Q.length) { sakla(); ciz(); } else bitir(); }
     };
   }
   // akıllı tahta satrancı: öğrenci karelere dokunur, kenardaki düğmeyle kontrol edilir
