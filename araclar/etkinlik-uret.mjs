@@ -214,6 +214,7 @@ function gidis(rows, r, c) { // boş hedefler, hareket kuralları (kural 4, 5)
     const a = r + dr, e = c + dc;
     if (a < 0 || a >= N || e < 0 || e >= N || b[a][e] !== '.') continue;
     if (a === ev(k)) continue;
+    if (a === ev(rakip(k)) && r !== a && [...rows[a]].includes(k)) continue;
     R.push([a, e]);
   }
   return R;
@@ -255,8 +256,8 @@ function hareketSoru(s, a) {
   return { metin: `${a}'deki ${adK(k).toLocaleLowerCase('tr')} taş nerelere gidebilir? Halka çiz.`, tahta: kt(s, [[r, c, 'n']]), tahtaC: kt(s, [[r, c, 'n'], ...G.map(([x, y]) => [x, y, 'o'])]), alt: 'Kaç kare? ........', cevap: `${G.length} kare: ${G.map(([x, y]) => adi(x, y)).join(', ')}.` };
 }
 function k3() {
-  const D = [['M:D7', 'D7'], ['M:A7', 'A7'], ['M:D7 T:D6', 'D7'], ['M:C7,B6 T:D6', 'C7'], ['T:D1', 'D1'], ['T:G1,F2', 'G1']];
-  return { ad: 'Başlangıç sırası', kurallar: [4], yonerge: 'Başlangıç sırasındaki taş yalnızca ileri ya da çapraz ileri 1 kare gider. Morlar yukarı, turuncular aşağı ilerler. Gri sıralar başlangıç sıralarıdır.', sorular: D.map(([p, a]) => hareketSoru(tk(p), a)) };
+  const D = [['M:D7', 'D7'], ['M:A7', 'A7'], ['M:D7 T:D6', 'D7'], ['M:C7,B6 T:D6', 'C7'], ['T:D1', 'D1'], ['M:G1 T:F1,E1', 'G1']];
+  return { ad: 'Başlangıç sırası', kurallar: [4], yonerge: 'Başlangıç sırasındaki taş yalnızca ileri ya da çapraz ileri 1 kare gider. Morlar yukarı, turuncular aşağı ilerler. Gri sıralar başlangıç sıralarıdır. Ajan taş da aynı kuralla oynar: rakibin sırasından tahtanın içine doğru gider.', sorular: D.map(([p, a]) => hareketSoru(tk(p), a)) };
 }
 function k4() {
   const D = [['M:D4', 'D4'], ['M:A4', 'A4'], ['T:D4 M:D5', 'D4'], ['M:C3,B4 T:D2', 'C3'], ['T:E4,E3 M:F5', 'E4'], ['M:G4,G3 T:F5', 'G4']];
@@ -275,7 +276,7 @@ function k6() {
     return { metin: `${m}'deki mor taş yıldızlı ${h} karesine gidebilir mi? Neden?`, tahta: kt(s, [[r, c, '*'], [r0, c0, 'n']]), alt: 'Evet  /  Hayır: ..........................', cevap: Y ? `Hayır: ${Y[0]} dörtlü olur (boşluk ya da rakip taş fark etmez).` : 'Evet: dörtlü olmaz.' };
   });
   birak(sorular.filter((q) => q.cevap.startsWith('Evet')).length === 1, 'k6 denge');
-  return { ad: 'Dörtlü yasağı', kurallar: [6], yonerge: 'Taşların aynı yatay, dikey ya da çapraz çizgide dört olamaz. Arada boşluk ya da rakip taş olsa bile yasaktır. Başlangıç sıraları bu kurala girmez.', sorular };
+  return { ad: 'Dörtlü yasağı', kurallar: [6], yonerge: 'Taşların yatay, dikey ya da çapraz doğrultuda dörtlü olamaz. Arada boşluk ya da rakip taş olsa bile dörtlü yapmak hatalı hamledir.', sorular };
 }
 function yakalaSoru(p, m, h, ek) {
   const s = tk(p), [r0, c0] = yer(m), [r, c] = yer(h), A = netYakala(s, m, h), son = hamle(s, m, h), k = s[r0][c0];
@@ -290,16 +291,16 @@ function k8() {
   return { ad: 'Çoklu yakalama', kurallar: [7], yonerge: 'Arada kalan rakip taşların hepsi alınmak zorundadır. Birini seçip bırakamazsın. Bir hamle iki yönde birden de sıkıştırabilir.', sorular: D.map((d) => yakalaSoru(...d)) };
 }
 function k9() {
-  const a = yakalaSoru('M:D5 T:C4,E4', 'D5', 'D4'); a.cevap = 'Hiçbiri. Mor kendi isteğiyle araya girdi, o da alınmaz.'; a.metin = "D5'teki mor taş iki turuncunun arasına giriyor. Bir taş alınır mı?";
-  const b = yakalaSoru('M:B4,D5 T:C4,E4', 'D5', 'D4'); b.cevap = 'C4 alınır. D4 araya girdiği için alınmaz.'; b.metin = "D5'teki mor taş D4'e giriyor. Ne olur? Çarpı koy.";
+  const a = yakalaSoru('M:D5 T:C4,E4', 'D5', 'D4'); a.cevap = 'Hiçbiri. Mor kendi isteğiyle araya girdi, rakip onu alamaz.'; a.metin = "D5'teki mor taş iki turuncunun arasına giriyor. Bir taş alınır mı?";
+  const b = yakalaSoru('M:B4,D5 T:C4,E4', 'D5', 'D4'); b.cevap = 'C4 alınır. Hamleyi yapan oyuncu alır; araya giren D4 alınmaz.'; b.metin = "D5'teki mor taş D4'e giriyor. Ne olur? Çarpı koy.";
   const c = yakalaSoru('T:D2,D5,C4,E4 M:D4', 'D2', 'D3'); birak(c.cevap.startsWith('Hiçbiri') === false, 'k9c');
   const sira = (p, m, h, izin) => {
     const s = tk(p), [r0, c0] = yer(m), [r, c] = yer(h), k = s[r0][c0], o = ev(rakip(k));
-    birak(r === o, 'k9 sıra'); birak(gidis(s, r0, c0).some(([x, y]) => x === r && y === c), 'k9 gidiş');
+    birak(r === o, 'k9 sıra'); birak(gidis(s, r0, c0).some(([x, y]) => x === r && y === c) === izin, 'k9 gidiş');
     const var_ = [...s[o]].filter((x) => x === k).length; birak((var_ === 0) === izin, 'k9 izin');
     return { metin: `${m}'deki ${adK(k).toLocaleLowerCase('tr')} taş rakibin başlangıç sırasındaki ${h}'e gidebilir mi?`, tahta: kt(s, [[r0, c0, 'n'], [r, c, '*']]), alt: 'Evet  /  Hayır', cevap: izin ? 'Evet: orada hiç taşı yok.' : 'Hayır: o sırada zaten bir taşı var.' };
   };
-  return { ad: 'Araya gir, sıraya gir', kurallar: [8, 9], yonerge: 'Kendi isteğinle iki rakip taşın arasına girersen alınmazsın. Rakibin başlangıç sırasında aynı anda yalnızca bir taşın olabilir.',
+  return { ad: 'Araya gir, sıraya gir', kurallar: [8, 9], yonerge: 'Kendi isteğinle iki rakip taşın arasına girersen rakip o taşı alamaz. Rakibin başlangıç sırasında aynı anda yalnızca bir taşın olabilir.',
     sorular: [a, b, c, sira('M:A1,D2 T:F1', 'D2', 'D1', false), sira('M:D2 T:F1,B1', 'D2', 'D1', true), sira('T:A7,C6 M:F7', 'C6', 'C7', false)] };
 }
 function k10() {
@@ -319,7 +320,7 @@ function k10() {
     const e = T[0];
     return { metin: `Sıra ${adK(k).toLocaleLowerCase('tr')}da. En çok taş alan hamleyi bul. Hangi taş, nereye?`, tahta: kt(s), tahtaC: kt(sonRows(hamle(s, e.m, e.h)), e.al.map(([x, y]) => [x, y, 'x'])), alt: 'Hamle: ...... → ......  Alınan: ......', cevap: `${e.m} → ${e.h}: ${e.n} taş alır.` };
   };
-  return { ad: 'Dört taşa giden yol', kurallar: [7, 10], yonerge: 'Rakibin 4 taşını alan oyunu kazanır. Önce kaç taş aldığını say, sonra en iyi hamleni seç.',
+  return { ad: 'Dört taşa giden yol', kurallar: [7, 10], yonerge: 'Rakibin dört taşını oyundan çıkaran oyunu kazanır. Önce kaç taş aldığını say, sonra en iyi hamleni seç.',
     sorular: [skor('M:D3,D6 T:D4', 'D6', 'D5', 3), skor('M:B4,D5 T:C4', 'D5', 'D4', 2), skor('M:D5 T:C4', 'D5', 'D4', 3), skor('T:B4,E3 M:C4,D4', 'E3', 'E4', 2),
       enIyi('M:B4,E5,G3,E2 T:C4,D4,F3', 'M'), enIyi('M:A4,D2,D5 T:B4,C4,D3', 'M')] };
 }

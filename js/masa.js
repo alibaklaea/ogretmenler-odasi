@@ -1214,7 +1214,7 @@
   const KURE_YAK = [
     { t: [".......", ".......", ".......", "MTT....", "...M...", ".......", "......."], c: [".......", ".......", ".......", "Mxx^...", "...M...", ".......", "......."], s: "Alttaki mor taş bir kare ileri (↑) gidiyor. Hangi turuncu taşlar alınır? Çarpı koy.", k: "İki turuncu taş da alınır (çoklu yakalama)." },
     { t: [".......", "..M....", "..T....", ".......", "..M....", ".......", "......."], c: [".......", "..M....", "..x....", "..^....", "..M....", ".......", "......."], s: "Mor taş bir kare ileri gidiyor. Hangi taş alınır?", k: "Aradaki turuncu taş alınır (dikey sıkıştırma)." },
-    { t: [".......", ".......", ".......", "T.T....", ".M.....", ".......", "......."], c: [".......", ".......", ".......", "T^T....", ".M.....", ".......", "......."], s: "Mor taş iki turuncunun arasına giriyor. Mor taş alınır mı?", k: "Hayır. Kendi isteğiyle araya giren taş alınmaz." },
+    { t: [".......", ".......", ".......", "T.T....", ".M.....", ".......", "......."], c: [".......", ".......", ".......", "T^T....", ".M.....", ".......", "......."], s: "Mor taş iki turuncunun arasına giriyor. Mor taş alınır mı?", k: "Hayır. Kendi isteğiyle araya giren taşı rakip alamaz." },
     { t: [".......", ".......", ".......", "MT.T...", "..M....", ".......", "......."], c: [".......", ".......", ".......", "Mx^T...", "..M....", ".......", "......."], s: "Mor taş ileri gidiyor. Ne olur? Hangi taş alınır?", k: "Soldaki turuncu alınır. Mor taş iki turuncunun arasında kalsa da hamleyi yapan o olduğu için alınmaz." },
     { t: [".......", ".......", ".......", ".......", ".......", "MMM....", "...M..."], c: [".......", ".......", ".......", ".......", ".......", "MMMo...", "...M..."], s: "Mor taş ileri (yıldızın olduğu yere) gidebilir mi?", k: "Hayır, kural dışı: mor taşlar yatayda dörtlü olur." }];
   KURE_YAK[4].t[5] = "MMM*...";
@@ -1301,14 +1301,19 @@
   }
   function kulupSlaytlari(p, i) {
     const P = KL.programlar[p], w = P.haftalar[i], t = kulupTarih(i), S = [];
-    S.push(sl("kapak", `<div class="etiket">${tarihYaz(t)} · ${esc(P.ad)} · ${i + 1}. hafta</div><h1>${esc(w.ad)}</h1><div class="kapak-alt"><span>${esc(KL.okul)}</span><span>${esc(P.blok)} · ${P.saatler[0][0]}</span></div>`, `${P.ad} kulübüne hoş geldiniz. Bugünkü konumuz: ${w.ad}.`));
-    S.push(sl("bilgi", `<div class="etiket">Bugün ne öğreneceğiz?</div><h2>${esc(w.amac)}</h2>`, w.amac));
-    (w.kuralKart || []).forEach((o) => { const K = KL.kurallar[o]; if (K) S.push(sl("liste", `<div class="etiket">${esc(o)} · Kurallar</div><ul>${K.map((k) => `<li>${esc(k)}</li>`).join("")}</ul>`, `${o} kuralları. ` + K.join(" "))); });
+    S.push(sl("kapak", `<div class="etiket">${tarihYaz(t)} · ${esc(P.ad)} · ${i + 1}. hafta</div><h1>${esc(w.ad)}</h1><div class="kapak-alt"><span>${esc(KL.okul)}</span></div>`, `${P.ad} kulübüne hoş geldiniz. Bugünkü konumuz: ${w.ad}.`));
+    S.push(sl("bilgi", `<div class="etiket">Bugün ne öğreneceğiz?</div><h2>${esc(w.hedef || w.amac)}</h2>`, w.hedef || w.amac));
+    (w.kuralKart || []).forEach((o) => {
+      const R = KL.tazof[o];
+      if (!R) { const K = KL.kurallar[o]; if (K) S.push(sl("liste", `<div class="etiket">${esc(o)} · Kurallar</div><ul>${K.map((k) => `<li>${esc(k)}</li>`).join("")}</ul>`, `${o} kuralları. ` + K.join(" "))); return; }
+      for (let j = 0, top = Math.ceil(R.length / 3); j < top; j++) { const P = R.slice(j * 3, j * 3 + 3);
+        S.push(sl("liste", `<div class="etiket">${esc(o)} · ${esc(KL.tazofKaynak)} · ${j + 1}/${top}</div><ul class="kl-madde">${P.map(([n, k]) => `<li><b>Madde ${n}.</b> ${esc(k)}</li>`).join("")}</ul>`, P.map(([, k]) => k).join(" "))); }
+    });
     (w.video || []).filter((v) => v.src).forEach((v) => S.push(sl("bilgi", `<div class="etiket">Video</div><h2 style="margin-bottom:12px">${esc(v.ad)}</h2><video src="${v.src}" controls playsinline style="max-height:62vh;max-width:100%;border-radius:12px;background:#000"></video>`, "")));
     (w.video || []).filter((v) => v.yt).forEach((v) => S.push(sl("bilgi", `<div class="etiket">Video</div><h2>${esc(v.ad)}</h2><p><a class="dugme ana" href="${v.yt}" target="_blank" rel="noopener">YouTube'da aç ↗</a></p>`, "")));
+    (w.tahtaSoru || []).forEach(([o, e, j], n) => { const q = KE[o][e].sorular[j];
+      S.push(sl("bilgi", `<div class="etiket">Birlikte düşünelim · ${n + 1} · ${esc(o)}</div><div class="kl-slayt"><div class="kl-beyaz" style="width:min(54vh,90vw)">${etkTahta(q.tahta, "100%")}</div><div><h2>${esc(q.metin)}</h2><div class="dusun" data-sayac="30">Düşünme süresi: 30 sn</div><details><summary>Cevabı göster</summary><p><b>${esc(q.cevap)}</b></p></details></div></div>`, q.metin)); });
     if (p === "SAT" && KS[i]) KS[i].slice(0, 3).forEach((q, j) => S.push(sl("bilgi", `<div class="etiket">Birlikte düşünelim · ${j + 1}</div><div class="kl-slayt"><div style="width:min(54vh,90vw)">${satrancTahta(q, false)}</div><div><h2>${esc(q.soru)}</h2><div class="dusun" data-sayac="30">Düşünme süresi: 30 sn</div><details><summary>Cevabı göster</summary><p><b>${esc(q.cevap)}</b></p></details></div></div>`, q.soru)));
-    const A = w.dersler.map(([b, m]) => ({ baslik: b, metin: m, sure: "" }));
-    S.push(yolHaritasi(w.ad, A), ...A.map((_, j) => adimSlayti(w.ad, A, j)));
     S.push(sl("bilet", `<div class="etiket">Çıkış bileti</div><div class="bilet"><div><b>3</b><p>Bugün öğrendiğim üç şey</p></div><div><b>2</b><p>Zorlandığım iki şey</p></div><div><b>1</b><p>Haftaya denemek istediğim bir şey</p></div></div>`, "Çıkış bileti: bugün öğrendiğin üç şeyi, zorlandığın iki şeyi ve haftaya denemek istediğin bir şeyi söyle."));
     return S;
   }
@@ -1322,6 +1327,7 @@
         return `<div class="kart gun-kart ${i === simdi ? "canva-simdi" : ""} ${w.bekliyor ? "gecmis" : ""}" id="kl${i}" style="margin-bottom:14px">
           <div class="gun-tarih"><span class="rozet dunya">${i + 1}. hafta</span><b>${tarihYaz(t)} Cumartesi</b>${i === simdi ? '<span class="rozet tatil">BU HAFTA</span>' : ""}${w.bekliyor ? '<span class="rozet tatil">kurallar bekleniyor</span>' : ""}</div>
           <h2 style="margin:8px 0 4px">${esc(w.ad)}</h2><p style="margin:0 0 6px">${esc(w.amac)}</p>
+          ${w.oyunsuz ? `<p class="not"><b>Bu hafta oyun takımı yok:</b> akıllı tahta ve çıktılarla işlenir.</p>` : ""}${(w.etk || []).length ? `<p class="not"><b>Kâğıtlar:</b> ${w.etk.map(([o, e]) => `${esc(o)} ${e + 1}: ${esc(KE[o][e].ad)}`).join(" · ")}</p>` : ""}
           ${w.oyunlar ? `<p class="not"><b>Oyunlar:</b> ${w.oyunlar.map(esc).join(", ")}</p>` : ""}${w.oyun ? `<p class="not"><b>Haftanın oyunu:</b> ${esc(w.oyun)}</p>` : ""}
           <details${i === simdi ? " open" : ""}><summary class="not" style="cursor:pointer">Ders akışı (${w.dersler.length} adım)</summary><ol>${w.dersler.map(([b, m]) => `<li><b>${esc(b)}:</b> ${esc(m)}</li>`).join("")}</ol></details>
           ${(w.video || []).length ? `<div class="kl-video">${w.video.map((v) => v.src ? `<figure><video src="${v.src}" controls preload="metadata" playsinline></video><figcaption>${esc(v.ad)}</figcaption></figure>` : `<a class="dugme kucuk" href="${v.yt}" target="_blank" rel="noopener">▶ ${esc(v.ad)} ↗</a>`).join("")}</div>` : ""}
@@ -1329,11 +1335,12 @@
             ${p === "SAT" && KS[i] ? `<button class="dugme kucuk" data-kl-sat="${i}">Alıştırma kâğıdı</button><button class="dugme kucuk" data-kl-satc="${i}">Cevap anahtarı</button>` : ""}
             ${(w.kagitlar || []).map((k) => `<button class="dugme kucuk" data-kl-kag="${k}">Etkinlik kâğıdı: ${esc({ "pentago-tanis": "Pentago tanışma", "kure-tanis": "Küre tanışma", "kure-yakalama": "Küre yakalama" }[k])}</button><button class="dugme kucuk" data-kl-kagc="${k}">Cevap anahtarı</button>`).join("")}
             ${(w.pdf || []).map(([a, f]) => `<a class="dugme kucuk" href="${klPdf(f)}" data-kl-pdf="${f}" target="_blank" rel="noopener">${esc(a)} (PDF)</a>`).join("")}
+            ${(w.etk || []).length ? `<button class="dugme kucuk" data-hf-etk="${i}">Bu haftanın kâğıtlarını yazdır (${w.etk.length})</button><button class="dugme kucuk" data-hf-etk="${i}" data-cv="1">Cevap anahtarları</button>` : ""}
             ${(w.kuralKart || []).map((o) => `<button class="dugme kucuk" data-kl-kural="${esc(o)}">Kural kartı: ${esc(o)}</button>`).join("")}</div></div>`; }).join("")}</div>
       <div><div class="kart odr-yan"><h3>Ders saatleri</h3><table class="bilgi-tablo">${P.saatler.map(([s, d]) => `<tr><th>${s}</th><td>${d}</td></tr>`).join("")}</table>
         <h3 style="margin-top:16px">Kurallar</h3>${(p === "SAT" ? [] : Object.keys(KL.kurallar)).map((o) => `<details><summary style="cursor:pointer"><b>${esc(o)}</b></summary>${KL.kurallar[o] ? `<ol style="padding-left:18px;font-size:.92rem">${KL.kurallar[o].map((k) => `<li>${esc(k)}</li>`).join("")}</ol>` : "<p class='not'>Kurallar eklenecek.</p>"}</details>`).join("")}
         ${p === "SAT" ? "" : Object.keys(KE).map((o) => `<h3 style="margin-top:16px">${esc(o)}: kural etkinlikleri</h3><p class="not">Siyah-beyaz baskıya göre çizildi. Her kâğıt bir ya da iki kuralı çalıştırır.</p><ol class="kl-etk">${KE[o].map((e, i) => `<li><span>${esc(e.ad)} <small>kural ${e.kurallar.join(", ")}</small></span><button class="dugme kucuk" data-etk="${esc(o)}" data-no="${i}">Yazdır</button> <button class="dugme kucuk" data-etk="${esc(o)}" data-no="${i}" data-cv="1">Cevap</button></li>`).join("")}</ol><div class="dugmeler"><button class="dugme kucuk" data-etk-tum="${esc(o)}">10 kâğıdı yazdır</button><button class="dugme kucuk" data-etk-tum="${esc(o)}" data-cv="1">10 cevap anahtarı</button></div>`).join("")}
-        ${p === "SAT" ? `<p class="not">Satranç alıştırmalarının cevapları bilgisayarla tek tek doğrulandı. Videolar YouTube'da açılır; bağlantı dersi YouTube'da arar.</p><div class="dugmeler"><button class="dugme kucuk" data-kl-tum="SAT">12 haftanın alıştırmalarını yazdır</button></div>` : `<p class="not">Videolar kendi kural videolarımız (@ankara_zeka_ve_bilim_akademisi).</p>`}</div></div></div>`;
+        ${p === "SAT" ? `<p class="not">Satranç alıştırmalarının cevapları bilgisayarla tek tek doğrulandı. Videolar YouTube'da açılır; bağlantı dersi YouTube'da arar.</p><div class="dugmeler"><button class="dugme kucuk" data-kl-tum="SAT">12 haftanın alıştırmalarını yazdır</button></div>` : `<p class="not">Videolar kendi kural videolarımız (@ankara_zeka_ve_bilim_akademisi). Slaytlardaki kurallar: ${esc(KL.tazofKaynak)}.</p>`}</div></div></div>`;
     const S = (i) => kulupSlaytlari(p, i), baslik = `Çocuk Kulübü · ${P.ad}`;
     document.querySelectorAll("[data-kl-video]").forEach((b) => b.onclick = () => sunumAc(S(+b.dataset.klVideo), 0, baslik, true, true));
     document.querySelectorAll("[data-kl-sun]").forEach((b) => b.onclick = () => sunumAc(S(+b.dataset.klSun), 0, baslik));
@@ -1343,6 +1350,7 @@
     document.querySelectorAll("[data-kl-kagc]").forEach((b) => b.onclick = () => klBas(() => kulupKagit(b.dataset.klKagc, true)));
     document.querySelectorAll("[data-kl-kural]").forEach((b) => b.onclick = () => klBas(() => kuralKarti(b.dataset.klKural)));
     document.querySelectorAll("[data-kl-tum]").forEach((b) => b.onclick = () => klBas(() => KS.map((_, i) => satrancKagit(i, false)).join("")));
+    document.querySelectorAll("[data-hf-etk]").forEach((b) => b.onclick = () => bas(P.haftalar[+b.dataset.hfEtk].etk.map(([o, e]) => etkKagit(o, e, !!b.dataset.cv)).join(""), true));
     document.querySelectorAll("[data-etk]").forEach((b) => b.onclick = () => bas(etkKagit(b.dataset.etk, +b.dataset.no, !!b.dataset.cv), true));
     document.querySelectorAll("[data-etk-tum]").forEach((b) => b.onclick = () => bas(KE[b.dataset.etkTum].map((_, i) => etkKagit(b.dataset.etkTum, i, !!b.dataset.cv)).join(""), true));
     document.querySelectorAll("[data-kl-renk]").forEach((b) => b.onclick = () => {
@@ -1577,7 +1585,7 @@
       <div class="kart"><h2>2. Haftayı açın</h2><ol>
         <li><b>Kazanım ve Etkinlik:</b> Öğrenme çıktılarını tek dokunuşla kopyalayın (deftere, e-Okul'a). Büyük soru, giriş, ders ders akış, ölçme ve farklılaştırma burada.</li>
         <li><b>Günlük Plan:</b> Ders gününü seçin, yazdırın ya da “PDF olarak kaydet” deyin. Öğretmen, okul ve müdür adı Ayarlar'dan gelir. Tatil günleri listede çıkmaz.</li>
-        <li><b>Öğrenci Sunumu:</b> Tahtada tam ekran açılır. Ok tuşları ya da dokunma ile ilerlenir; ⏱ zamanlayıcı, 🎲 rastgele öğrenci ve ✎ tahtaya yazma sunumun içinde.</li>
+        <li><b>Öğrenci Sunumu:</b> Tahtada tam ekran açılır. Ok tuşları ya da dokunma ile ilerlenir; ⏱ zamanlayıcı ve ✎ tahtaya yazma sunumun içinde.</li>
         <li><b>Çalışma Kâğıtları:</b> Destek 3 için etkinlik kitabınızın ilgili hafta ekleri ayrı PDF olarak açılır. Destek 1'de MEB materyalindeki etkinlik sayfaları, materyali olmayan haftalarda ise plana göre hazırlanmış A4 çalışma kâğıtları basılır.</li>
         <li><b>Belirli Gün & AB:</b> O haftaya denk gelen MEB belirli günleri ile Avrupa ve dünya etkinlikleri.</li></ol></div>
       <div class="kart"><h2>3. Yazdırma ipucu</h2><p>Yazdır penceresinde <b>Kenar boşlukları: Yok</b> ve <b>Arka plan grafikleri: Açık</b> seçin; sayfa A4 dikey ayarlıdır.</p></div>
