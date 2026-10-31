@@ -2,7 +2,7 @@
 import gzip, io, os, sys, tarfile, time
 
 KAYNAK, CIKTI = sys.argv[1], sys.argv[2]
-AD, SURUM, HEDEF = "akil-oyunlari-tahtasi", "1.0.0", "opt/akil-oyunlari-tahtasi"
+AD, SURUM, HEDEF = "akil-oyunlari-tahtasi", "1.0.1", "opt/akil-oyunlari-tahtasi"
 ZAMAN = int(time.time())
 
 BASLAT = """#!/bin/sh

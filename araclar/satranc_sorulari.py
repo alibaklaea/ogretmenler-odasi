@@ -476,6 +476,69 @@ def s10():
 
 
 ETK = [f() for f in (s1, s2, s3, s4, s5, s6, s7, s8, s9, s10)]
+
+
+# ---------- 50 dokunmatik soru: taş adı, taşı bul, yanlış dizilişi düzelt ----------
+def yanlis(hatalar):
+    """Başlangıç dizilişine ('a', 'b') yer değiştirme ya da ('a', 'b', 't') taşıma uygular."""
+    t = chess.Board()
+    for h in hatalar:
+        A, B = chess.parse_square(h[0]), chess.parse_square(h[1]); pa, pb = t.piece_at(A), t.piece_at(B)
+        assert pa is not None, h
+        t.set_piece_at(B, pa)
+        if pb is not None: t.set_piece_at(A, pb)
+        else: t.remove_piece_at(A)
+    assert t.board_fen() != BASLA
+    return t.board_fen()
+
+
+def duzelt(metin, hatalar):
+    f = yanlis(hatalar); say = sum(chess.Board(f + " w - - 0 1").piece_at(x) != chess.Board().piece_at(x) for x in chess.SQUARES)
+    return {"fen": f, "metin": metin, "cevap": "Taşlar başlangıç dizilişindeki yerlerine döndü.", "do": {"duzelt": BASLA}, "fark": say}
+
+
+def elli_ad():
+    Q = []; b = chess.Board()
+    for k in ["a1", "b1", "c1", "d1", "e1", "h2", "g8", "f8", "d8", "e8"]:
+        p = b.piece_at(chess.parse_square(k)); ad_ = TAS[p.symbol().upper()]; r = "Beyaz" if p.color else "Siyah"
+        Q.append({"fen": BASLA, "vurgu": [k], "metin": f"{k} karesindeki taşın adı ne? Rengi ne?", "cevap": f"{r} {ad_.lower()}.", "do": {"alanlar": [alan("Taş", ["Şah", "Vezir", "Kale", "Fil", "At", "Piyon"], ad_), alan("Renk", ["Beyaz", "Siyah"], r)]}})
+    return {"ad": "Taşların adı", "konu": "Taşlar", "yonerge": "Sarı karedeki taşa bak. Adını ve rengini seç.", "sorular": Q, "birlikte": []}
+
+
+def elli_bul():
+    b = chess.Board(); Q = []
+    for yazi, tip, r in [("Beyaz şaha", chess.KING, True), ("Siyah şaha", chess.KING, False), ("Beyaz vezire", chess.QUEEN, True), ("Siyah vezire", chess.QUEEN, False), ("Beyaz fillere", chess.BISHOP, True), ("Siyah fillere", chess.BISHOP, False), ("Beyaz atlara", chess.KNIGHT, True), ("Siyah atlara", chess.KNIGHT, False), ("Beyaz kalelere", chess.ROOK, True), ("Siyah kalelere", chess.ROOK, False)]:
+        L = sorted(ad(x) for x in b.pieces(tip, r)); Q.append({"fen": BASLA, "metin": f"{yazi} dokun.", "cevap": " ve ".join(L), "do": {"kare": L}})
+    return {"ad": "Taşı bul", "konu": "Taşlar", "yonerge": "İstenen taşların hepsine dokun, sonra Doğru mu?'ya bas.", "sorular": Q, "birlikte": []}
+
+
+NASIL = "Taşa dokun, sonra doğru kareye dokun."
+
+
+def elli_sah():
+    H = [("Beyaz şah ile vezirin yeri karışmış. Düzelt!", [("d1", "e1")]), ("Siyah şah ile vezirin yeri karışmış. Düzelt!", [("d8", "e8")]), ("İki tarafta da şah ile vezirin yeri karışmış. Düzelt!", [("d1", "e1"), ("d8", "e8")]),
+         ("Beyaz vezir yerinde değil. Düzelt!", [("d1", "d3")]), ("Beyaz şah yerinde değil. Düzelt!", [("e1", "e3")]), ("Siyah vezir yerinde değil. Düzelt!", [("d8", "d6")]), ("Siyah şah yerinde değil. Düzelt!", [("e8", "e6")]),
+         ("Beyaz şah da vezir de yerinde değil. Düzelt!", [("d1", "d3"), ("e1", "e3")]), ("Siyah şah da vezir de yerinde değil. Düzelt!", [("d8", "c6"), ("e8", "f6")]), ("Beyazda şah ile vezir karışmış, siyah vezir de yerinde değil. Düzelt!", [("d1", "e1"), ("d8", "d6")])]
+    return {"ad": "Şah ve vezir yanlış yerde", "konu": "Düzeltme", "yonerge": NASIL + " Vezir kendi rengini sever: beyaz vezir d1, siyah vezir d8. Şah onun yanında durur.", "sorular": [duzelt(m, h) for m, h in H], "birlikte": []}
+
+
+def elli_fil():
+    H = [("Beyazın solunda at ile fil karışmış. Düzelt!", [("b1", "c1")]), ("Beyazın sağında at ile fil karışmış. Düzelt!", [("f1", "g1")]), ("Siyahta b8 ve c8 karışmış. Düzelt!", [("b8", "c8")]), ("Siyahta f8 ve g8 karışmış. Düzelt!", [("f8", "g8")]),
+         ("Beyazda iki yanda da at ile fil karışmış. Düzelt!", [("b1", "c1"), ("f1", "g1")]), ("Siyahta iki yanda da at ile fil karışmış. Düzelt!", [("b8", "c8"), ("f8", "g8")]), ("Dört yerde at ile fil karışmış. Düzelt!", [("b1", "c1"), ("f1", "g1"), ("b8", "c8"), ("f8", "g8")]),
+         ("Bir beyaz fil yerinde değil. Düzelt!", [("c1", "e3")]), ("Bir beyaz at yerinde değil. Düzelt!", [("b1", "c3")]), ("Bir siyah fil ve bir siyah at yerinde değil. Düzelt!", [("f8", "c5"), ("g8", "f6")])]
+    return {"ad": "Fil ve at yanlış yerde", "konu": "Düzeltme", "yonerge": NASIL + " Köşeden ortaya doğru sıra: kale, at, fil.", "sorular": [duzelt(m, h) for m, h in H], "birlikte": []}
+
+
+def elli_karma():
+    H = [("Beyazda kale ile at karışmış. Düzelt!", [("a1", "b1")]), ("Siyahta at ile kale karışmış. Düzelt!", [("g8", "h8")]), ("Beyazda kale ile fil karışmış. Düzelt!", [("h1", "f1")]), ("Beyazda fil ile vezir karışmış. Düzelt!", [("c1", "d1")]), ("Siyahta şah ile fil karışmış. Düzelt!", [("e8", "f8")]),
+         ("Bir beyaz piyon önde duruyor. Düzelt!", [("e2", "e4")]), ("İki siyah piyon önde duruyor. Düzelt!", [("d7", "d5"), ("e7", "e5")]), ("Üç yerde hata var: şah-vezir ve at-fil. Düzelt!", [("d1", "e1"), ("b1", "c1"), ("f8", "g8")]),
+         ("Beyazda sıra tamamen karışmış: kale, at, fil. Düzelt!", [("a1", "c1"), ("b1", "c1")]), ("Tahtayı tara: kaç hata varsa düzelt!", [("d8", "e8"), ("b1", "c1"), ("a2", "a3"), ("h1", "g1")])]
+    return {"ad": "Karışık düzeltme", "konu": "Düzeltme", "yonerge": NASIL + " Tahtayı başlangıç dizilişine getir.", "sorular": [duzelt(m, h) for m, h in H], "birlikte": []}
+
+
+ELLI = [elli_ad(), elli_bul(), elli_sah(), elli_fil(), elli_karma()]
+assert sum(len(e["sorular"]) for e in ELLI) == 50
+assert all(q["do"]["duzelt"] == BASLA for e in ELLI[2:] for q in e["sorular"])
 for e in ETK:
     assert len(e["sorular"]) == 6
     e["birlikte"] = []
@@ -486,4 +549,4 @@ for i, w in enumerate(H, 1):
     for q in w: chess.Board(tam(q["fen"]))
     print(i, " | ".join(q["cevap"][:26] for q in TAHTA[i - 1][:4]))
 pathlib.Path(__file__).resolve().parent.parent.joinpath("js", "kulup-satranc.js").write_text(
-    "// Otomatik üretildi: araclar/satranc_sorulari.py (cevaplar python-chess ile hesaplandı). Elle düzenlemeyin.\nwindow.KULUP_SATRANC = " + json.dumps(H, ensure_ascii=False) + ";\nwindow.KULUP_SATRANC_TAHTA = " + json.dumps(TAHTA, ensure_ascii=False) + ";\nwindow.KULUP_SATRANC_ETK = " + json.dumps(ETK, ensure_ascii=False) + ";\n", encoding="utf-8")
+    "// Otomatik üretildi: araclar/satranc_sorulari.py (cevaplar python-chess ile hesaplandı). Elle düzenlemeyin.\nwindow.KULUP_SATRANC = " + json.dumps(H, ensure_ascii=False) + ";\nwindow.KULUP_SATRANC_TAHTA = " + json.dumps(TAHTA, ensure_ascii=False) + ";\nwindow.KULUP_SATRANC_ETK = " + json.dumps(ETK, ensure_ascii=False) + ";\nwindow.KULUP_SATRANC_50 = " + json.dumps(ELLI, ensure_ascii=False) + ";\n", encoding="utf-8")
