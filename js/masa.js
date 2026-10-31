@@ -184,7 +184,7 @@
           <div class="dugmeler" style="margin-top:10px"><button class="dugme kucuk" id="pYedek">Yedeği indir</button><label class="dugme kucuk" style="cursor:pointer">Yedeği yükle<input type="file" id="pYukle" accept=".json" hidden></label><button class="dugme kucuk" id="pYayin">Yayın dosyasını indir</button></div></div></div></div>`;
     document.querySelectorAll("[data-t]").forEach((b) => b.onclick = () => location.hash = "projeler/" + b.dataset.t);
     [$("#pYeni"), $("#pYeni2")].forEach((b) => b && (b.onclick = () => projeFormu({ tur: T })));
-    if ($("#pPlan")) $("#pPlan").onclick = () => { const var_ = new Set(projeler.map((p) => p.id)); projeler = projeler.concat(JSON.parse(JSON.stringify(window.ETWINNING_PLAN || [])).filter((p) => !var_.has(p.id))); projeKaydet(); projelerSayfa("etwinning"); };
+    if ($("#pPlan")) $("#pPlan").onclick = () => { const P = JSON.parse(JSON.stringify(window.ETWINNING_PLAN || [])), var_ = new Set(projeler.map((p) => p.id)); projeler = projeler.map((p) => { const y = P.find((x) => x.id === p.id); return y ? { ...p, ad: y.ad, kategori: y.kategori } : p; }).concat(P.filter((p) => !var_.has(p.id))); projeKaydet(); projelerSayfa("etwinning"); };
     if ($("#pOdul")) $("#pOdul").onclick = () => { projeler = projeler.concat(odulProjesi()); projeKaydet(); projelerSayfa("etwinning"); };
     $("#sahne").querySelectorAll("[data-pd]").forEach((b) => b.onclick = () => projeFormu(projeler.find((p) => p.id === b.dataset.pd)));
     $("#sahne").querySelectorAll("[data-psil]").forEach((b) => b.onclick = () => {

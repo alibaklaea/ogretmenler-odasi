@@ -1,6 +1,6 @@
 // 2026-27 eTwinning proje planları: herkese açık kartlar. Kalite Etiketi metinleri burada tutulmaz.
 window.ETWINNING_PLAN = [
-  { id: "tw-siir", ad: "One Letter, a Thousand Poems for Peace (Bir Harf Bin Şiir)", tur: "etwinning", durum: "fikir",
+  { id: "tw-siir", ad: "From Sumud's Children to Hope's Children: One Letter, a Thousand Poems for Peace (Sumud'un Çocuklarından Umudun Çocuklarına: Bir Harf Bin Şiir)", tur: "etwinning", durum: "fikir",
     kategori: "Barış üçlemesi 2. ayak · Şiir · Okuryazarlık, çok dillilik, değerler · 8-11 yaş",
     ortaklar: "Kurucular: Türkiye + 1 Avrupa okulu · 3-4 ülke (önceki ortaklara da açık)",
     baslangic: "2026-11-09", sonTarih: "2027-07-01",
@@ -16,7 +16,7 @@ window.ETWINNING_PLAN = [
       "21 Mart: Dünya Şiir Günü çevrim içi şiir dinletisi; veli ve okul duyuruları; basın haberi",
       "Nisan: Son test, öğretmen ve öğrenci değerlendirmesi, analiz; şiirler Bir Renk Bin Resim projesine aktarılır",
       "Haziran: Kalite Etiketi başvurusu (son tarihi rehberden doğrula)"].map((ad) => ({ ad, tamam: false })) },
-  { id: "tw-resim", ad: "One Colour, a Thousand Paintings for Peace (Bir Renk Bin Resim)", tur: "etwinning", durum: "fikir",
+  { id: "tw-resim", ad: "From Sumud's Children to Hope's Children: One Colour, a Thousand Paintings for Peace (Sumud'un Çocuklarından Umudun Çocuklarına: Bir Renk Bin Resim)", tur: "etwinning", durum: "fikir",
     kategori: "Barış üçlemesi 3. ayak · Görsel sanatlar · Kültürel ifade, dijital beceri · 8-11 yaş",
     ortaklar: "Kurucular: Türkiye + 1 Avrupa okulu · 3-4 ülke (önceki ortaklara da açık)",
     baslangic: "2027-03-01", sonTarih: "2027-07-01",
