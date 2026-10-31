@@ -165,7 +165,7 @@ dialog menu .ana { background: var(--vurgu); color: #fff; border-color: var(--vu
 .sunum-araclar { display: flex; gap: 8px; }
 .sunum-araclar button, .sunum-alt button { width: 52px; height: 52px; border-radius: 14px; border: 1px solid var(--cizgi); background: #fff; font-size: 22px; }
 .sunum-araclar button.acik { background: var(--vurgu); color: #fff; }
-.slayt { padding: 2vh 7vw; display: flex; flex-direction: column; justify-content: center; overflow: auto; }
+.slayt { padding: 2vh 7vw; display: flex; flex-direction: column; justify-content: safe center; overflow: auto; }
 .slayt .etiket { font-size: clamp(16px, 1.6vw, 26px); font-weight: 700; color: var(--vurgu); letter-spacing: .12em; text-transform: uppercase; margin-bottom: 1.5vh; }
 .slayt h1 { font-size: clamp(36px, 5vw, 86px); line-height: 1.08; margin-bottom: 2vh; }
 .slayt h2 { font-size: clamp(30px, 3.6vw, 62px); line-height: 1.15; }
@@ -426,13 +426,16 @@ dialog#ayarlar { width: min(860px, 96vw); max-height: 94vh; }
 .kl-slayt.acik .cevap-t { display: block; }
 .kl-slayt.acik .soru-t { display: none; }
 /* akıllı tahta satrancı */
-.ct-tahta { position: relative; width: min(68vh, 92vw); flex: none; background: #fff; border-radius: 10px; }
+.ct-tahta { position: relative; width: min(calc(96vh - 225px), 54vw); min-width: 240px; flex: none; background: #fff; border-radius: 10px; margin-top: 6px; }
+.ct-tahta svg { overflow: visible; }
+.kl-slayt.ct { flex-wrap: nowrap; gap: 3vw; }
 .ct-iz { position: absolute; left: 4.72%; top: 0; width: 94.49%; height: 94.49%; display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); }
 .ct-k { all: unset; cursor: pointer; display: block; width: 100%; height: 100%; touch-action: manipulation; }
 .ct-k.sec { background: rgba(25, 113, 194, .45); box-shadow: inset 0 0 0 3px #1971c2; }
 .ct-k.dogru { background: rgba(43, 138, 62, .5); box-shadow: inset 0 0 0 3px #2b8a3e; }
 .ct-k.yanlis { background: rgba(224, 49, 49, .5); box-shadow: inset 0 0 0 3px #e03131; }
-.ct-yan { max-width: 42vw; }
+.ct-yan { max-width: 42vw; min-width: 0; }
+@media (orientation: portrait) { .kl-slayt.ct { flex-direction: column; } .ct-tahta { width: min(calc(100vw - 40px), 62vh); } .ct-yan { max-width: none; width: 100%; } .slayt:has(.ct) { padding-left: 12px; padding-right: 12px; } }
 .ct-yan h2 { max-width: none; }
 .ct-yan .dugme { font-size: 1.1rem; padding: 12px 18px; }
 .ct-secenek { margin-bottom: 12px; }
