@@ -793,6 +793,8 @@
     else if (yol === "araclar") araclarSayfa();
     else if (yol === "canva") canvaSayfa(a1);
     else if (yol === "kulup") kulupSayfa(a1 || "AKIL", a2);
+    else if (yol === "dokun") dokunSayfa(a1 && decodeURIComponent(a1), a2);
+    else if (yol === "dokun-serbest") { dokunSayfa(); serbest = null; sunumAc([serbestSlayt()], 0, "Satranç tahtası"); }
     else if (yol === "projeler") projelerSayfa(a1 || "teknofest");
     else if (yol === "odr") odrSayfa(a1);
     else if (yol === "ql") qlSayfa(a1);
@@ -1284,6 +1286,8 @@
       if (k === "*" || k === "y") h += `<text x="${x}" y="${y + 6}" text-anchor="middle" font-size="17" fill="${dolu ? "#fff" : "#000"}">★</text>`;
       if (k === "x") h += `<path d="M${x - 9} ${y - 9}L${x + 9} ${y + 9}M${x + 9} ${y - 9}L${x - 9} ${y + 9}" stroke="#fff" stroke-width="6"/><path d="M${x - 9} ${y - 9}L${x + 9} ${y + 9}M${x + 9} ${y - 9}L${x - 9} ${y + 9}" stroke="#000" stroke-width="3"/>`; });
     if (sol) for (let i = 0; i < n; i++) h += `<text x="${X(i)}" y="10" text-anchor="middle" font-size="10" font-weight="700">${"ABCDEFG"[i]}</text><text x="6" y="${Y(i) + 3.5}" text-anchor="middle" font-size="10" font-weight="700">${i + 1}</text>`;
+    if (t.dokun) t.s.forEach((s, r) => [...s].forEach((_, c) => { const x = X(c) - K / 2, y = Y(r) - K / 2;
+      h += `<rect class="dk-k" data-k="${"ABCDEFG"[c] + (r + 1)}" x="${x}" y="${y}" width="${K}" height="${K}" rx="4"/>`; }));
     return `<svg viewBox="0 0 ${sol + G + 2} ${sol + G + 2}" style="width:${boy};display:block;margin:auto">${h}</svg>`;
   }
   function etkKagit(oyun, i, cevap) {
@@ -1308,6 +1312,80 @@
     const ciz = (t, t2) => !t ? "" : kutu(t2 ? `<div class="kl-ikili">${etkTahta(t, "45%")}<span>→</span>${etkTahta(t2, "45%")}</div>` : etkTahta(t, "100%"));
     return sl("bilgi", `<div class="etiket">Birlikte yapalım · ${esc(o)}: ${esc(E.ad)} · ${j + 1}/${E.birlikte.length}</div><div class="kl-slayt"><div class="soru-t">${ciz(q.tahta, q.tahta2)}</div>${q.tahtaC || q.tahta2C ? `<div class="cevap-t">${ciz(q.tahtaC || q.tahta, q.tahta2C)}</div>` : ""}
       <div><h2>${esc(q.metin)}</h2><details ontoggle="this.closest('.kl-slayt').classList.toggle('acik',this.open)"><summary>Cevabı göster</summary><p><b>${esc(q.cevap)}</b></p></details></div></div>`, q.metin);
+  }
+  // dokunarak etkinlik: kâğıt gerekmez, cevaplar q.do'dan denetlenir
+  const DKO = () => { const L = KT.map((Q, i) => ({ ad: `${i + 1}. hafta: ${KL.programlar.SAT.haftalar[i].ad}`, yonerge: "", sorular: Q.map((q) => ({ ...q, metin: q.soru, do: { kare: q.isaret, alanlar: q.secenek ? [{ ad: "Cevap", secenek: q.secenek, dogru: q.dogru }] : [] } })) }));
+    return { Pentago: KE.Pentago, "Küre": KE["Küre"], "Satranç": KE["Satranç"], "Satranç Haftaları": L }; };
+  const dkDurum = JSON.parse(localStorage.getItem("masa.dokun") || "{}");
+  function dokunSayfa(oyun, no) {
+    const O = DKO();
+    if (oyun && O[oyun] && no !== undefined && no !== "" && O[oyun][+no]) return dokunEtkinlik(oyun, +no);
+    if (oyun && O[oyun]) {
+      $("#sahne").innerHTML = `<div class="ust-baslik"><div><h1>${esc(oyun)}</h1><p>Bir etkinliğe dokun.</p></div><div class="dugmeler"><a class="dugme" href="#dokun">‹ Oyunlar</a></div></div>
+        <div class="dk-izgara">${O[oyun].map((e, i) => { const d = dkDurum[oyun + i]; return `<a class="dk-kart${d ? " bitti" : ""}" href="#dokun/${encodeURIComponent(oyun)}/${i}"><b>${i + 1}</b><span>${esc(e.ad)}</span><small>${d ? `✓ ${d}` : `${dkSorular(e).length} soru`}</small></a>`; }).join("")}</div>`;
+      return;
+    }
+    $("#sahne").innerHTML = `<div class="ust-baslik"><div><h1>Dokunarak Etkinlik</h1><p>Kâğıt yok, internet yok: öğrenci tahtaya gelir, dokunarak çözer, Doğru mu? ile kontrol eder.</p></div></div>
+      <div class="dk-izgara buyuk">${Object.keys(O).map((o) => `<a class="dk-kart" href="#dokun/${encodeURIComponent(o)}"><b>${{ Pentago: "◉", "Küre": "●", "Satranç": "♞", "Satranç Haftaları": "♟" }[o]}</b><span>${esc(o)}</span><small>${O[o].length} etkinlik</small></a>`).join("")}
+      <a class="dk-kart" href="#dokun-serbest"><b>♜</b><span>Serbest satranç tahtası</span><small>Taşları elle oynat</small></a></div>`;
+  }
+  function dkSorular(E) { // doğru-yanlış tablosu da dokunmatik soruya dönüşür
+    const dil = (m) => m.replace("Halka çiz.", "Karelere dokun.").replace(" Çarpı koy.", " Taşlara dokun.").replace(" Beşliyi çiz.", "").replace(" Çizerek bul.", "").replace("Bilyeleri sağdaki boş tablaya çiz.", "Sağdaki tabloda çukura dokun: bir dokunuş siyah, iki beyaz, üç boş.").replace("karesine yıldız çiz.", "karesine dokun.").replace("Yıldız çiz.", "Köşeye dokun.").replace("Halka çiz, adını yaz.", "Karelere dokun.").replace("adını yaz", "").replace("Boş kareyi bul, eksik taşı yaz.", "Boş karelere dokun.");
+    return [...E.sorular.map((q) => ({ ...q, metin: dil(q.metin || q.soru) })), ...(E.dy || []).map(([m, d]) => ({ metin: `Doğru mu, yanlış mı? ${m}`, cevap: d ? "Doğru" : "Yanlış", do: { alanlar: [{ ad: "Cevap", secenek: ["Doğru", "Yanlış"], dogru: d ? "Doğru" : "Yanlış" }] } }))];
+  }
+  function dokunEtkinlik(oyun, no) {
+    const E = DKO()[oyun][no], Q = dkSorular(E); let i = 0, ilk = 0, hata = false;
+    function tahtaCiz(q) {
+      if (q.fen) return `<div class="ct-tahta">${satrancTahta(q, false)}${ctIzgara()}</div>`;
+      if (q.tahta2) return `<div class="dk-cift"><div class="kl-beyaz">${etkTahta(q.tahta, "100%")}</div><span>→</span><div class="kl-beyaz dk-cizim">${dkCizim(q)}</div></div>`;
+      if (q.tahta) return `<div class="kl-beyaz dk-tahta">${etkTahta({ ...q.tahta, dokun: !!(q.do.kare) }, "100%")}</div>`;
+      return "";
+    }
+    const dkCizim = (q) => `<div class="dk-c3">${[0, 1, 2].flatMap((r) => [0, 1, 2].map((c) => `<button class="dk-c" data-c="${r}${c}"></button>`)).join("")}</div>`;
+    function ciz() {
+      const q = Q[i], A = q.do || {}; hata = false;
+      $("#sahne").innerHTML = `<div class="dk-ust"><a class="dugme" href="#dokun/${encodeURIComponent(oyun)}">‹ Liste</a><b>${esc(oyun)}: ${esc(E.ad)}</b><span>Soru ${i + 1} / ${Q.length}</span></div>
+        <div class="dk-alan${q.tahta || q.fen ? "" : " yazi"}">${tahtaCiz(q)}<div class="dk-yan"><h2>${esc(q.metin)}</h2>${E.yonerge && i === 0 ? `<p class="not">${esc(E.yonerge)}</p>` : ""}
+          ${(A.alanlar || []).map((a, j) => `<div class="dk-grup" data-g="${j}">${A.alanlar.length > 1 ? `<small>${esc(a.ad)}</small>` : ""}<div>${a.secenek.map((x) => `<button class="dugme" data-v="${esc(x)}">${esc(x)}</button>`).join("")}</div></div>`).join("")}
+          ${A.kare && !A.kare.length ? `<p class="not">Alınan taş yoksa hiçbir yere dokunma, Doğru mu?'ya bas.</p>` : ""}
+          <div class="dk-sonuc"></div><p class="dk-cv" hidden><b>${esc(q.cevap)}</b></p>
+          <div class="dugmeler"><button class="dugme ana" data-d="kontrol">Doğru mu?</button><button class="dugme" data-d="cevap">Cevabı göster</button><button class="dugme" data-d="temizle">Temizle</button><button class="dugme" data-d="sonraki">Sonraki ›</button></div></div></div>`;
+    }
+    function bitir() {
+      dkDurum[oyun + no] = `${ilk}/${Q.length}`; localStorage.setItem("masa.dokun", JSON.stringify(dkDurum));
+      $("#sahne").innerHTML = `<div class="dk-son"><h1>Aferin!</h1><p>${Q.length} sorunun ${ilk} tanesini ilk denemede bildiniz.</p><div class="dugmeler"><a class="dugme ana" href="#dokun/${encodeURIComponent(oyun)}">Etkinlik listesi</a>${DKO()[oyun][no + 1] ? `<a class="dugme" href="#dokun/${encodeURIComponent(oyun)}/${no + 1}">Sonraki etkinlik ›</a>` : ""}</div></div>`;
+    }
+    function dogruKareler(q) { return (q.do.kare || []); }
+    function kontrol() {
+      const q = Q[i], A = q.do, s = $(".dk-sonuc"); let tamam = true;
+      const yaz = (m, c) => { s.textContent = m; s.className = "dk-sonuc " + c; };
+      if (A.cizim) { const dk = A.cizim.join(""), h = [...document.querySelectorAll(".dk-c")].map((b) => b.dataset.t || ".").join(""); tamam = dk === h; }
+      if (A.kare) { const sec = [...document.querySelectorAll(".dk-k.sec,.ct-k.sec")].map((b) => b.dataset.k), dk = dogruKareler(q);
+        document.querySelectorAll(".dk-k.sec,.ct-k.sec").forEach((b) => { b.classList.toggle("yanlis", !dk.includes(b.dataset.k)); });
+        if (sec.length !== dk.length || sec.some((x) => !dk.includes(x))) tamam = false; }
+      for (const [j, a] of (A.alanlar || []).entries()) { const b = document.querySelector(`[data-g="${j}"] .ana`); if (!b) return yaz("Önce cevabını seç.", "kotu"); if (b.dataset.v !== a.dogru) tamam = false; }
+      if (tamam) { if (!hata) ilk++; hata = true; document.querySelectorAll(".dk-k.sec,.ct-k.sec").forEach((b) => { b.classList.remove("sec"); b.classList.add("dogru"); }); yaz("✓ Doğru!", "iyi"); }
+      else { hata = true; yaz("✗ Tekrar dene.", "kotu"); }
+    }
+    function goster() {
+      const q = Q[i], A = q.do; hata = true; $(".dk-cv").hidden = false;
+      if (A.kare) { document.querySelectorAll(".dk-k,.ct-k").forEach((b) => { b.classList.remove("sec", "yanlis"); b.classList.toggle("dogru", A.kare.includes(b.dataset.k)); }); }
+      (A.alanlar || []).forEach((a, j) => document.querySelectorAll(`[data-g="${j}"] button`).forEach((b) => b.classList.toggle("ana", b.dataset.v === a.dogru)));
+      if (A.cizim) document.querySelectorAll(".dk-c").forEach((b) => { const t = A.cizim[+b.dataset.c[0]][+b.dataset.c[1]]; dkTas(b, t === "." ? "" : t); });
+    }
+    const dkTas = (b, t) => { b.dataset.t = t; b.className = "dk-c" + (t ? " t" + t : ""); };
+    ciz();
+    $("#sahne").onclick = (e) => {
+      if (!location.hash.startsWith("#dokun/")) return;
+      const t = e.target, d = t.dataset.d;
+      if (t.classList.contains("dk-k") || t.classList.contains("ct-k")) { t.classList.remove("yanlis", "dogru"); t.classList.toggle("sec"); $(".dk-sonuc").textContent = ""; return; }
+      if (t.classList.contains("dk-c")) { dkTas(t, { "": "S", S: "B", B: "" }[t.dataset.t || ""]); return; }
+      if (t.dataset.v !== undefined) { t.parentNode.querySelectorAll("button").forEach((b) => b.classList.toggle("ana", b === t)); $(".dk-sonuc").textContent = ""; return; }
+      if (d === "kontrol") kontrol();
+      if (d === "cevap") goster();
+      if (d === "temizle") ciz();
+      if (d === "sonraki") { if (++i < Q.length) ciz(); else bitir(); }
+    };
   }
   // akıllı tahta satrancı: öğrenci karelere dokunur, kenardaki düğmeyle kontrol edilir
   const KARELER = [..."87654321"].flatMap((r) => [..."abcdefgh"].map((c) => c + r));

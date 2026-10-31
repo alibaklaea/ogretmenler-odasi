@@ -388,21 +388,30 @@ for i, (w, t) in enumerate(zip(H, TAHTA)):
 
 # ---------- 1. hafta etkinlik sayfaları (takımsız, siyah-beyaz): her sayfa tek konu, 6 soru ----------
 BOS = "8/8/8/8/8/8/8/8"
+HARFLER, SAYILAR = list("abcdefgh"), list("12345678")
+
+
+def alan(ad_, secenek, dogru):
+    assert dogru in secenek, (ad_, dogru)
+    return {"ad": ad_, "secenek": secenek, "dogru": dogru}
+
+
+def renk_alan(k): return alan("Renk", ["Açık", "Koyu"], renk(k))
 
 
 def renk(k): return "Koyu" if chess.BB_SQUARES[chess.parse_square(k)] & chess.BB_DARK_SQUARES else "Açık"
 
 
 def s1():
-    Q = [{"fen": BOS, "soru": "Tahtayı say: Bir yatayda kaç kare var? Toplam kaç kare var?", "alt": "Yatayda: ....  Toplam: ....", "cevap": "Bir yatayda 8, toplam 64 kare."},
-         {"fen": BOS, "soru": "Sağ alt köşedeki kare hangi renk? Yıldız çiz.", "alt": "Açık  /  Koyu", "cevap": f"{renk('h1')} renk (h1).", "isaret": ["h1"]}]
-    for k in ["e4", "d4", "a8", "g7"]: Q.append({"fen": BOS, "soru": "Yıldızlı kare açık mı, koyu mu?", "yildiz": [k], "alt": "Açık  /  Koyu", "cevap": f"{renk(k)} ({k})."})
+    Q = [{"fen": BOS, "soru": "Tahtayı say: Bir yatayda kaç kare var? Toplam kaç kare var?", "alt": "Yatayda: ....  Toplam: ....", "cevap": "Bir yatayda 8, toplam 64 kare.", "do": {"alanlar": [alan("Yatayda", ["6", "8", "10"], "8"), alan("Toplam", ["36", "49", "64", "81"], "64")]}},
+         {"fen": BOS, "soru": "Sağ alt köşedeki kare hangi renk? Yıldız çiz.", "alt": "Açık  /  Koyu", "cevap": f"{renk('h1')} renk (h1).", "isaret": ["h1"], "do": {"kare": ["h1"], "alanlar": [renk_alan("h1")]}}]
+    for k in ["e4", "d4", "a8", "g7"]: Q.append({"fen": BOS, "soru": "Yıldızlı kare açık mı, koyu mu?", "yildiz": [k], "alt": "Açık  /  Koyu", "cevap": f"{renk(k)} ({k}).", "do": {"alanlar": [renk_alan(k)]}})
     return {"ad": "Tahtayı tanı", "konu": "64 kare", "yonerge": "Satranç tahtasında 64 kare vardır. Kareler açık ve koyu sırayla dizilir. Tahta konurken sağ alt köşe açık renk olur.", "sorular": Q}
 
 
 def s2():
     Q = []
-    for k in ["c6", "f2", "a5", "h3", "d8", "e1"]: Q.append({"fen": BOS, "soru": "Yıldızlı kare hangi dikeyde, hangi yatayda?", "yildiz": [k], "alt": "Dikey: ....  Yatay: ....", "cevap": f"{k[0]} dikeyi, {k[1]}. yatay."})
+    for k in ["c6", "f2", "a5", "h3", "d8", "e1"]: Q.append({"fen": BOS, "soru": "Yıldızlı kare hangi dikeyde, hangi yatayda?", "yildiz": [k], "alt": "Dikey: ....  Yatay: ....", "cevap": f"{k[0]} dikeyi, {k[1]}. yatay.", "do": {"alanlar": [alan("Dikey", HARFLER, k[0]), alan("Yatay", SAYILAR, k[1])]}})
     return {"ad": "Yatay ve dikey", "konu": "Yatay, dikey", "yonerge": "Dikeyler harfle (a-h), yataylar sayıyla (1-8) gösterilir. Dikey yukarı aşağı, yatay sağa sola uzanır.", "sorular": Q}
 
 
@@ -410,40 +419,40 @@ def s3():
     Q = []
     for a, b in [("a1", "d4"), ("c1", "h6"), ("b2", "b6"), ("h1", "e4"), ("a3", "c6"), ("d1", "a4")]:
         A, B = chess.parse_square(a), chess.parse_square(b); ok = abs(chess.square_file(A) - chess.square_file(B)) == abs(chess.square_rank(A) - chess.square_rank(B))
-        Q.append({"fen": BOS, "soru": "Yıldızlı iki kare aynı çaprazda mı? Çizerek bul.", "yildiz": [a, b], "alt": "Evet  /  Hayır", "cevap": "Evet, aynı çaprazda." if ok else "Hayır, aynı çaprazda değil."})
+        Q.append({"fen": BOS, "soru": "Yıldızlı iki kare aynı çaprazda mı? Çizerek bul.", "yildiz": [a, b], "alt": "Evet  /  Hayır", "cevap": "Evet, aynı çaprazda." if ok else "Hayır, aynı çaprazda değil.", "do": {"alanlar": [alan("Aynı çaprazda mı?", ["Evet", "Hayır"], "Evet" if ok else "Hayır")]}})
     assert 2 <= sum(q["cevap"].startswith("Evet") for q in Q) <= 4
     return {"ad": "Çapraz çizgiler", "konu": "Çapraz", "yonerge": "Çapraz çizgi köşeden köşeye gider. Çapraz boyunca bütün kareler aynı renktir.", "sorular": Q}
 
 
 def s4():
-    Q = [{"fen": BOS, "soru": "Yıldızlı karenin adı ne?", "yildiz": [k], "alt": "Karenin adı: ........", "cevap": k} for k in ["b3", "g5", "e7", "a2", "h8", "d6"]]
+    Q = [{"fen": BOS, "soru": "Yıldızlı karenin adı ne?", "yildiz": [k], "alt": "Karenin adı: ........", "cevap": k, "do": {"alanlar": [alan("Harf", HARFLER, k[0]), alan("Sayı", SAYILAR, k[1])]}} for k in ["b3", "g5", "e7", "a2", "h8", "d6"]]
     return {"ad": "Karenin adı", "konu": "Koordinat", "yonerge": "Karenin adı önce harf, sonra sayı ile okunur: e4 gibi.", "sorular": Q}
 
 
 def s5():
-    Q = [{"fen": BOS, "soru": f"{k} karesine yıldız çiz. Rengi ne?", "alt": "Açık  /  Koyu", "cevap": f"{k}: {renk(k).lower()} kare.", "isaret": [k]} for k in ["f3", "c7", "h5", "a6", "e2", "b8"]]
+    Q = [{"fen": BOS, "soru": f"{k} karesine yıldız çiz. Rengi ne?", "alt": "Açık  /  Koyu", "cevap": f"{k}: {renk(k).lower()} kare.", "isaret": [k], "do": {"kare": [k], "alanlar": [renk_alan(k)]}} for k in ["f3", "c7", "h5", "a6", "e2", "b8"]]
     return {"ad": "Kareyi bul", "konu": "Koordinat", "yonerge": "Önce harfi bul, parmağınla yukarı çık, sayıda dur.", "sorular": Q}
 
 
 def s6():
     Q = []
     for k, t in [("d4", "R"), ("e5", "n"), ("c3", "B"), ("f6", "q"), ("b4", "K"), ("g5", "p")]:
-        Q.append({"fen": konum({k: t}), "soru": f"{k} karesindeki taşın adı ne? Hangi renk?", "alt": "Taş: ............  Renk: ........", "cevap": f"{'Beyaz' if t.isupper() else 'Siyah'} {TAS[t.upper()].lower()}."})
+        Q.append({"fen": konum({k: t}), "soru": f"{k} karesindeki taşın adı ne? Hangi renk?", "alt": "Taş: ............  Renk: ........", "cevap": f"{'Beyaz' if t.isupper() else 'Siyah'} {TAS[t.upper()].lower()}.", "do": {"alanlar": [alan("Taş", ["Şah", "Vezir", "Kale", "Fil", "At", "Piyon"], TAS[t.upper()]), alan("Renk", ["Beyaz", "Siyah"], "Beyaz" if t.isupper() else "Siyah")]}})
     return {"ad": "Taşları tanı", "konu": "Taşlar", "yonerge": "Satrançta altı çeşit taş vardır: şah, vezir, kale, fil, at ve piyon.", "sorular": Q}
 
 
 def s7():
     b = chess.Board(); Q = []
     for yazi, tip, r in [("Beyazın kaç piyonu var?", chess.PAWN, chess.WHITE), ("Siyahın kaç atı var?", chess.KNIGHT, chess.BLACK), ("Beyazın kaç kalesi var?", chess.ROOK, chess.WHITE), ("Siyahın kaç veziri var?", chess.QUEEN, chess.BLACK), ("Beyazın kaç fili var?", chess.BISHOP, chess.WHITE)]:
-        n = len(b.pieces(tip, r)); Q.append({"fen": BASLA, "soru": yazi, "alt": "Sayı: ........", "cevap": str(n)})
-    Q.append({"fen": BASLA, "soru": "Tahtada toplam kaç taş var?", "alt": "Sayı: ........", "cevap": str(len(b.piece_map()))})
+        n = len(b.pieces(tip, r)); Q.append({"fen": BASLA, "soru": yazi, "alt": "Sayı: ........", "cevap": str(n), "do": {"alanlar": [alan("Sayı", ["1", "2", "4", "8"], str(n))]}})
+    Q.append({"fen": BASLA, "soru": "Tahtada toplam kaç taş var?", "alt": "Sayı: ........", "cevap": str(len(b.piece_map())), "do": {"alanlar": [alan("Sayı", ["16", "24", "32", "64"], str(len(b.piece_map())))]}})
     return {"ad": "Taşları say", "konu": "Taşlar", "yonerge": "Oyun başında iki tarafın da aynı taşları vardır. Tahtaya bak, say ve yaz.", "sorular": Q}
 
 
 def s8():
     b = chess.Board(); Q = []
     for yazi, tip, r in [("Beyaz kaleler", chess.ROOK, chess.WHITE), ("Siyah atlar", chess.KNIGHT, chess.BLACK), ("Beyaz filler", chess.BISHOP, chess.WHITE), ("Siyah vezir", chess.QUEEN, chess.BLACK), ("Beyaz şah", chess.KING, chess.WHITE), ("Siyah kaleler", chess.ROOK, chess.BLACK)]:
-        L = sorted(ad(x) for x in b.pieces(tip, r)); Q.append({"fen": BASLA, "soru": f"{yazi} hangi karede? Halka çiz, adını yaz.", "alt": "Kare: ................", "cevap": " ve ".join(L), "isaret": L})
+        L = sorted(ad(x) for x in b.pieces(tip, r)); Q.append({"fen": BASLA, "soru": f"{yazi} hangi karede? Halka çiz, adını yaz.", "alt": "Kare: ................", "cevap": " ve ".join(L), "isaret": L, "do": {"kare": L}})
     return {"ad": "Taşlar nerede?", "konu": "Başlangıç dizilişi", "yonerge": "Köşelerde kaleler, yanlarında atlar, sonra filler durur. Ortada vezir ve şah vardır, piyonlar önde dizilir.", "sorular": Q}
 
 
@@ -452,7 +461,7 @@ def s9():
     for a, b_ in [("a1", "b1"), ("c1", "d1"), ("e1", "d1"), ("f8", "g8"), ("d8", "e8"), ("h8", "g8")]:
         t = chess.Board(); A, B = chess.parse_square(a), chess.parse_square(b_); pa, pb = t.piece_at(A), t.piece_at(B); t.set_piece_at(A, pb); t.set_piece_at(B, pa)
         fark = sorted(ad(x) for x in chess.SQUARES if t.piece_at(x) != chess.Board().piece_at(x)); assert len(fark) == 2
-        Q.append({"fen": t.board_fen(), "soru": "İki taş yer değiştirmiş. Hangi kareler yanlış?", "alt": "Kareler: ........ ve ........", "cevap": f"{fark[0]} ve {fark[1]}", "isaret": fark})
+        Q.append({"fen": t.board_fen(), "soru": "İki taş yer değiştirmiş. Hangi kareler yanlış?", "alt": "Kareler: ........ ve ........", "cevap": f"{fark[0]} ve {fark[1]}", "isaret": fark, "do": {"kare": fark}})
     return {"ad": "Yanlış dizilişi bul", "konu": "Başlangıç dizilişi", "yonerge": "Vezir kendi rengini sever: beyaz vezir d1'de, siyah vezir d8'de durur. Şah onun yanındadır.", "sorular": Q}
 
 
@@ -462,7 +471,7 @@ def s10():
         t = chess.Board(); ad_ = []
         for k in L:
             p = t.piece_at(chess.parse_square(k)); ad_.append(f"{k}: {'beyaz' if p.color else 'siyah'} {TAS[p.symbol().upper()].lower()}"); t.remove_piece_at(chess.parse_square(k))
-        Q.append({"fen": t.board_fen(), "soru": f"{len(L)} taş eksik. Boş kareyi bul, eksik taşı yaz.", "alt": "Eksik: ................................", "cevap": ", ".join(ad_), "isaret": L})
+        Q.append({"fen": t.board_fen(), "soru": f"{len(L)} taş eksik. Boş kareyi bul, eksik taşı yaz.", "alt": "Eksik: ................................", "cevap": ", ".join(ad_), "isaret": L, "do": {"kare": L}})
     return {"ad": "Dizilişi tamamla", "konu": "Başlangıç dizilişi", "yonerge": "Tahtayı dikkatle tara. Başlangıç dizilişinde olması gereken taşlardan bazıları yok.", "sorular": Q}
 
 
@@ -470,6 +479,7 @@ ETK = [f() for f in (s1, s2, s3, s4, s5, s6, s7, s8, s9, s10)]
 for e in ETK:
     assert len(e["sorular"]) == 6
     e["birlikte"] = []
+    assert all("do" in q for q in e["sorular"]), e["ad"]
     print(e["ad"], "|", " | ".join(q["cevap"][:22] for q in e["sorular"]))
 
 for i, w in enumerate(H, 1):

@@ -8,6 +8,13 @@ const rnd = (n) => { tohum = (tohum * 1664525 + 1013904223) >>> 0; return Math.f
 const yon = (d) => (d === 1 ? 'saat yönünde ↻' : 'saat yönünün tersine ↺');
 const birak = (kosul, not) => { if (!kosul) throw new Error('SORU REDDEDİLDİ: ' + not); };
 
+// dokunmatik cevap: do = { kare: [...], alanlar: [{ ad, secenek, dogru }], cizim: [...] }
+const alan = (ad, secenek, dogru) => { birak(secenek.includes(dogru), `alan ${ad}: ${dogru}`); return { ad, secenek, dogru }; };
+const EH = (d) => alan('Cevap', ['Evet', 'Hayır'], d ? 'Evet' : 'Hayır');
+const adSec = (i) => { const c = i % 6, r = Math.floor(i / 6), Y = [i, r * 6 + (c + 1) % 6, ((r + 1) % 6) * 6 + c, ((r + 2) % 6) * 6 + (c + 3) % 6]; return Y.map(cellName).sort(); };
+const tablaAlan = (d) => alan('Tabla', QNAME, d);
+const yonAlan = (d) => alan('Yön', ['↻ saat yönünde', '↺ tersine'], d === 1 ? '↻ saat yönünde' : '↺ tersine');
+
 // ---------- Pentago ----------
 const PH = { 0: '.', 1: 'S', 2: 'B' };
 const satirlar = (b) => [0, 1, 2, 3, 4, 5].map((r) => b.slice(r * 6, r * 6 + 6).map((x) => PH[x]).join(''));
@@ -29,13 +36,13 @@ function dolgu(b, n, yasak) { // dengeyi bozmadan rastgele taş serper
 }
 
 function p1(L = ['B2', 'E2', 'B5', 'F6']) {
-  const sorular = [{ metin: 'Tahtayı say: Kaç çukur var? Kaç tabla var?', tahta: pt(Array(36).fill(0)), alt: 'Çukur: ........  Tabla: ........', cevap: '36 çukur, 4 tabla.' }];
+  const sorular = [{ metin: 'Tahtayı say: Kaç çukur var? Kaç tabla var?', tahta: pt(Array(36).fill(0)), alt: 'Çukur: ........  Tabla: ........', cevap: '36 çukur, 4 tabla.', do: { alanlar: [alan('Çukur', ['16', '25', '36', '64'], '36'), alan('Tabla', ['2', '4', '6', '9'], '4')] } }];
   for (const ad of L) {
     const i = hucreNo(ad);
-    sorular.push({ metin: 'Yıldızlı çukurun adı ne? Hangi tablada?', tahta: pt(Array(36).fill(0), [[i, '*']]), alt: 'Adı: ......  Tabla: ....................', cevap: `${ad}, ${tablaAd(i)} tabla.` });
+    sorular.push({ metin: 'Yıldızlı çukurun adı ne? Hangi tablada?', tahta: pt(Array(36).fill(0), [[i, '*']]), alt: 'Adı: ......  Tabla: ....................', cevap: `${ad}, ${tablaAd(i)} tabla.`, do: { alanlar: [alan('Adı', adSec(i), ad), tablaAlan(tablaAd(i))] } });
   }
   const i = hucreNo('C4');
-  sorular.push({ metin: 'C4 çukuruna halka çiz. Hangi tablada?', tahta: pt(Array(36).fill(0)), tahtaC: pt(Array(36).fill(0), [[i, 'o']]), alt: 'Tabla: ....................', cevap: `C4, ${tablaAd(i)} tabla.` });
+  sorular.push({ metin: 'C4 çukuruna halka çiz. Hangi tablada?', tahta: pt(Array(36).fill(0)), tahtaC: pt(Array(36).fill(0), [[i, 'o']]), alt: 'Tabla: ....................', cevap: `C4, ${tablaAd(i)} tabla.`, do: { kare: ['C4'], alanlar: [tablaAlan(tablaAd(i))] } });
   return { ad: 'Tablalar ve çukurlar', kurallar: [1], yonerge: 'Tahta 6 × 6 ve dört 3 × 3 tabladan oluşur. Çukurun adı önce harf, sonra sayı ile okunur: C4 gibi.', sorular };
 }
 function p2(L = [[3, 3], [4, 3], [5, 4], [6, 6], [2, 1], [7, 7]]) {
@@ -44,14 +51,14 @@ function p2(L = [[3, 3], [4, 3], [5, 4], [6, 6], [2, 1], [7, 7]]) {
     const t = Array(36).fill(0);
     let k = 0; while (k < s + b) { const i = rnd(36); if (t[i]) continue; t[i] = k < s ? 1 : 2; k++; }
     birak(!has5(t, 1) && !has5(t, 2), 'p2 beşli');
-    sorular.push({ metin: 'Siyah ve beyaz bilyeleri say. Sıra kimde?', tahta: pt(t), alt: 'Siyah: ....  Beyaz: ....  Sıra: ............', cevap: `Siyah ${s}, beyaz ${b}. Sıra ${s === b ? 'siyahta: sayılar eşit, siyah başlar' : 'beyazda: siyah bir bilye önde'}.` });
+    sorular.push({ metin: 'Siyah ve beyaz bilyeleri say. Sıra kimde?', tahta: pt(t), alt: 'Siyah: ....  Beyaz: ....  Sıra: ............', cevap: `Siyah ${s}, beyaz ${b}. Sıra ${s === b ? 'siyahta: sayılar eşit, siyah başlar' : 'beyazda: siyah bir bilye önde'}.`, do: { alanlar: [alan('Sıra kimde?', ['Siyah', 'Beyaz'], s === b ? 'Siyah' : 'Beyaz')] } });
   }
   return { ad: 'Sıra kimde?', kurallar: [2, 3], yonerge: 'Siyah başlar, sonra sırayla oynanır. Bilye sayılarına bakarak sıranın kimde olduğunu bulabilirsin.', sorular };
 }
 const tablaDon = (s, d) => { const r = [[], [], []]; for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) { if (d === 1) r[j][2 - i] = s[i][j]; else r[2 - j][i] = s[i][j]; } return r.map((x) => x.join('')); };
 function p3(L = [[['SS.', '..B', 'S..'], 1], [['S..', 'S..', 'B.B'], 1], [['.B.', 'S.S', '...'], -1], [['SSB', '...', '...'], -1], [['S.B', '.B.', '..S'], 1], [['BS.', 'S..', '..B'], -1]]) {
   const sorular = L.map(([s, d]) => ({
-    metin: `Tablayı ${yon(d)} 90° çevir. Bilyeleri sağdaki boş tablaya çiz.`, tahta: { tur: 'p3', s }, tahta2: { tur: 'p3', s: ['...', '...', '...'] }, tahta2C: { tur: 'p3', s: tablaDon(s, d) }, cevap: 'Doğru çizim yanda.' }));
+    metin: `Tablayı ${yon(d)} 90° çevir. Bilyeleri sağdaki boş tablaya çiz.`, tahta: { tur: 'p3', s }, tahta2: { tur: 'p3', s: ['...', '...', '...'] }, tahta2C: { tur: 'p3', s: tablaDon(s, d) }, cevap: 'Doğru çizim yanda.', do: { cizim: tablaDon(s, d) } }));
   return { ad: 'Tablayı çevir', kurallar: [3], yonerge: 'Bir tabla 90° döner: saat yönünde ↻ ya da tersine ↺. Köşedeki bilye köşede, kenardaki kenarda kalır; ortadaki yerinden oynamaz.', sorular };
 }
 function p4(L = [['A1', 0, 1], ['C1', 0, -1], ['B3', 0, 1], ['D2', 1, 1], ['F4', 3, -1], ['B6', 2, -1]]) {
@@ -61,7 +68,7 @@ function p4(L = [['A1', 0, 1], ['C1', 0, -1], ['B3', 0, 1], ['D2', 1, 1], ['F4',
     t[i] = 1; dolgu(t, 5, new Set([i]));
     const iz = t.map((_, k) => k === i ? 9 : 0), son = rotate(iz, q, d).indexOf(9);
     birak(son !== i, 'p4 oynamadı ' + ad); birak(tablaAd(i) === QNAME[q], `p4 başka tabla ${ad}`);
-    sorular.push({ metin: `${ad}'deki yıldızlı bilye ${QNAME[q]} tablada. Tablayı ${yon(d)} çevirince nereye gelir?`, tahta: pt(t, [[i, 'y']]), alt: 'Yeni yeri: ........', tahtaC: pt(rotate(t, q, d), [[son, 'y']]), cevap: `${cellName(son)}.` });
+    sorular.push({ metin: `${ad}'deki yıldızlı bilye ${QNAME[q]} tablada. Tablayı ${yon(d)} çevirince nereye gelir?`, tahta: pt(t, [[i, 'y']]), alt: 'Yeni yeri: ........', tahtaC: pt(rotate(t, q, d), [[son, 'y']]), cevap: `${cellName(son)}.`, do: { kare: [cellName(son)] } });
   }
   return { ad: 'Çevirince nereye gider?', kurallar: [3], yonerge: 'Bilyeler tablayla birlikte döner. Tablayı kafanda çevir ya da parmağınla izle.', sorular };
 }
@@ -77,7 +84,7 @@ function p5(D = [
     const b = coz(s), F = besli(b);
     birak(F.length <= 1, 'p5 birden çok beşli');
     const a = F[0];
-    return { metin: 'Burada 5 var mı? Varsa kimin, hangi yönde? Beşliyi çiz.', tahta: pt(b), alt: 'Kim: ............  Yön: ............', tahtaC: pt(b, a ? a.L.map((i) => [i, 'o']) : []), cevap: a ? `${a.p === 1 ? 'Siyah' : 'Beyaz'}, ${yonBul(a.L)}.` : 'Yok: araya boşluk girince 5 sayılmaz.' };
+    return { metin: 'Burada 5 var mı? Varsa kimin, hangi yönde? Beşliyi çiz.', tahta: pt(b), alt: 'Kim: ............  Yön: ............', tahtaC: pt(b, a ? a.L.map((i) => [i, 'o']) : []), cevap: a ? `${a.p === 1 ? 'Siyah' : 'Beyaz'}, ${yonBul(a.L)}.` : 'Yok: araya boşluk girince 5 sayılmaz.', do: { alanlar: [alan('Kim?', ['Siyah', 'Beyaz', 'Yok'], a ? (a.p === 1 ? 'Siyah' : 'Beyaz') : 'Yok'), alan('Yön', ['yatay', 'dikey', 'çapraz', 'yok'], a ? yonBul(a.L) : 'yok')] } };
   });
   return { ad: 'Beşli avı', kurallar: [4], yonerge: 'Yatay, dikey ya da çapraz, arada boşluk olmadan 5 bilye yan yana olmalı.', sorular };
 }
@@ -93,7 +100,7 @@ function p6(D = [
   const sorular = D.map((s) => {
     const b = coz(s), C = tekCukur(b, 1);
     birak(!has5(b, 1) && !has5(b, 2), 'p6 hazır beşli'); birak(C.length >= 1, 'p6 yok');
-    return { metin: C.length > 1 ? 'Sıra siyahta. Bilyeyi nereye koyarsa hemen 5 olur? İki yer bul.' : 'Sıra siyahta. Bilyeyi nereye koyarsa hemen 5 olur?', tahta: pt(b), tahtaC: pt(b, C.map((i) => [i, 'o'])), alt: 'Çukur: ............', cevap: `${C.map(cellName).join(' ya da ')}. Oyun biter, tabla çevrilmez.` };
+    return { metin: C.length > 1 ? 'Sıra siyahta. Bilyeyi nereye koyarsa hemen 5 olur? İki yer bul.' : 'Sıra siyahta. Bilyeyi nereye koyarsa hemen 5 olur?', tahta: pt(b), tahtaC: pt(b, C.map((i) => [i, 'o'])), alt: 'Çukur: ............', cevap: `${C.map(cellName).join(' ya da ')}. Oyun biter, tabla çevrilmez.`, do: { kare: C.map(cellName) } };
   });
   return { ad: 'Tek bilye kaldı', kurallar: [4, 5], yonerge: 'Bilyeyi koyunca 5 olduysa oyun biter; tablayı çevirmeye gerek yoktur.', sorular };
 }
@@ -109,7 +116,7 @@ function p7(D = [
   const sorular = D.map(([s, ad]) => {
     const b = coz(s), i = hucreNo(ad); birak(!b[i], 'p7 dolu');
     const c = b.slice(); c[i] = 1; const f = has5(c, 1); evet += f;
-    return { metin: `Siyah ${ad}'ye koyuyor. 5 oldu mu? Tablayı çevirmesi gerekir mi?`, tahta: pt(b, [[i, '*']]), tahtaC: pt(c), alt: '5 oldu mu: ......  Çevirir mi: ......', cevap: f ? 'Evet 5 oldu. Hayır, çevirmez: oyun biter.' : 'Hayır, 5 olmadı. Evet, bir tablayı çevirmek zorunda.' };
+    return { metin: `Siyah ${ad}'ye koyuyor. 5 oldu mu? Tablayı çevirmesi gerekir mi?`, tahta: pt(b, [[i, '*']]), tahtaC: pt(c), alt: '5 oldu mu: ......  Çevirir mi: ......', cevap: f ? 'Evet 5 oldu. Hayır, çevirmez: oyun biter.' : 'Hayır, 5 olmadı. Evet, bir tablayı çevirmek zorunda.', do: { alanlar: [alan('5 oldu mu?', ['Evet', 'Hayır'], f ? 'Evet' : 'Hayır'), alan('Çevirir mi?', ['Evet', 'Hayır'], f ? 'Hayır' : 'Evet')] } };
   });
   birak(evet === bek, 'p7 denge');
   return { ad: 'Çevirmeli miyim?', kurallar: [3, 5], yonerge: 'Bilyeni koy. 5 olduysa kazandın, oyun biter. 5 olmadıysa bir tablayı çevirmek zorundasın.', sorular };
@@ -137,7 +144,7 @@ function p8(L = [[0, 1], [1, -1], [2, 1], [3, -1], [0, -1], [3, 1]]) {
       const K = []; for (let a = 0; a < 4; a++) for (const e of [1, -1]) { const R = rotate(t, a, e); if (has5(R, 1) && !has5(R, 2)) K.push([a, e]); }
       if (K.length !== 1 || K[0][0] !== q || K[0][1] !== d) continue;
       const son = rotate(t, q, d);
-      sorular.push({ metin: 'Siyah bilyesini koydu. Hangi tablayı, hangi yöne çevirirse 5 olur?', tahta: pt(t), tahtaC: pt(son, besli(son)[0].L.map((i) => [i, 'o'])), alt: 'Tabla: ..............  Yön: ↻  ↺', cevap: `${QNAME[q]} tabla, ${yon(d)}.` });
+      sorular.push({ metin: 'Siyah bilyesini koydu. Hangi tablayı, hangi yöne çevirirse 5 olur?', tahta: pt(t), tahtaC: pt(son, besli(son)[0].L.map((i) => [i, 'o'])), alt: 'Tabla: ..............  Yön: ↻  ↺', cevap: `${QNAME[q]} tabla, ${yon(d)}.`, do: { alanlar: [tablaAlan(QNAME[q]), yonAlan(d)] } });
       break;
     }
   }
@@ -162,7 +169,7 @@ function p9(alt) {
   const sorular = (alt ? [[berabere(3, -1, 3, 4, 1), 3, -1, 'Berabere'], [(() => { const t = berabere(3, -1, 3, 4, 1); t[hucreNo('C5')] = 0; return t; })(), 3, -1, 'Siyah kazanır']] : O).map(([t, q, d, bek]) => {
     const R = rotate(t, q, d), S = sonuc(R);
     birak(S === bek, `p9 ${S} / ${bek}`); birak(!has5(t, 1) && !has5(t, 2), 'p9 çevirmeden beşli');
-    return { metin: `Bilye kondu, şimdi ${QNAME[q]} tabla ${yon(d)} çevriliyor. Sonuç ne olur?`, tahta: pt(t), tahtaC: pt(R, besli(R).flatMap((f) => f.L.map((i) => [i, 'o']))), alt: 'Siyah  /  Beyaz  /  Berabere  /  Oyun sürer', cevap: `${S}.` };
+    return { metin: `Bilye kondu, şimdi ${QNAME[q]} tabla ${yon(d)} çevriliyor. Sonuç ne olur?`, tahta: pt(t), tahtaC: pt(R, besli(R).flatMap((f) => f.L.map((i) => [i, 'o']))), alt: 'Siyah  /  Beyaz  /  Berabere  /  Oyun sürer', cevap: `${S}.`, do: { alanlar: [alan('Sonuç', ['Siyah kazanır', 'Beyaz kazanır', 'Berabere', 'Oyun sürer'], S)] } };
   });
   return { ad: 'Berabere mi, kazandım mı?', kurallar: [4, 6], yonerge: 'Çevirme sonunda 5\'lere bakılır. İki oyuncunun da 5\'i varsa oyun berabere biter. Önce çevir, sonra çiz, sonra karar ver.', sorular };
 }
@@ -180,7 +187,7 @@ function p10(L = [true, false, true, false, false, false]) {
       if (W.length !== 1 || !!W[0].early !== erken) continue;
       const m = W[0];
       gorulen.add(ks);
-      sorular.push({ metin: 'Sıra siyahta. Tek hamlede kazanmanın yolu bir tane. Bul!', tahta: pt(t), tahtaC: pt(m.board, besli(m.board)[0].L.map((i) => [i, 'o'])), alt: 'Çukur: ......  Tabla: ..........  Yön: ↻  ↺', cevap: erken ? `${cellName(m.cell)}'ye koy; 5 oldu, çevirme yok.` : `${cellName(m.cell)}'ye koy, ${QNAME[m.q]} tabla ${yon(m.d)}.` });
+      sorular.push({ metin: 'Sıra siyahta. Tek hamlede kazanmanın yolu bir tane. Bul!', tahta: pt(t), tahtaC: pt(m.board, besli(m.board)[0].L.map((i) => [i, 'o'])), alt: 'Çukur: ......  Tabla: ..........  Yön: ↻  ↺', cevap: erken ? `${cellName(m.cell)}'ye koy; 5 oldu, çevirme yok.` : `${cellName(m.cell)}'ye koy, ${QNAME[m.q]} tabla ${yon(m.d)}.`, do: { kare: [cellName(m.cell)], alanlar: [alan('Tabla çevrilir mi?', [...QNAME, 'Çevrilmez'], erken ? 'Çevrilmez' : QNAME[m.q]), ...(erken ? [] : [yonAlan(m.d)])] } });
       break;
     }
   }
@@ -240,17 +247,17 @@ const sonRows = (b) => b.map((s) => s.join(''));
 function k1() {
   const A = [['A', ['TTTTTTM', ...Array(5).fill('.......'), 'TMMMMMM']], ['B', ['TTTTTTT', ...Array(5).fill('.......'), 'MMMMMMM']], ['C', ['MTTTTTT', ...Array(5).fill('.......'), 'MMMMMMT']], ['D', ['TTTMTTT', ...Array(5).fill('.......'), 'MMMTMMM']]];
   return { ad: 'Diziliş ve ajan taş', kurallar: [1, 2], yonerge: 'Her oyuncunun 7 taşı vardır. Morun soluna ve turuncunun sağına birer rakip taş gelir: bunlara ajan taş denir.',
-    sorular: A.map(([ad, s]) => ({ metin: `Diziliş ${ad}: Doğru mu? Yanlışsa nedenini yaz.`, tahta: kt(s), alt: 'Doğru  /  Yanlış: ............................', cevap: { A: 'Doğru.', B: 'Yanlış: ajan taş yok.', C: 'Yanlış: ajanlar ters köşede.', D: 'Yanlış: ajanlar ortada olmaz.' }[ad] })),
+    sorular: A.map(([ad, s]) => ({ metin: `Diziliş ${ad}: Doğru mu? Yanlışsa nedenini yaz.`, tahta: kt(s), alt: 'Doğru  /  Yanlış: ............................', cevap: { A: 'Doğru.', B: 'Yanlış: ajan taş yok.', C: 'Yanlış: ajanlar ters köşede.', D: 'Yanlış: ajanlar ortada olmaz.' }[ad], do: { alanlar: [alan('Bu diziliş', ['Doğru', 'Yanlış'], ad === 'A' ? 'Doğru' : 'Yanlış')] } })),
     dy: [['Her oyuncunun 7 taşı vardır.', 1], ['Tahta 8 × 8 karedir.', 0], ['Üst sırada 6 turuncu ve 1 mor taş vardır.', 1], ['Alt sırada 7 mor taş vardır.', 0]] };
 }
 function k2() {
-  const sorular = [3, 6, 9, 12].map((n) => ({ metin: `Oyunda ${n} hamle oynandı. ${n + 1}. hamle kimin?`, alt: 'Mor  /  Turuncu', cevap: (n + 1) % 2 ? 'Mor: tek numaralı hamleler morun.' : 'Turuncu: çift numaralı hamleler turuncunun.' }));
+  const sorular = [3, 6, 9, 12].map((n) => ({ metin: `Oyunda ${n} hamle oynandı. ${n + 1}. hamle kimin?`, alt: 'Mor  /  Turuncu', cevap: (n + 1) % 2 ? 'Mor: tek numaralı hamleler morun.' : 'Turuncu: çift numaralı hamleler turuncunun.', do: { alanlar: [alan('Kimin?', ['Mor', 'Turuncu'], (n + 1) % 2 ? 'Mor' : 'Turuncu')] } }));
   return { ad: 'İlk hamle ve dokunma', kurallar: [3, 11], yonerge: 'Oyuna mor başlar, sonra sırayla oynanır. Bir taşa dokunduysan o taşı oynamak zorundasın.', sorular,
     dy: [['Oyuna turuncu başlar.', 0], ['Ece bir taşa dokundu, vazgeçip başka taş oynayabilir.', 0], ['Can taşına dokundu; o taşı oynamak zorunda.', 1], ['Mor ilk hamleyi yaptıktan sonra sıra turuncuya geçer.', 1], ['İki kez üst üste oynayabilirim.', 0], ['Dokunmadığım taşları düşünerek seçebilirim.', 1]] };
 }
 function hareketSoru(s, a) {
   const [r, c] = yer(a), k = s[r][c], G = gidis(s, r, c);
-  return { metin: `${a}'deki ${adK(k).toLocaleLowerCase('tr')} taş nerelere gidebilir? Halka çiz.`, tahta: kt(s, [[r, c, 'n']]), tahtaC: kt(s, [[r, c, 'n'], ...G.map(([x, y]) => [x, y, 'o'])]), alt: 'Kaç kare? ........', cevap: `${G.length} kare: ${G.map(([x, y]) => adi(x, y)).join(', ')}.` };
+  return { metin: `${a}'deki ${adK(k).toLocaleLowerCase('tr')} taş nerelere gidebilir? Halka çiz.`, tahta: kt(s, [[r, c, 'n']]), tahtaC: kt(s, [[r, c, 'n'], ...G.map(([x, y]) => [x, y, 'o'])]), alt: 'Kaç kare? ........', cevap: `${G.length} kare: ${G.map(([x, y]) => adi(x, y)).join(', ')}.`, do: { kare: G.map(([x, y]) => adi(x, y)) } };
 }
 function k3(D = [['M:D7', 'D7'], ['M:A7', 'A7'], ['M:D7 T:D6', 'D7'], ['M:C7,B6 T:D6', 'C7'], ['T:D1', 'D1'], ['M:G1 T:F1,E1', 'G1']]) {
   return { ad: 'Başlangıç sırası', kurallar: [4], yonerge: 'Başlangıç sırasındaki taş yalnızca ileri ya da çapraz ileri 1 kare gider. Morlar yukarı, turuncular aşağı ilerler. Gri sıralar başlangıç sıralarıdır. Ajan taş da aynı kuralla oynar: rakibin sırasından tahtanın içine doğru gider.', sorular: D.map(([p, a]) => hareketSoru(tk(p), a)) };
@@ -266,14 +273,14 @@ function k6(D = [['M:A3,B3,C3,D4', 'D4', 'D3'], ['M:A3,C3,F3,E4', 'E4', 'E3'], [
     const s = tk(p), [r0, c0] = yer(m), [r, c] = yer(h);
     birak(gidis(s, r0, c0).some(([a, e]) => a === r && e === c), 'k6 gidiş ' + m);
     const son = hamle(s, m, h), L = dorDortlu(son, 'M', r, c), Y = Object.entries(L).find(([, v]) => v >= 4);
-    return { metin: `${m}'deki mor taş yıldızlı ${h} karesine gidebilir mi? Neden?`, tahta: kt(s, [[r, c, '*'], [r0, c0, 'n']]), alt: 'Evet  /  Hayır: ..........................', cevap: Y ? `Hayır: ${Y[0]} dörtlü olur (boşluk ya da rakip taş fark etmez).` : 'Evet: dörtlü olmaz.' };
+    return { metin: `${m}'deki mor taş yıldızlı ${h} karesine gidebilir mi? Neden?`, tahta: kt(s, [[r, c, '*'], [r0, c0, 'n']]), alt: 'Evet  /  Hayır: ..........................', cevap: Y ? `Hayır: ${Y[0]} dörtlü olur (boşluk ya da rakip taş fark etmez).` : 'Evet: dörtlü olmaz.', do: { alanlar: [EH(!Y)] } };
   });
   
   return { ad: 'Dörtlü yasağı', kurallar: [6], yonerge: 'Taşların yatay, dikey ya da çapraz doğrultuda dörtlü olamaz. Arada boşluk ya da rakip taş olsa bile dörtlü yapmak hatalı hamledir.', sorular };
 }
 function yakalaSoru(p, m, h, ek) {
   const s = tk(p), [r0, c0] = yer(m), [r, c] = yer(h), A = netYakala(s, m, h), son = hamle(s, m, h), k = s[r0][c0];
-  return { metin: `${m}'deki ${adK(k).toLocaleLowerCase('tr')} taş ${h}'e gidiyor. Hangi taşlar alınır? Çarpı koy.`, tahta: kt(s, [[r0, c0, 'n'], [r, c, '*']]), tahtaC: kt(sonRows(son), A.map(([x, y]) => [x, y, 'x'])), alt: 'Alınanlar: ......................', cevap: A.length ? `${A.map(([x, y]) => adi(x, y)).join(', ')} alınır.` : `Hiçbiri: ${ek || 'sıkıştırma yok'}.` };
+  return { metin: `${m}'deki ${adK(k).toLocaleLowerCase('tr')} taş ${h}'e gidiyor. Hangi taşlar alınır? Çarpı koy.`, tahta: kt(s, [[r0, c0, 'n'], [r, c, '*']]), tahtaC: kt(sonRows(son), A.map(([x, y]) => [x, y, 'x'])), alt: 'Alınanlar: ......................', cevap: A.length ? `${A.map(([x, y]) => adi(x, y)).join(', ')} alınır.` : `Hiçbiri: ${ek || 'sıkıştırma yok'}.`, do: { kare: A.map(([x, y]) => adi(x, y)) } };
 }
 function k7(D = [['M:D3,D6 T:D4', 'D6', 'D5'], ['M:B4,D5 T:C4', 'D5', 'D4'], ['M:B3,E6 T:C4', 'E6', 'D5'], ['T:C3,E4 M:D4', 'E4', 'E5'], ['M:A4,D5 T:C4', 'D5', 'D4', 'arada boşluk var'], ['M:D2,D5 T:D4', 'D2', 'D3']]) {
   return { ad: 'Sıkıştır ve al', kurallar: [7], yonerge: 'Rakip taşı kendi iki taşının arasına alan, hamlesiyle onu yakalar. Taş yatay, dikey ya da çapraz sıkışabilir. Hamle ileri de olabilir, geri de.', sorular: D.map((d) => yakalaSoru(...d)) };
@@ -289,7 +296,7 @@ function k9() {
     const s = tk(p), [r0, c0] = yer(m), [r, c] = yer(h), k = s[r0][c0], o = ev(rakip(k));
     birak(r === o, 'k9 sıra'); birak(gidis(s, r0, c0).some(([x, y]) => x === r && y === c) === izin, 'k9 gidiş');
     const var_ = [...s[o]].filter((x) => x === k).length; birak((var_ === 0) === izin, 'k9 izin');
-    return { metin: `${m}'deki ${adK(k).toLocaleLowerCase('tr')} taş rakibin başlangıç sırasındaki ${h}'e gidebilir mi?`, tahta: kt(s, [[r0, c0, 'n'], [r, c, '*']]), alt: 'Evet  /  Hayır', cevap: izin ? 'Evet: orada hiç taşı yok.' : 'Hayır: o sırada zaten bir taşı var.' };
+    return { metin: `${m}'deki ${adK(k).toLocaleLowerCase('tr')} taş rakibin başlangıç sırasındaki ${h}'e gidebilir mi?`, tahta: kt(s, [[r0, c0, 'n'], [r, c, '*']]), alt: 'Evet  /  Hayır', cevap: izin ? 'Evet: orada hiç taşı yok.' : 'Hayır: o sırada zaten bir taşı var.', do: { alanlar: [EH(izin)] } };
   };
   return { ad: 'Araya gir, sıraya gir', kurallar: [8, 9], yonerge: 'Kendi isteğinle iki rakip taşın arasına girersen rakip o taşı alamaz. Rakibin başlangıç sırasında aynı anda yalnızca bir taşın olabilir.',
     sorular: [a, b, c, sira('M:A1,D2 T:F1', 'D2', 'D1', false), sira('M:D2 T:F1,B1', 'D2', 'D1', true), sira('T:A7,C6 M:F7', 'C6', 'C7', false)] };
@@ -300,6 +307,7 @@ function k10() {
     const b = yakalaSoru(p, m, h);
     b.metin = `${adK(k)} daha önce ${once} taş aldı. ${m}'deki taş ${h}'e gidiyor. Şimdi kaç taşı oldu? Kazandı mı?`;
     b.alt = 'Toplam: ......  Kazandı mı: ......'; b.cevap = `${top} taş. ${top >= 4 ? 'Kazandı!' : 'Henüz kazanmadı.'}`;
+    b.do = { alanlar: [alan('Toplam', ['2', '3', '4', '5'], String(top)), alan('Kazandı mı?', ['Evet', 'Hayır'], top >= 4 ? 'Evet' : 'Hayır')] };
     return b;
   };
   const enIyi = (p, k) => {
@@ -309,7 +317,7 @@ function k10() {
       T.push({ m: adi(r, c), h: adi(a, e), n: al.length, al, r, c }); }); }));
     T.sort((x, y) => y.n - x.n); birak(T[0].n > T[1].n && T[0].n >= 2, 'k10 en iyi tek değil');
     const e = T[0];
-    return { metin: `Sıra ${adK(k).toLocaleLowerCase('tr')}da. En çok taş alan hamleyi bul. Hangi taş, nereye?`, tahta: kt(s), tahtaC: kt(sonRows(hamle(s, e.m, e.h)), e.al.map(([x, y]) => [x, y, 'x'])), alt: 'Hamle: ...... → ......  Alınan: ......', cevap: `${e.m} → ${e.h}: ${e.n} taş alır.` };
+    return { metin: `Sıra ${adK(k).toLocaleLowerCase('tr')}da. En çok taş alan hamleyi bul. Hangi taş, nereye?`, tahta: kt(s), tahtaC: kt(sonRows(hamle(s, e.m, e.h)), e.al.map(([x, y]) => [x, y, 'x'])), alt: 'Hamle: ...... → ......  Alınan: ......', cevap: `${e.m} → ${e.h}: ${e.n} taş alır.`, do: { kare: [e.m, e.h] } };
   };
   return { ad: 'Dört taşa giden yol', kurallar: [7, 10], yonerge: 'Rakibin dört taşını oyundan çıkaran oyunu kazanır. Önce kaç taş aldığını say, sonra en iyi hamleni seç.',
     sorular: [skor('M:D3,D6 T:D4', 'D6', 'D5', 3), skor('M:B4,D5 T:C4', 'D5', 'D4', 2), skor('M:D5 T:C4', 'D5', 'D4', 3), skor('T:B4,E3 M:C4,D4', 'E3', 'E4', 2),
