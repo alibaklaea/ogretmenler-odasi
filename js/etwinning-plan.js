@@ -1,12 +1,61 @@
 // 2026-27 eTwinning proje planları: herkese açık kartlar. Kalite Etiketi metinleri burada tutulmaz.
 window.ETWINNING_PLAN = [
  {
+  "id": "tw-isty",
+  "ad": "I See Through Your Eyes: Listen to Silence (Senin Gözünden Görüyorum: Sessizliğe Kulak Ver)",
+  "tur": "etwinning",
+  "durum": "fikir",
+  "kategori": "Engelli farkındalık serisi 1. proje · İşitme · Röportaj, iletişim, erişilebilirlik · 8-16 yaş · 6 hafta",
+  "ortaklar": "Hedef: 6 üye · Kurucular: Türkiye + 1 Avrupa okulu · en az 3 ülke · 8-16 yaş",
+  "baslangic": "2026-11-30",
+  "sonTarih": "2027-02-26",
+  "aciklama": "Serinin ilk projesi. Karma uluslu Köprü Takımları işitme engelli yetişkinleri ve aileleri dinler: neler yaşıyorlar, nasıl yaklaşılmasını istiyorlar, okulda ve günlük hayatta nelere ihtiyaç duyuyorlar. Görüşmeleri çocuklar hazırlar ve yürütür; soruların her biri ülkeler arasında birlikte seçilir. Ortak ürün: işitme engelli kişilerin onayladığı, altyazılı ve işaret dilli Birlikte İletişim Rehberi.",
+  "adimlar": [
+   {
+    "ad": "Hazırlık 2-27 Kasım: 6 üyeyi kesinleştir, görev tablosunu birlikte doldur, 13 Kasım'a kadar iki ülkeden kurucuyla kaydet. Veli izni. Görüşülecek kişilerden yazılı izin ve görüşme tercihini al (işaret dili tercümanı, yazılı ya da altyazılı)",
+    "tamam": false
+   },
+   {
+    "ad": "1. hafta · 30 Kasım-4 Aralık: Ön test. 3 Aralık Dünya Engelliler Günü: açılış. Öğrenciler davranış ve saygılı dil kurallarını birlikte yazar. Karma Köprü Takımları kurulur",
+    "tamam": false
+   },
+   {
+    "ad": "2. hafta · 7-11 Aralık: Merak Soruları: takımlar yaşam, yaklaşım ve ihtiyaç başlıklarında soru üretir, ülkeler arasında oylar. Öğrencilerin yürüttüğü canlı tanışma (altyazı açık)",
+    "tamam": false
+   },
+   {
+    "ad": "3. hafta · 14-18 Aralık: Birinci görüşme: işitme engelli konukla canlı röportaj. Her ülkeden çocuklar soru sorar. Kısa işaret dili selamlaşması",
+    "tamam": false
+   },
+   {
+    "ad": "4. hafta · 21-25 Aralık: İkinci görüşme: işitme engelli aile ya da öğretmen. Takımlar yanıtları üç başlıkta sınıflar. Ara değerlendirme, plan güncellemesi",
+    "tamam": false
+   },
+   {
+    "ad": "5. hafta · 28 Aralık-8 Ocak: Türkiye nöbeti: Türkiye takımları rehber taslağını yazar, Avrupa'daki ortaklar 4 Ocak'ta devralıp ekler ve altyazı hazırlar",
+    "tamam": false
+   },
+   {
+    "ad": "6. hafta · 11-15 Ocak: Görüşülen kişiler rehberi okur, düzeltir, onaylar. Kısa video ve poster son hâl. Okulda sunum, velilere duyuru",
+    "tamam": false
+   },
+   {
+    "ad": "Kapanış · 18-22 Ocak: Son test, analiz, yansıtma. Rehber başka bir okula tanıtılır. Sonuçlar seri planına aktarılır",
+    "tamam": false
+   },
+   {
+    "ad": "Başvuru · 26 Şubat'a kadar: Kendi metnini yaz, Taslak kaydet, 2027 rehberi ile son kontrol yap",
+    "tamam": false
+   }
+  ]
+ },
+ {
   "id": "tw-siir",
   "ad": "From Sumud's Children to Hope's Children: One Letter, a Thousand Poems for Peace (Sumud'un Çocuklarından Umudun Çocuklarına: Bir Harf Bin Şiir)",
   "tur": "etwinning",
   "durum": "fikir",
-  "kategori": "Barış üçlemesi 2. ayak · Şiir · Okuryazarlık, çok dillilik, değerler · 8-11 yaş · 6 hafta",
-  "ortaklar": "Kurucular: Türkiye + 1 Avrupa okulu · toplam 3-4 okul, 2-3 ülke · Türkiye'den en fazla 10 öğretmen",
+  "kategori": "Barış üçlemesi 2. ayak · Şiir · Okuryazarlık, çok dillilik, değerler · 8-16 yaş · 6 hafta",
+  "ortaklar": "Hedef: 6 üye · Kurucular: Türkiye + 1 Avrupa okulu · en az 3 ülke · 8-16 yaş",
   "baslangic": "2027-02-08",
   "sonTarih": "2027-04-30",
   "aciklama": "“Bir Nota Bin Ses”in devamı. Karma uluslu Harf Takımları, barışı anlatan sözcüklerin harflerini ülkeden ülkeye taşıyarak ortak akrostiş ve şiir zinciri yazar. Her şiirde en az iki okulun dizesi vardır, hiçbir şiirin tek yazarı yoktur. Ortak ürün: çok dilli sesli antoloji ve 19 Mart'ta Dünya Şiir Günü çevrim içi dinletisi.",
@@ -54,8 +103,8 @@ window.ETWINNING_PLAN = [
   "ad": "From Sumud's Children to Hope's Children: One Colour, a Thousand Paintings for Peace (Sumud'un Çocuklarından Umudun Çocuklarına: Bir Renk Bin Resim)",
   "tur": "etwinning",
   "durum": "fikir",
-  "kategori": "Barış üçlemesi 3. ayak · Görsel sanatlar · Eleştirel yapay zekâ okuryazarlığı · 8-11 yaş · 6 hafta",
-  "ortaklar": "Kurucular: Türkiye + 1 Avrupa okulu · toplam 3-4 okul, 2-3 ülke · Türkiye'den en fazla 10 öğretmen",
+  "kategori": "Barış üçlemesi 3. ayak · Görsel sanatlar · Eleştirel yapay zekâ okuryazarlığı · 8-16 yaş · 6 hafta",
+  "ortaklar": "Hedef: 6 üye · Kurucular: Türkiye + 1 Avrupa okulu · en az 3 ülke · 8-16 yaş",
   "baslangic": "2027-03-29",
   "sonTarih": "2027-05-31",
   "aciklama": "Üçlemenin final ayağı. Karma uluslu Renk Takımları, bir okulun başlattığı resmi öbür okulun sürdürdüğü Resim Bayrağı zinciriyle eserler üretir. Her hafta aynı soru sorulur: insanın barış resmi ile yapay zekânın barış resmi neden farklı? Öğrenci hesap açmaz; yapay zekâ öğretmen ekranında sınıfça eleştirilir. Ortak ürün: üç projenin nota, harf ve rengini birleştiren sanal Barış Sergisi, 7 Mayıs'ta Avrupa Günü açılışı.",
@@ -103,8 +152,8 @@ window.ETWINNING_PLAN = [
   "ad": "Treasure from the Bin (Çöpten Çıkan Hazine)",
   "tur": "etwinning",
   "durum": "fikir",
-  "kategori": "Sürdürülebilirlik · Kompost · STEM · Yeşil Vatan · 7-11 yaş · Kasım-Haziran",
-  "ortaklar": "Kurucular: Türkiye + 1 Avrupa okulu · toplam 3-4 okul, 2-3 ülke · Türkiye'den en fazla 10 öğretmen",
+  "kategori": "Sürdürülebilirlik · Kompost · STEM · Yeşil Vatan · 8-16 yaş · Kasım-Haziran",
+  "ortaklar": "Hedef: 6 üye · Kurucular: Türkiye + 1 Avrupa okulu · en az 3 ülke · 8-16 yaş",
   "baslangic": "2026-11-23",
   "sonTarih": "2027-06-20",
   "aciklama": "Karma uluslu Hazine Avcıları okullarındaki organik atığı ölçer, kompost kurar, solucan ve mikroorganizmaların rolünü araştırır. Veriler ortak tabloda birleşir; kodlama grubu toprak nem ve sıcaklığını Arduino ile ölçer. Kompostun işe yarayıp yaramadığı kontrol gruplu tohum deneyiyle sınanır. Ortak ürün: tüm ülkelerin verisini kullanan Hazine Haritası ve her okulun öbürünün sonuçlarını yorumladığı Kompost Rehberi.",
