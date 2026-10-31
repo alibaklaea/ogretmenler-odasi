@@ -167,6 +167,9 @@
   const DURUM = { fikir: "Fikir", basvuru: "Başvuru aşaması", devam: "Devam ediyor", tamam: "Tamamlandı" };
   let projeler = JSON.parse(localStorage.getItem("masa.projeler") || "null") || JSON.parse(JSON.stringify(window.PROJELER || []));
   const projeKaydet = () => { localStorage.setItem("masa.projeler", JSON.stringify(projeler)); seritCiz(); };
+  // eTwinning plan kartları: yeni plan geldiğinde her cihazda kendiliğinden güncellenir; işaretlenen adımlar ve Kalite Etiketi taslağı korunur.
+  const planBirlestir = () => { const P = JSON.parse(JSON.stringify(window.ETWINNING_PLAN || [])), var_ = new Set(projeler.map((p) => p.id)); projeler = projeler.map((p) => { const y = P.find((x) => x.id === p.id); if (!y) return p; const bitti = new Set((p.adimlar || []).filter((a) => a.tamam).map((a) => a.ad)); return { ...p, ad: y.ad, kategori: y.kategori, aciklama: y.aciklama, ortaklar: y.ortaklar, baslangic: y.baslangic, sonTarih: y.sonTarih, adimlar: y.adimlar.map((a) => ({ ...a, tamam: bitti.has(a.ad) })) }; }).concat(P.filter((p) => !var_.has(p.id))); localStorage.setItem("masa.projeler", JSON.stringify(projeler)); localStorage.setItem("masa.planImza", JSON.stringify(window.ETWINNING_PLAN || [])); };
+  if (window.ETWINNING_PLAN && localStorage.getItem("masa.planImza") !== JSON.stringify(window.ETWINNING_PLAN)) planBirlestir();
 
   function kalanGun(t) { return t ? Math.round((iso(t) - bugun) / 864e5) : null; }
 
@@ -184,7 +187,7 @@
           <div class="dugmeler" style="margin-top:10px"><button class="dugme kucuk" id="pYedek">Yedeği indir</button><label class="dugme kucuk" style="cursor:pointer">Yedeği yükle<input type="file" id="pYukle" accept=".json" hidden></label><button class="dugme kucuk" id="pYayin">Yayın dosyasını indir</button></div></div></div></div>`;
     document.querySelectorAll("[data-t]").forEach((b) => b.onclick = () => location.hash = "projeler/" + b.dataset.t);
     [$("#pYeni"), $("#pYeni2")].forEach((b) => b && (b.onclick = () => projeFormu({ tur: T })));
-    if ($("#pPlan")) $("#pPlan").onclick = () => { const P = JSON.parse(JSON.stringify(window.ETWINNING_PLAN || [])), var_ = new Set(projeler.map((p) => p.id)); projeler = projeler.map((p) => { const y = P.find((x) => x.id === p.id); if (!y) return p; const bitti = new Set((p.adimlar || []).filter((a) => a.tamam).map((a) => a.ad)); return { ...p, ad: y.ad, kategori: y.kategori, aciklama: y.aciklama, ortaklar: y.ortaklar, baslangic: y.baslangic, sonTarih: y.sonTarih, adimlar: y.adimlar.map((a) => ({ ...a, tamam: bitti.has(a.ad) })) }; }).concat(P.filter((p) => !var_.has(p.id))); projeKaydet(); projelerSayfa("etwinning"); };
+    if ($("#pPlan")) $("#pPlan").onclick = () => { planBirlestir(); projeKaydet(); projelerSayfa("etwinning"); };
     if ($("#pOdul")) $("#pOdul").onclick = () => { projeler = projeler.concat(odulProjesi()); projeKaydet(); projelerSayfa("etwinning"); };
     $("#sahne").querySelectorAll("[data-pd]").forEach((b) => b.onclick = () => projeFormu(projeler.find((p) => p.id === b.dataset.pd)));
     $("#sahne").querySelectorAll("[data-psil]").forEach((b) => b.onclick = () => {
@@ -1787,5 +1790,16 @@
   $("#btnTam").onclick = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
 
   planSec(plan);
-  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js").catch(() => {});
+  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+    // Uygulama açık kalsa da güncellensin: ekrana dönünce sürüm denetlenir, yeni sürüm gelince yazı yazılmıyorsa sayfa yenilenir.
+    const eskiVar = !!navigator.serviceWorker.controller; let bekliyor = false, yenilendi = false;
+    const yenile = () => { if (!bekliyor || yenilendi || document.visibilityState !== "visible" || /^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || "")) return; yenilendi = true; location.reload(); };
+    navigator.serviceWorker.addEventListener("controllerchange", () => { if (eskiVar) { bekliyor = true; yenile(); } });
+    navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then((k) => {
+      const denetle = () => k.update().catch(() => {});
+      document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { denetle(); yenile(); } });
+      addEventListener("online", denetle); setInterval(denetle, 30 * 60 * 1000);
+    }).catch(() => {});
+    document.addEventListener("focusout", () => setTimeout(yenile, 300));
+  }
 })();
