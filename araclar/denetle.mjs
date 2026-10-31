@@ -29,7 +29,7 @@ const yaz = (ad, q, m) => hata.push(`${ad}: ${m} | ${q.metin.slice(0, 50)} | ${(
 function denetle(i, q, ad) {
   if (!q.tahta || q.tahta.tur !== 'p') return;
   const S = q.tahta.s, [x, y] = sayi(S), F = besler(S); top++;
-  const kural = { 1: () => x === 0 && y === 0, 2: () => x === y || x === y + 1, 4: () => x === y, 6: () => x === y, 7: () => x === y, 8: () => x === y + 1, 10: () => x === y };
+  const kural = { 1: () => x === 0 && y === 0, 2: () => x === y || x === y + 1, 4: () => x === y, 6: () => x === y, 7: () => x === y, 8: () => x === y + 1, 10: () => x === y, 11: () => x === y, 12: () => x === y };
   if (kural[i] && !kural[i]()) yaz(ad, q, `sayı hatası S=${x} B=${y}`);
   if (i !== 5 && F.length) yaz(ad, q, 'tahtada hazır 5 var');
   if (i === 5) { const k = q.cevap.startsWith('Siyah') ? 'S' : q.cevap.startsWith('Beyaz') ? 'B' : null;

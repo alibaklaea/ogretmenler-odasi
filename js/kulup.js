@@ -98,7 +98,7 @@
               ["Çözüm videosu (10 dk)", "Cevaplar videoyla kontrol edilir."],
               ["Oyun ligi (35 dk)", "Kazanan bir masa sağa."],
               ["3. ders: Ustaya karşı (40 dk)", "Öğretmen ya da en çok kazanan öğrenci aynı anda 3 masaya karşı oynar."]],
-            video: [v("Pentago bulmaca çözümü 3", "pentago-cozum-3.mp4")], pdf: [["Pentago Bulmacaları · Seviye 3", "pdf/kulup/Pentago-Bulmacalari-Etkinlik-3-Seviye3.pdf"]], kuralKart: ["Pentago"] },
+            video: [v("Pentago bulmaca çözümü 3", "pentago-cozum-3.mp4")], pdf: [["Pentago Bulmacaları · Seviye 3", "pdf/kulup/Pentago-Bulmacalari-Etkinlik-3-Seviye3.pdf"]], etk: [["Pentago", 10], ["Pentago", 11]], kuralKart: ["Pentago"] },
           { ad: "İstasyon günü", oyunlar: ["Pentago", "Küre", "Equilibrio"],
             amac: "Üç oyunu istasyonlarda dönüşümlü oynar; hangi oyunda hangi düşünme becerisini kullandığını anlatır.",
             dersler: [

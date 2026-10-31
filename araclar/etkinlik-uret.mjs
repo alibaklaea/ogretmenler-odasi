@@ -1,11 +1,13 @@
 // Kural etkinliklerini üretir: node araclar/etkinlik-uret.mjs → js/kulup-etkinlik.js
 // Cevaplar kural motorlarından hesaplanır; birden çok doğru cevap ya da kuralı belirsiz kalan soru üretimi durdurur.
 import fs from 'fs';
-import { rotate, has5, moves, LINES, cellName, QNAME } from './pentago-motor.mjs';
+import { rotate, has5, moves, winIn1, LINES, cellName, QNAME } from './pentago-motor.mjs';
+import { savunmalar, zorla, ulasilir } from './pentago-uzman.mjs';
 
 let tohum = 20261030;
 const rnd = (n) => { tohum = (tohum * 1664525 + 1013904223) >>> 0; return Math.floor((tohum / 4294967296) * n); };
 const yon = (d) => (d === 1 ? 'saat yönünde ↻' : 'saat yönünün tersine ↺');
+const karistir = (L) => { const a = L.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rnd(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const birak = (kosul, not) => { if (!kosul) throw new Error('SORU REDDEDİLDİ: ' + not); };
 
 // dokunmatik cevap: do = { kare: [...], alanlar: [{ ad, secenek, dogru }], cizim: [...] }
@@ -134,12 +136,35 @@ function g10(i) {
   const m = W[0];
   return { metin: 'Sıra siyahta. Tek hamlede kazanmanın yolu bir tane. Bul!', tahta: pt(b), tahtaC: pt(m.board, besli(m.board)[0].L.map((x) => [x, 'o'])), alt: 'Çukur: ......  Tabla: ..........  Yön: ↻  ↺', cevap: erken ? `${cellName(m.cell)}'ye koy; 5 oldu, çevirme yok.` : `${cellName(m.cell)}'ye koy, ${QNAME[m.q]} tabla ${yon(m.d)}.`, do: { kare: [cellName(m.cell)], alanlar: [alan('Tabla çevrilir mi?', [...QNAME, 'Çevrilmez'], erken ? 'Çevrilmez' : QNAME[m.q]), ...(erken ? [] : [yonAlan(m.d)])] } };
 }
-const G = {}; for (const [n, f] of [[5, g5], [6, g6], [7, g7], [8, g8], [9, g9], [10, g10]]) G[n] = uret(58, f);
+const hamleAd = (m) => `${cellName(m.cell)} + ${QNAME[m.q]} ${m.d === 1 ? '↻' : '↺'}`;
+function secimli(b, metin, dogru, yanlis, neden) {
+  const Y = karistir(yanlis).filter((m) => hamleAd(m) !== hamleAd(dogru)).slice(0, 3); if (Y.length < 3) return null;
+  const O = karistir([dogru, ...Y]).map(hamleAd);
+  return { metin, tahta: pt(b), tahtaC: pt(dogru.board), alt: O.join('   /   '), cevap: `${hamleAd(dogru)}. ${neden}`, do: { alanlar: [alan('Hamle', O, hamleAd(dogru))] } };
+}
+function g11() { // beyaz tek hamlede kazanacak, tek doğru savunmayı seç
+  const L = LINES[rnd(32)], m = L[rnd(5)], b = Array(36).fill(0), e = 1 + rnd(3); L.forEach((x) => { if (x !== m) b[x] = 2; });
+  dengele(b, 4 + e, 4 + e, new Set([m])); if (!temiz(b) || !winIn1(b, 2) || winIn1(b, 1)) return null;
+  if (ulasilir(b) !== true) return null;
+  const S = savunmalar(b, 1); if (!S.length) return null; const A = new Set(S.map(hamleAd));
+  const yak = moves(b, 1).filter((x) => x.res === 'GO' && !A.has(hamleAd(x))); if (yak.length < 3) return null;
+  return secimli(b, 'Beyaz bir sonraki hamlede kazanmak üzere. Hangi hamle beyazı durdurur?', S[rnd(S.length)], yak, 'Bu hamleden sonra beyaz tek hamlede 5 yapamaz.');
+}
+function g12() { // siyah zorla kazanır: rakip ne yaparsa yapsın sonraki hamlede 5
+  const b = Array(36).fill(0), L = LINES[rnd(32)], e = 1 + rnd(2); karistir(L).slice(0, 3).forEach((x) => { b[x] = 1; }); const L2 = LINES[rnd(32)]; karistir(L2).slice(0, 2).forEach((x) => { if (!b[x]) b[x] = 1; });
+  const [x] = say(b); if (x < 4) return null; dengele(b, x + e, x + e, new Set()); if (!temiz(b) || winIn1(b, 1) || winIn1(b, 2)) return null;
+  const Z = zorla(b, 1); if (!Z.length) return null; if (ulasilir(b) !== true) return null;
+  const A = new Set(Z.map(hamleAd)), Y = moves(b, 1).filter((m) => m.res === 'GO' && !A.has(hamleAd(m)));
+  return secimli(b, 'Sıra siyahta. Hangi hamleyle beyaz ne yaparsa yapsın bir sonraki hamlede kazanırsın?', Z[rnd(Z.length)], Y, 'Çift tehdit: beyaz ikisini birden durduramaz.');
+}
+const G = {}; for (const [n, f] of [[5, g5], [6, g6], [7, g7], [8, g8], [9, g9], [10, g10], [11, g11], [12, g12]]) { G[n] = uret(58, f); console.error('hazır', n); }
 const p5 = () => ({ ad: 'Beşli avı', kurallar: [4], yonerge: 'Yatay, dikey ya da çapraz, arada boşluk olmadan 5 bilye yan yana olmalı.', sorular: G[5].slice(0, 6) });
 const p6 = () => ({ ad: 'Tek bilye kaldı', kurallar: [4, 5], yonerge: 'Sıra siyahta olduğu için siyah ve beyaz bilye sayısı eşittir. Bilyeyi koyunca 5 olduysa oyun biter; tablayı çevirmeye gerek yoktur.', sorular: G[6].slice(0, 6) });
 const p7 = () => ({ ad: 'Çevirmeli miyim?', kurallar: [3, 5], yonerge: 'Bilyeni koy. 5 olduysa kazandın, oyun biter. 5 olmadıysa bir tablayı çevirmek zorundasın.', sorular: G[7].slice(0, 6) });
 const p8 = () => ({ ad: 'Çevirerek kazan', kurallar: [3, 4], yonerge: 'Siyah bilyesini koydu, bu yüzden siyahın bir bilyesi fazla. Bir çevirme bilyeleri aynı çizgiye getirebilir. Her tahtada tam bir doğru çevirme var.', sorular: G[8].slice(0, 6) });
 const p9 = () => ({ ad: 'Berabere mi, kazandım mı?', kurallar: [4, 6], yonerge: "Çevirme sonunda 5'lere bakılır. İki oyuncunun da 5'i varsa oyun berabere biter. Önce çevir, sonra karar ver.", sorular: G[9].slice(0, 6) });
+const p11 = () => ({ ad: 'Tehlikeyi durdur', kurallar: [3, 4], yonerge: 'Rakibin 4 bilyesi dizildiyse sırayı kaçırma. Bilye koymak ya da tabla çevirmek diziyi bozabilir; ama kendi çevirmenin diziyi 5 yapmamasına dikkat et.', sorular: G[11].slice(0, 6) });
+const p12 = () => ({ ad: 'İki hamlede kazan', kurallar: [3, 4, 5], yonerge: 'Çift tehdit kur: bir hamleyle iki ayrı yerden 5 yapma hazırla. Rakip birini durdurursa ötekiyle kazanırsın.', sorular: G[12].slice(0, 6) });
 const p10 = () => ({ ad: 'Şampiyon hamlesi', kurallar: [3, 4, 5], yonerge: 'Bazı tahtalarda koymak yeter, bazılarında çevirmek de gerekir.', sorular: G[10].slice(0, 6) });
 
 // ---------- Küre ----------
@@ -273,14 +298,14 @@ function k10() {
 }
 
 const KULUP_ETK = {
-  Pentago: [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10].map((f) => f()),
+  Pentago: [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12].map((f) => f()),
   'Küre': [k1, k2, k3, k4, k5, k6, k7, k8, k9, k10].map((f) => f()),
 };
 // slaytta birlikte çözülen sorular: kâğıttakilerle aynı tür, farklı konum
 const ayni = (q, e) => e.sorular.some((x) => JSON.stringify([x.metin, x.tahta]) === JSON.stringify([q.metin, q.tahta]));
 const BIRLIKTE = {
   Pentago: [p1(['D5', 'A3']).sorular.slice(1, 3), p2([[4, 4], [3, 2]]).sorular, p3([[['S.S', '...', 'B..'], 1], [['.S.', 'B..', '..S'], -1]]).sorular, p4([['A3', 0, 1], ['E1', 1, -1]]).sorular,
-    G[5].slice(6, 8), G[6].slice(6, 8), G[7].slice(6, 8), G[8].slice(6, 8), G[9].slice(6, 8), G[10].slice(6, 8)],
+    G[5].slice(6, 8), G[6].slice(6, 8), G[7].slice(6, 8), G[8].slice(6, 8), G[9].slice(6, 8), G[10].slice(6, 8), G[11].slice(6, 8), G[12].slice(6, 8)],
   'Küre': [[{ metin: 'Mor ajan taş nerede? Bul ve söyle.', tahta: kt(['TTTTTTM', ...Array(5).fill('.......'), 'TMMMMMM']), cevap: "G1: turuncunun sağında." }, { metin: 'Turuncu ajan taş nerede? Bul ve söyle.', tahta: kt(['TTTTTTM', ...Array(5).fill('.......'), 'TMMMMMM']), cevap: "A7: morun solunda." }],
     [{ metin: 'Oyunda 4 hamle oynandı. 5. hamle kimin?', cevap: 'Mor: tek numaralı hamleler morun.' }, { metin: 'Ada bir taşa dokundu, ama başka taş oynamak istiyor. Olur mu?', cevap: 'Hayır. Kurallı hamlesi varsa dokunduğu taşı oynamak zorunda.' }],
     k3([['M:F7', 'F7'], ['T:B1 M:B2', 'B1']]).sorular, k4([['M:E4', 'E4'], ['T:C3 M:C2', 'C3']]).sorular, k5([['M:F6', 'F6'], ['T:E2,E3', 'E2']]).sorular,
@@ -294,7 +319,6 @@ const BIRLIKTE = {
 for (const [o, L] of Object.entries(BIRLIKTE)) L.forEach((b, i) => { birak(b.length >= 1, 'birlikte boş'); b.forEach((q) => birak(!ayni(q, KULUP_ETK[o][i]), `kâğıtla aynı: ${o} ${i} ${q.metin}`)); KULUP_ETK[o][i].birlikte = b; });
 const yol = new URL('../js/kulup-etkinlik.js', import.meta.url);
 // ---------- bankalar: her konu için 50 dokunmatik soru ----------
-const karistir = (L) => { const a = L.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rnd(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const tum = Array.from({ length: 36 }, (_, i) => i);
 const merkez = new Set([7, 10, 25, 28]);
 const pBanka = [
@@ -302,7 +326,7 @@ const pBanka = [
   p2(Array.from({ length: 50 }, (_, i) => { const s = 1 + (i % 8), bey = i % 2 ? s : s - 1; return [s, bey]; })).sorular,
   p3(Array.from({ length: 50 }, (_, i) => { for (;;) { const h = Array.from({ length: 9 }, () => '...SB'[rnd(5)]), t = [0, 3, 6].map((k) => h.slice(k, k + 3).join('')), d = i % 2 ? 1 : -1; if (h.filter((x) => x !== '.').length >= 2 && tablaDon(t, d).join('') !== t.join('')) return [t, d]; } })).sorular,
   p4(karistir(tum.filter((x) => !merkez.has(x))).slice(0, 25).flatMap((x) => { const q = (x % 6 >= 3 ? 1 : 0) + (x >= 18 ? 2 : 0); return [[cellName(x), q, 1], [cellName(x), q, -1]]; })).sorular,
-  ...[5, 6, 7, 8, 9, 10].map((n) => G[n].slice(8))];
+  ...[5, 6, 7, 8, 9, 10, 11, 12].map((n) => G[n].slice(8))];
 const hk = (r, c) => adi(r, c), secK = (L) => L[rnd(L.length)];
 function dene(n, f) { const R = [], gor = new Set(); let d = 0; while (R.length < n) { birak(++d < 2000000, 'küre üretim ' + R.length); let q = null; try { q = f(R.length); } catch (e) { if (!String(e.message).startsWith('SORU')) throw e; } if (!q) continue;
   const rows = q.tahta && q.tahta.s; if (rows) { let bozuk = false; rows.forEach((sat, r) => [...sat].forEach((ch, c) => { if ((ch === 'M' || ch === 'T') && r > 0 && r < 6) { const L = dorDortlu(kc(rows), ch, r, c); if (Math.max(L.yatay, L.dikey, L['çapraz']) >= 4) bozuk = true; } })); if (bozuk && !q.dortluSerbest) continue; }
