@@ -152,42 +152,38 @@ window.ETWINNING_PLAN = [
   "ad": "Treasure from the Bin (Çöpten Çıkan Hazine)",
   "tur": "etwinning",
   "durum": "fikir",
-  "kategori": "Sürdürülebilirlik · Kompost · STEM · Yeşil Vatan · 8-16 yaş · Kasım-Haziran",
-  "ortaklar": "Hedef: 6 üye · Kurucular: Türkiye + 1 Avrupa okulu · en az 3 ülke · 8-16 yaş",
-  "baslangic": "2026-11-23",
-  "sonTarih": "2027-06-20",
-  "aciklama": "Karma uluslu Hazine Avcıları okullarındaki organik atığı ölçer, kompost kurar, solucan ve mikroorganizmaların rolünü araştırır. Veriler ortak tabloda birleşir; kodlama grubu toprak nem ve sıcaklığını Arduino ile ölçer. Kompostun işe yarayıp yaramadığı kontrol gruplu tohum deneyiyle sınanır. Ortak ürün: tüm ülkelerin verisini kullanan Hazine Haritası ve her okulun öbürünün sonuçlarını yorumladığı Kompost Rehberi.",
+  "kategori": "Sürdürülebilirlik · Kompost · STEM · Yeşil Vatan · 8-16 yaş · Aralık-Mayıs · 7 üye",
+  "ortaklar": "Hedef: 7 üye (4 hazır, 3 farklı ülkeden 3 öğretmen aranıyor; tercihen biyoloji ve fen) · Kurucular: Türkiye + 1 Avrupa okulu · 8-16 yaş",
+  "baslangic": "2026-12-07",
+  "sonTarih": "2027-06-11",
+  "aciklama": "Karma uluslu Hazine Avcıları okullarındaki organik atığı ölçer, kompost kurar, solucan ve mikroorganizmaların rolünü araştırır. Veriler ortak tabloda birleşir; kodlama grubu toprak nem ve sıcaklığını Arduino ile ölçer. Kompostun işe yarayıp yaramadığı kontrol gruplu tohum deneyiyle sınanır; deney tasarımına biyoloji ve fen öğretmeni ortaklar rehberlik eder. Ortak ürün: tüm ülkelerin verisini kullanan Hazine Haritası ve her okulun öbürünün sonuçlarını yorumladığı Kompost Rehberi.",
   "adimlar": [
    {
-    "ad": "Hazırlık 2-13 Kasım: Ortak bul, planı ortaklarla yaz, 13 Kasım'a kadar iki ülkeden kurucuyla kaydet. Veli izni. 2026-27 Yeşil Vatan takvimini il/ilçe MEM'den al",
+    "ad": "Hazırlık 2 Kasım-4 Aralık: 3 farklı ülkeden 3 öğretmeni bul (tercihen biyoloji ve fen), 7 üyeyi kesinleştir. 27 Kasım'a kadar iki ülkeden kurucuyla kaydet. Görev tablosunu birlikte doldur. Veli izni. 2026-27 Yeşil Vatan takvimini il/ilçe MEM'den al",
     "tamam": false
    },
    {
-    "ad": "Faz 1 · 23 Kasım-18 Aralık: Ön test, karma Hazine Avcıları, logo oylaması, öğrencilerin yürüttüğü tanışma, kurallar. Atık Dedektifleri: bir hafta organik atık tartılır",
+    "ad": "Faz 1 · 7 Aralık-8 Ocak: Ön test, karma Hazine Avcıları, logo oylaması, öğrencilerin yürüttüğü tanışma, kurallar. Atık Dedektifleri: bir hafta organik atık tartılır",
     "tamam": false
    },
    {
-    "ad": "Faz 2 · 21 Aralık-22 Ocak: Her okul kompost kutusunu kurar. Ankara kışı için kutu içeride ya da yalıtımlı olur. Kodlama grubu sıcaklık ve toprak nem sensörünü Tinkercad'de dener, sonra kutuda ölçer",
+    "ad": "Faz 2 · 11 Ocak-19 Şubat: Her okul kompost kutusunu kurar. Ankara kışı için kutu içeride ya da yalıtımlı olur. Kodlama grubu sıcaklık ve toprak nem sensörünü Tinkercad'de dener, sonra kutuda ölçer. Türkiye'de yarıyıl 25 Ocak-5 Şubat: kompostu okul görevlisi izler, ortak okullar ölçüme devam eder",
     "tamam": false
    },
    {
-    "ad": "Yarıyıl · 25 Ocak-5 Şubat: Türkiye'de ders yok. Kompostu okul görevlisiyle izleme düzeni kurulur, ortak okullar ölçüme devam eder",
+    "ad": "Faz 3 · 22 Şubat-26 Mart: Solucan ve mikroorganizma araştırması; biyoloji öğretmeni ortakla canlı görüşme ya da mikroskop gösterisi. Takımlar başka ülkenin verisini yorumlar, grafik çizer. Ara değerlendirme ve plan güncellemesi (Türkiye ara tatili 8-12 Mart)",
     "tamam": false
    },
    {
-    "ad": "Faz 3 · 8 Şubat-26 Mart: Solucan ve mikroorganizma araştırması, canlı uzman görüşmesi. Takımlar başka ülkenin verisini yorumlar, grafik çizer. Ara değerlendirme ve plan güncellemesi",
+    "ad": "Faz 4 · 29 Mart-30 Nisan: Kontrol gruplu tohum deneyi: kompostlu ve kompostsuz saksı, öğrenciler değişkenleri ortak kararla seçer. 22 Nisan Dünya Günü ortak etkinliği. Velilerle evde atık ayrıştırma",
     "tamam": false
    },
    {
-    "ad": "Faz 4 · 29 Mart-7 Mayıs: Kontrol gruplu tohum deneyi: kompostlu ve kompostsuz saksı, öğrenciler değişkenleri ortak kararla seçer. 22 Nisan Dünya Günü ortak etkinliği. Velilerle evde atık ayrıştırma",
+    "ad": "Faz 5 · 3-28 Mayıs: Atık ölçümü tekrarlanır. Hazine Haritası ve Kompost Rehberi yazılır: her ülke bölümünü başka ülkenin takımı yorumlar. 21 Mayıs Cuma Biyoçeşitlilik Günü (22 Mayıs Cumartesi) için kompostlu saksılar sergilenir. Okulda kompost köşesi, münazara, belediye bilgilendirmesi. 28 Mayıs ortak canlı kapanış sunumu (Kurban Bayramı 17-19 Mayıs)",
     "tamam": false
    },
    {
-    "ad": "Faz 5 · 10 Mayıs-4 Haziran: Atık ölçümü tekrarlanır. Hazine Haritası ve Kompost Rehberi yazılır: her ülke bölümünü başka ülkenin takımı yorumlar. Okulda kompost köşesi, münazara, belediye bilgilendirmesi. 4 Haziran Cuma Dünya Çevre Günü sunumu (5 Haziran Cumartesi)",
-    "tamam": false
-   },
-   {
-    "ad": "Kapanış ve başvuru · 7-20 Haziran: Son test, analiz, yansıtma. Kendi metnini yaz, kategori ibarelerini Açıklama alanına ekle, teslim et",
+    "ad": "Kapanış ve başvuru · 31 Mayıs-11 Haziran: Son test, analiz, yansıtma. Kendi metnini yaz, kategori ibarelerini Açıklama alanına ekle, teslim et",
     "tamam": false
    }
   ]
