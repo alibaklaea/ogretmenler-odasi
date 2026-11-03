@@ -49,6 +49,7 @@
 
   // Çarşamba kodlama atölyesi, Destek planlarıyla aynı hafta numaralarına oturtulur
   const KD = window.KODLAMA;
+  const HZ = window.HAZIRLIK || {};
   PD.planlar.KOD = { ad: KD.ad, aralar: PD.planlar.D1.aralar, haftalar: KD.haftalar.map((k) => {
     const d = PD.planlar.D1.haftalar.find((w) => w.no === k.no);
     const temaNo = k.yok ? 0 : k.no <= 7 ? 1 : k.no <= 24 ? 2 : k.no <= 28 ? 3 : 4;
@@ -833,7 +834,7 @@
   }
 
   // ---------- hafta sayfası ----------
-  const SEKMELER = [["etkinlik", "Kazanım ve Etkinlik"], ["gunluk", "Günlük Plan"], ["sunum", "Öğrenci Sunumu"], ["kagit", "Çalışma Kâğıtları"], ["gunler", "Belirli Gün & AB"]];
+  const SEKMELER = [["etkinlik", "Kazanım ve Etkinlik"], ["hazirlik", "Ders Öncesi Hazırlık"], ["gunluk", "Günlük Plan"], ["sunum", "Öğrenci Sunumu"], ["kagit", "Çalışma Kâğıtları"], ["gunler", "Belirli Gün & AB"]];
 
   function haftaSayfa(no, sekme) {
     const hs = haftalar(), w = hs.find((x) => x.no === no) || simdikiHafta();
@@ -853,6 +854,7 @@
     const ig = isGunuSay(w);
     const tatilUyari = ig < 5 ? `<div class="uyari">Bu hafta ${5 - ig} gün tatil: ${[...new Set(haftaGunleri(w).filter((g) => g.t).map((g) => g.t.ad))].join(", ")}. Yıllık planda bu hafta ${w.saat} ders saati olarak planlanmış.</div>` : "";
     if (sekme === "etkinlik") ic.innerHTML = tatilUyari + etkinlikSekme(w, P);
+    if (sekme === "hazirlik") hazirlikSekme(ic, w, P);
     if (sekme === "gunluk") gunlukSekme(ic, w, P, tatilUyari);
     if (sekme === "sunum") sunumSekme(ic, w, P, gunler);
     if (sekme === "kagit") kagitSekme(ic, w, P);
@@ -889,6 +891,87 @@
     return `<div class="iki-sutun"><div>${sol}</div><div>${sag}</div></div>`;
   }
 
+  // ---------- ders öncesi hazırlık: ihtiyaç listesi, öğretmen evrakı, videolar ----------
+  const hzVeri = (w) => HZ[plan + "-" + w.no] || { liste: [], icerik: [], video: [] };
+  function hzListe(w, P) {
+    const v = hzVeri(w), L = [...(v.liste || [])];
+    const ekler = P.flatMap((p) => p.ekler.map((e) => `${e.ad || "Ek"}: ${e.baslik}`));
+    if (ekler.length) L.push(`Çalışma kâğıtları, öğrenci sayısı kadar fotokopi (Çalışma Kâğıtları sekmesinden yazdır): ${ekler.join(" • ")}`);
+    if (P.some((p) => p.pdf)) L.push("Etkinliğin PDF'ini derse girmeden aç; varsa ek sayfalarını yazdır (Kazanım ve Etkinlik sekmesindeki bağlantı).");
+    const var_ = L.join(" ").toLocaleLowerCase("tr");
+    [...new Set((w.materyal || "").split(/\s*[,/]\s*/).map((m) => m.trim()).filter(Boolean))]
+      .filter((m) => !var_.includes(m.toLocaleLowerCase("tr").slice(0, 8)))
+      .forEach((m) => L.push(m.charAt(0).toLocaleUpperCase("tr") + m.slice(1)));
+    return L;
+  }
+  const hzAnahtar = (w) => `masa.hz.${plan}-${w.no}`;
+  function hzIsaretli(w) { try { return JSON.parse(localStorage.getItem(hzAnahtar(w)) || "[]"); } catch (e) { return []; } }
+  function hzGrafik(c) {
+    const W = 520, H = 230, sol = 40, alt = 34, ust = 14, m = Math.max(...c.deger), us = Math.pow(10, Math.floor(Math.log10(m))), adim = us * (m / us > 5 ? 2 : 1);
+    const tavan = Math.ceil(m / adim) * adim, bw = (W - sol - 10) / c.deger.length, y = (v) => ust + (H - alt - ust) * (1 - v / tavan);
+    let s = `<svg class="hz-grafik" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(c.baslik)}">`;
+    for (let v = 0; v <= tavan; v += adim) s += `<line x1="${sol}" x2="${W - 6}" y1="${y(v)}" y2="${y(v)}" stroke="#ccc" stroke-width="1"/><text x="${sol - 6}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="#555">${v}</text>`;
+    c.deger.forEach((v, i) => { const x = sol + i * bw + bw * 0.18, gw = bw * 0.64;
+      s += `<rect x="${x}" y="${y(v)}" width="${gw}" height="${y(0) - y(v)}" rx="3" fill="#2f6f9f"/><text x="${x + gw / 2}" y="${y(v) - 4}" text-anchor="middle" font-size="12" font-weight="700" fill="#222">${v}</text><text x="${x + gw / 2}" y="${H - alt + 16}" text-anchor="middle" font-size="12" fill="#222">${esc(c.etiket[i])}</text>`; });
+    return s + `<text x="8" y="${ust - 2}" font-size="10" fill="#555">${esc(c.birim || "")}</text></svg>`;
+  }
+  function hzBalik(c) {
+    const K = c.kollar, ust = K.filter((_, i) => i % 2 === 0), alt_ = K.filter((_, i) => i % 2 === 1), n = Math.max(ust.length, alt_.length), ara = 500 / n;
+    let s = `<svg class="hz-grafik" viewBox="0 0 700 300" role="img" aria-label="Balık kılçığı şablonu"><line x1="20" y1="150" x2="560" y2="150" stroke="#222" stroke-width="3"/><polygon points="560,150 600,112 690,150 600,188" fill="#fff" stroke="#222" stroke-width="3"/><text x="622" y="155" font-size="12" font-weight="700" text-anchor="middle">${esc(c.bas)}</text>`;
+    [[ust, 1], [alt_, -1]].forEach(([L, yon]) => L.forEach((k, i) => { const x = 90 + i * ara + ara * 0.5;
+      s += `<line x1="${x - 60}" y1="${150 - yon * 110}" x2="${x}" y2="150" stroke="#222" stroke-width="2"/><text x="${x - 60}" y="${yon > 0 ? 30 : 282}" font-size="13" font-weight="700" text-anchor="middle">${esc(k)}</text>`; }));
+    return s + "</svg>";
+  }
+  function hzIcerikHTML(c) {
+    let g = "";
+    if (c.tur === "metin") g = c.p.map((x) => `<p>${esc(x)}</p>`).join("");
+    if (c.tur === "tablo") g = `<table class="hz-tablo"><tr>${c.cols.map((x) => `<th>${esc(x)}</th>`).join("")}</tr>${c.rows.map((r) => `<tr>${c.cols.map((_, i) => `<td>${esc(r[i] || "")}</td>`).join("")}</tr>`).join("")}</table>`;
+    if (c.tur === "grafik") g = hzGrafik(c);
+    if (c.tur === "balik") g = hzBalik(c);
+    if (c.tur === "kartlar") g = `<div class="hz-kartlar">${c.items.map((x) => `<div>${esc(x).replace(/\n/g, "<br>")}</div>`).join("")}</div>`;
+    return `<div class="hz-icerik"><h3>${esc(c.baslik)}</h3>${g}${c.not ? `<p class="not">${esc(c.not)}</p>` : ""}</div>`;
+  }
+  const ytResim = (id) => `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+  function videoKart(v) {
+    return `<div class="video-kart"><button class="video-oynat" data-yt="${esc(v.id)}" title="Oynat" style="background-image:url('${ytResim(v.id)}')"><span>▶</span></button>
+      <div class="video-bilgi"><b>${esc(v.ad)}</b><small>${esc(v.kanal)}${v.neden ? " · " + esc(v.neden) : ""}</small></div></div>`;
+  }
+  // Okul (MEB) ağında youtube.com kapalı; gömülü oynatıcı youtube-nocookie.com üzerinden çalışıyor.
+  document.addEventListener("click", (e) => { const b = e.target.closest("[data-yt]"); if (!b) return; e.preventDefault(); e.stopPropagation();
+    const f = document.createElement("iframe"); f.src = `https://www.youtube-nocookie.com/embed/${b.dataset.yt}?rel=0&autoplay=1`; f.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen"; f.allowFullscreen = true; f.className = "video-cerceve";
+    b.replaceWith(f); if (sun.oto) { sun.oto = false; clearTimeout(sun.t); oynatDugmeleri(); } }, true);
+  function hazirlikSekme(ic, w, P) {
+    const v = hzVeri(w), L = hzListe(w, P), isa = new Set(hzIsaretli(w));
+    const hazir = L.filter((x) => isa.has(x)).length;
+    ic.innerHTML = `<div class="iki-sutun"><div>
+        <div class="kart" style="margin-bottom:16px"><div class="parca-baslik"><h2 style="margin:0">Ders öncesi ihtiyaç listesi</h2><span class="rozet" id="hzSay">${hazir}/${L.length} hazır</span></div>
+          <p class="not">Planda geçen ve derse girmeden hazır olması gereken her şey. Hazırladıklarını işaretle; işaretler bu cihazda saklanır.</p>
+          <ul class="hz-liste">${L.map((x, i) => `<li><label><input type="checkbox" data-hz="${i}" ${isa.has(x) ? "checked" : ""}><span>${esc(x)}</span></label></li>`).join("")}</ul>
+          <div class="dugmeler"><button class="dugme ana" id="hzBas">Listeyi ve öğretmen evrakını yazdır</button></div></div>
+        ${(v.icerik || []).length ? `<div class="kart"><h2>Öğretmen evrakı (hazır içerik)</h2><p class="not">Planda “öykü okunur”, “tablo gösterilir”, “kartlar dağıtılır” denen malzemeler. Tahtaya yansıt ya da yazdır.</p>${v.icerik.map(hzIcerikHTML).join("")}</div>` : ""}
+      </div><div>
+        <div class="kart"><h2>Videolar</h2>${(v.video || []).length ? `<p class="not">Okul ağında YouTube sitesi kapalı olduğu için videolar burada, sitenin içinde oynar. Derse girmeden bir kez izle. Öğrenci sunumunda da “Birlikte izleyelim” slaytı olarak çıkar.</p><div class="video-grid">${v.video.map(videoKart).join("")}</div>` : `<p class="not">Bu hafta için seçilmiş video yok; etkinlik videosuz işlenir.</p>`}</div>
+      </div></div>`;
+    ic.querySelectorAll("[data-hz]").forEach((c) => c.onchange = () => {
+      const s = new Set(hzIsaretli(w)), x = L[+c.dataset.hz]; if (c.checked) s.add(x); else s.delete(x);
+      try { localStorage.setItem(hzAnahtar(w), JSON.stringify([...s])); } catch (e) {}
+      $("#hzSay").textContent = `${L.filter((y) => s.has(y)).length}/${L.length} hazır`; });
+    $("#hzBas").onclick = () => bas(hzBaski(w, P));
+  }
+  function hzBaski(w, P) {
+    const v = hzVeri(w), L = hzListe(w, P);
+    return `<div class="sayfa hz-sayfa"><div class="s-ust"><span>${esc(ayar.okul || "BİLİM VE SANAT MERKEZİ")}</span><span>${esc(PD.planlar[plan].ad)} · ${w.no}. hafta · ${kisaTarih(w.bas, w.bit)}</span></div>
+      <h1>Ders öncesi hazırlık: ${esc(w.etkinlik.replace(/\s*\(2 saat\)/g, ""))}</h1>
+      <ul class="hz-liste">${L.map((x) => `<li>☐ ${esc(x)}</li>`).join("")}</ul>
+      ${(v.video || []).length ? `<h2 style="font-size:12pt">Videolar (Öğretmen Masası › ${w.no}. hafta › Ders Öncesi Hazırlık)</h2><ul>${v.video.map((x) => `<li>${esc(x.ad)} · ${esc(x.kanal)}</li>`).join("")}</ul>` : ""}
+      ${(v.icerik || []).map(hzIcerikHTML).join("")}</div>`;
+  }
+  function hzOzet(w, P) {
+    const L = hzListe(w, P), isa = new Set(hzIsaretli(w)), eksik = L.filter((x) => !isa.has(x)), v = hzVeri(w);
+    return `<div class="${eksik.length ? "uyari" : "kart"} hz-ozet"><b>Ders öncesi hazırlık:</b> ${L.length - eksik.length}/${L.length} hazır${(v.video || []).length ? ` · ${v.video.length} video` : ""}${(v.icerik || []).length ? ` · ${v.icerik.length} hazır öğretmen evrakı` : ""}.
+      ${eksik.length ? `Eksik: ${eksik.slice(0, 3).map((x) => esc(x.split(/[.:]/)[0])).join("; ")}${eksik.length > 3 ? "…" : ""}.` : ""} <a href="#hafta/${w.no}/hazirlik">Hazırlık listesini aç ›</a></div>`;
+  }
+
   // ---------- günlük plan ----------
   function gunlukSekme(ic, w, P, tatilUyari) {
     const prog = TK.program[plan] || {};
@@ -896,7 +979,7 @@
     if (!dersGunleri.length || !P.some((p) => p.dersler.length)) { ic.innerHTML = tatilUyari + `<div class="uyari">Bu hafta ${esc(PD.planlar[plan].ad)} için işlenecek ders yok (ders günleri tatile denk geliyor ya da hafta tamamlandı).</div>`; return; }
     ic.innerHTML = tatilUyari + `<div class="ust-baslik"><p>MEB günlük plan düzenine göre hazırlanır. Haftanın ders akışı ders programınızdaki günlere (${Object.keys(prog).map((d) => GUN_TAM[d] + " " + prog[d] + " saat").join(", ")}) sırayla bölünür. Ders gününü seçin, bilgileri <a href="#" id="ayarAc">Ayarlar</a>'dan girin.</p>
       <div class="dugmeler"><select id="gpGun" style="width:auto">${dersGunleri.map((g) => `<option value="${isoYaz(g.d)}">${g.ad} ${tarihYaz(g.d)}${g.yarim ? " (yarım gün)" : ""}</option>`).join("")}</select>
-      <button class="dugme ana" id="gpBas">Yazdır / PDF</button><button class="dugme" id="gpHepsi">Haftanın tüm günleri</button></div></div><div class="ekran-onizleme" id="gpOn"></div>`;
+      <button class="dugme ana" id="gpBas">Yazdır / PDF</button><button class="dugme" id="gpHepsi">Haftanın tüm günleri</button></div></div>${hzOzet(w, P)}<div class="ekran-onizleme" id="gpOn"></div>`;
     const gunP = () => gunePay(P, dersGunleri.length, dersGunleri.findIndex((g) => isoYaz(g.d) === $("#gpGun").value));
     const ciz = () => { $("#gpOn").innerHTML = gunlukPlanHTML(w, gunP(), iso($("#gpGun").value)); };
     $("#gpGun").onchange = ciz; ciz();
@@ -940,7 +1023,9 @@
       <table class="gp-surec">${surec}</table>
       <table><tr><th>Ölçme ve değerlendirme</th><td>${esc(w.olcme)}</td></tr>
         <tr><th>Farklılaştırma</th><td>${fark}</td></tr>
-        <tr><th>Çalışma kâğıtları</th><td>${esc(ekler)}</td></tr></table>
+        <tr><th>Çalışma kâğıtları</th><td>${esc(ekler)}</td></tr>
+        ${(hzVeri(w).liste || []).length ? `<tr><th>Ders öncesi hazırlık</th><td>${hzVeri(w).liste.map((x) => "☐ " + esc(x)).join("<br>")}</td></tr>` : ""}
+        ${(hzVeri(w).video || []).length ? `<tr><th>Video</th><td>${hzVeri(w).video.map((x) => `${esc(x.ad)} (${esc(x.kanal)})`).join("<br>")}</td></tr>` : ""}</table>
       <div class="gp-imza"><div><br><br><i></i>${ayar.ogretmen ? esc(ayar.ogretmen) + "<br>" : ""}Öğretmen</div><div>UYGUNDUR<br>${tarihYaz(gun)}<i></i>${ayar.mudur ? esc(ayar.mudur) + "<br>" : ""}Okul Müdürü</div></div>
     </div>`;
   }
@@ -982,6 +1067,7 @@
       (p.sorular || []).slice(1, 3).forEach((q) => S.push(sl("soru", `<div class="etiket">Tartışalım</div><div class="soru-buyuk">${esc(q)}</div>`, q)));
     });
     const hedef = w.kazanimlar.map((k) => k.replace(/^DEP\.\d+\.\d+\s*/, ""));
+    (hzVeri(w).video || []).forEach((v) => S.push(sl("video", `<div class="etiket">Birlikte izleyelim</div><h2>${esc(v.ad)}</h2>${videoKart(v)}`, `Şimdi birlikte bir video izleyeceğiz: ${v.ad}.`)));
     if (hedef.length) S.push(sl("liste", `<div class="etiket">Bu hafta neler öğreneceğiz?</div><ul>${hedef.map((k) => `<li>${esc(k)}</li>`).join("")}</ul>`, "Bu hafta şunları öğreneceğiz. " + hedef.join(" ")));
     P.forEach((p) => {
       const A = adimlarOlustur(p);

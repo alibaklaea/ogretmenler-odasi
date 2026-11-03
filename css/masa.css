@@ -489,3 +489,29 @@ html.uygulama .dk-alan .ct-tahta, html.uygulama .dk-tahta { width: 520px; width:
 .dk-yan .dugme { margin: 0 8px 8px 0; }
 .dk-cift > * + * { margin-left: 12px; }
 @media (orientation: portrait), (max-width: 760px) { .dk-alan > * + * { margin-left: 0; margin-top: 12px; } }
+
+/* ders öncesi hazırlık */
+.hz-liste { list-style: none; padding: 0; margin: 10px 0 14px; }
+.hz-liste li { padding: 7px 0; border-bottom: 1px dashed var(--cizgi); }
+.hz-liste label { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+.hz-liste input { margin-top: 4px; width: 18px; height: 18px; flex: none; }
+.hz-liste input:checked + span { color: var(--soluk); text-decoration: line-through; }
+.hz-icerik { border-top: 1px solid var(--cizgi); padding-top: 12px; margin-top: 14px; }
+.hz-icerik h3 { margin: 0 0 8px; }
+.hz-tablo { width: 100%; border-collapse: collapse; font-size: .92rem; margin: 6px 0; }
+.hz-tablo th, .hz-tablo td { border: 1px solid var(--cizgi); padding: 6px 8px; text-align: left; vertical-align: top; }
+.hz-tablo th { background: rgba(47, 111, 159, .1); }
+.hz-grafik { width: 100%; max-width: 620px; height: auto; display: block; margin: 6px 0; background: #fff; border-radius: 8px; }
+.hz-kartlar { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+.hz-kartlar div { border: 2px dashed #999; border-radius: 8px; padding: 12px; min-height: 70px; font-weight: 600; background: #fff; color: #111; }
+.hz-ozet { margin-bottom: 14px; }
+.video-grid { display: grid; gap: 14px; }
+.video-kart { display: grid; gap: 6px; }
+.video-oynat { position: relative; aspect-ratio: 16 / 9; width: 100%; border: 0; border-radius: 10px; background: #111 center / cover no-repeat; cursor: pointer; }
+.video-oynat span { position: absolute; inset: 0; margin: auto; width: 64px; height: 64px; border-radius: 50%; background: rgba(200, 30, 30, .9); color: #fff; font-size: 28px; display: grid; place-items: center; }
+.video-cerceve { width: 100%; aspect-ratio: 16 / 9; border: 0; border-radius: 10px; background: #000; }
+.video-bilgi small { display: block; color: var(--soluk); }
+.slayt.tur-video .video-kart { max-width: min(70vw, 120vh); }
+.slayt.tur-video .video-bilgi { display: none; }
+.sayfa.hz-sayfa .hz-kartlar div { border-color: #555; }
+.sayfa.hz-sayfa .hz-icerik { break-inside: avoid; }
