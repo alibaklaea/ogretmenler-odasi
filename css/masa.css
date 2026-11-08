@@ -515,3 +515,11 @@ html.uygulama .dk-alan .ct-tahta, html.uygulama .dk-tahta { width: 520px; width:
 .slayt.tur-video .video-bilgi { display: none; }
 .sayfa.hz-sayfa .hz-kartlar div { border-color: #555; }
 .sayfa.hz-sayfa .hz-icerik { break-inside: avoid; }
+.kl-paket { margin-top: 12px; padding: 10px 12px; border: 1px dashed var(--cizgi); border-radius: 10px; background: rgba(95, 168, 232, .07); }
+.kl-paket .dugmeler { margin: 8px 0 4px; }
+.kl-paket { margin-top: 12px; padding: 10px 12px; border: 1px dashed var(--cizgi); border-radius: 10px; background: rgba(95, 168, 232, .07); }
+.kl-paket .dugmeler { margin: 8px 0 4px; }
+.eq-gos { display: flex; flex-wrap: wrap; gap: 4mm; justify-content: center; margin: 0 0 3mm; }
+.eq-gos span { display: flex; flex-direction: column; align-items: center; }
+.eq-gos svg { height: 11mm; width: auto !important; }
+.eq-gos small { font-size: 8pt; }

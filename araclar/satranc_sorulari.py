@@ -198,7 +198,9 @@ def konum(tas):
 
 
 def dokun(q):
-    q = dict(q); q["soru"] = q["soru"].replace("X ile işaretle, kaç kare olduğunu yaz.", "Karelere dokun.").replace("X ile işaretle.", "Karelere dokun.")
+    q = dict(q)
+    if "soru" not in q: return q
+    q["soru"] = q["soru"].replace("X ile işaretle, kaç kare olduğunu yaz.", "Karelere dokun.").replace("X ile işaretle.", "Karelere dokun.")
     return q
 
 
@@ -690,8 +692,8 @@ def b_sah():
 
 
 def b_at():
-    Q = havuz_git("N", "at", 40)
-    for _ in range(60):
+    Q = havuz_git("N", "at", 60)
+    for _ in range(140):
         a, h = R.sample(KARELER, 2); n = at_mesafe(a, h)
         if n <= 4: Q.append(sec(konum({a: "N"}), f"At {a}'den yıldızlı {h} karesine en az kaç hamlede gider?", ["1", "2", "3", "4"], str(n), f"{n} hamle", yildiz=[h]))
     return Q
@@ -709,7 +711,7 @@ def b_piyon():
 
 
 def b_durum():
-    kota = {"MAT": 14, "PAT": 8, "ŞAH": 14, "YOK": 14}; Q = []; gor = set(); ETK2 = ["Şah", "Mat", "Pat", "Hiçbiri"]
+    kota = {"MAT": 26, "PAT": 14, "ŞAH": 25, "YOK": 25}; Q = []; gor = set(); ETK2 = ["Şah", "Mat", "Pat", "Hiçbiri"]
     for _ in range(4000000):
         if not any(kota.values()): break
         ks = R.choice(["a8", "h8", "a1", "h1", "e8", "a5", "h4", "d8", "g8", "b8", "h7"]); t = {ks: "k"}
@@ -730,13 +732,13 @@ def b_durum():
 
 def b_rok():
     Q = []
-    for _ in range(25):
+    for _ in range(50):
         s = R.choice(["r", "b", "q", "n"]); e = kare_rastgele(0, 7, 2, 6); t = {"e8": "k", "e1": "K", "h1": "R", e: s}
         if R.random() < .2: t[R.choice(["f1", "g1"])] = R.choice("BN")
         b = chess.Board(konum(t) + " w K - 0 1")
         if not b.is_valid(): continue
         q = rok(b.fen()); ok = q["cevap"].startswith("EVET"); Q.append(sec(b.fen(), "Beyaz kısa rok yapabilir mi?", ["Evet", "Hayır"], "Evet" if ok else "Hayır", q["cevap"]))
-    for _ in range(45):
+    for _ in range(90):
         f = rastgele_konum(); q = materyal(f + " w - - 0 1"); c = q["cevap"]; d = "Eşit" if "eşit" in c else "Beyaz" if ": beyaz" in c else "Siyah"
         Q.append(sec(f, "Taş değerlerini topla. Kim önde?", ["Beyaz", "Siyah", "Eşit"], d, c))
     R.shuffle(Q); return Q
@@ -749,13 +751,13 @@ def havuz_limit(f, n):
     return Q
 
 
-B_T = [lambda: b_h1(), lambda: havuz_git("R", "kale", 30) + havuz_git("B", "fil", 30), lambda: havuz_git("Q", "vezir", 30) + b_sah(), b_at, b_piyon, b_durum, b_rok,
-       lambda: mat_havuz("R", 32) + mat_havuz("Q", 32), lambda: tuzak_havuz_n(70), lambda: catal_havuz(70), lambda: acmaz_havuz(70), lambda: sonyatay_havuz(70)]
+B_T = [lambda: b_h1() + b_bul(), lambda: havuz_git("R", "kale", 55) + havuz_git("B", "fil", 55), lambda: havuz_git("Q", "vezir", 50) + b_sah(), b_at, b_piyon, b_durum, b_rok,
+       lambda: mat_havuz("R", 55) + mat_havuz("Q", 55), lambda: tuzak_havuz_n(130), lambda: catal_havuz(130), lambda: acmaz_havuz(130), lambda: sonyatay_havuz(130)]
 HAFTA_B = []
 for i, f in enumerate(B_T):
     L = [dokun(q) for q in f()]
     if i in (1, 2, 7): R.shuffle(L)
-    HAFTA_B.append([conv(q) for q in tekil(L, 50, T[i])])
+    HAFTA_B.append([conv(q) for q in tekil(L, 90, T[i])])
 print("banka", [len(x) for x in SAYFA_B], [len(x) for x in HAFTA_B])
 
 for i, w in enumerate(H, 1):
