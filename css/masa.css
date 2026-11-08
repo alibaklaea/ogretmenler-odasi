@@ -523,3 +523,8 @@ html.uygulama .dk-alan .ct-tahta, html.uygulama .dk-tahta { width: 520px; width:
 .eq-gos span { display: flex; flex-direction: column; align-items: center; }
 .eq-gos svg { height: 11mm; width: auto !important; }
 .eq-gos small { font-size: 8pt; }
+.tz-oyun { border-top: 1px solid var(--cizgi); padding: 8px 0; }
+.tz-oyun .video-kart { margin: 8px 0; }
+.tz-madde { padding-left: 22px; font-size: .9rem; }
+.tz-madde li { margin-bottom: 4px; }
+.tz-madde.baski { font-size: 10.5pt; line-height: 1.4; }

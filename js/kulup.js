@@ -57,7 +57,7 @@
             amac: "Açıklık bırakma, 'Bitirdim!' kuralı ve puanlama kurallarına uyarak süreli yarışır.",
             dersler: [
               ["Kurallar (15 dk)", "3, 4 ve 5. videoları izleyin. Açıklık kalmalı, birleştirme yok; yapı dengede durmalı; erken 'Bitirdim' uyarı getirir."],
-              ["Hakemli eşleşme (35 dk)", "Üçlü gruplar: iki yarışmacı, bir hakem. Her turda 5 şekil, her şekil 1 puan. Roller her turda değişir."],
+              ["Hakemli eşleşme (35 dk)", "Üçlü gruplar: iki yarışmacı, bir hakem. Her turda en çok 5 kart; 3 kartı kazanan turu alır. Roller her turda değişir."],
               ["3. ders: Mini lig (40 dk)", "Masalar arası eşleşme; turu alan 1 puan. Son 1 dakika uyarısını öğretmen yapar."]],
             video: [v("Equilibrio 3: Açıklık", "equilibrio-3-aciklik.mp4"), v("Equilibrio 4: Bitirdim", "equilibrio-4-bitirdim.mp4"), v("Equilibrio 5: Tur, puan, süre", "equilibrio-5-tur-puan-sure.mp4")], kuralKart: ["Equilibrio"] },
           { ad: "Küre: Dörtlü yasağı ve rakip sıra", oyunlar: ["Küre"],
@@ -209,7 +209,7 @@
         "Kendi isteğinle iki rakip taşın arasına girersen rakip o taşı alamaz.", "Rakibin başlangıç sırasında aynı anda yalnızca bir taşın olabilir.", "Rakibin 4 taşını alan kazanır.", "Dokunduğun taşı oynamak zorundasın."],
       "Equilibrio": ["Kutuda 18 parça: 4 küp, 4 kare prizma, 4 dik yamuk, 2 silindir, 2 üçgen prizma, 1 köprü, 1 yarım silindir.", "Hakem şeklin numarasını söyler; önce kitapçık açılır, sonra dizilir.",
         "Yapı kartın aynısı olmalı: karttaki açıklıklar korunur, parçalar birleştirilmez.", "Bir parça düşerse toplanır, devam edilir.",
-        "İlk bitiren elini kaldırır ve 'Bitirdim!' der; yapı dengede durmalıdır. Erken 'Bitirdim' uyarı getirir.", "Her turda 5 şekil, her şekil 1 puan. Turu alan 1, diğeri 0 puan."]
+        "İlk bitiren elini kaldırır ve 'Bitirdim!' der; yapı dengede durmalıdır. Erken 'Bitirdim' uyarı getirir.", "Bir turda en çok 5 kart uygulanır, her kart 1 puan. 3 kartı kazanan olunca tur biter. Turu alan 1, kaybeden 0 puan alır; berabere biterse ikisi de 0,5 puan alır (TAZOF madde 6)."]
     },
     // TAZOF turnuva kuralları, revizyon 03.10.2026 (tazof.org.tr/turnuvalar/turnuva-kurallari): oyunla ilgili maddeler, metne sadık
     tazofKaynak: "TAZOF Turnuva Kuralları · Revizyon 03.10.2026",

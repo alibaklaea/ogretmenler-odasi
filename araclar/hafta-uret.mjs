@@ -53,20 +53,35 @@ function eYapi(i) { const { S, L } = yapiKur(), s = say(L), tip = i % 3, tahta =
   const yok = TUR.filter((t) => !s[t]), varlar = TUR.filter((t) => s[t]); if (!yok.length || varlar.length < 3) return null;
   const d = yok[rnd(yok.length)], O = karistir([d, ...karistir(varlar).slice(0, 3)]).map(AD);
   return { metin: 'Bu yapıda hangi parça hiç kullanılmamış?', tahta, cevap: `${AD(d)}.`, do: { alanlar: [alan('Parça', O, AD(d))] } }; }
-const KURAL_E = [['Kutuda 18 parça vardır.', 1], ['Kutuda 4 tane silindir vardır.', 0], ['Yapı kartın aynısı olmalıdır.', 1], ['Karttaki açıklıkları kapatabilirim.', 0], ['İki parçayı birleştirip tek parça gibi kullanabilirim.', 0],
-  ['Bir parça düşerse toplanır ve devam edilir.', 1], ['Bir parça düşünce oyun biter.', 0], ['İlk bitiren elini kaldırır ve “Bitirdim!” der.', 1], ['Yapı dengede durmadan “Bitirdim!” diyebilirim.', 0], ['Erken “Bitirdim!” demek uyarı getirir.', 1],
-  ['Her turda 5 şekil dizilir.', 1], ['Her şekil 3 puandır.', 0], ['Hakem şeklin numarasını söyler.', 1], ['Önce dizerim, kitapçığı sonra açarım.', 0], ['Kutuda 1 köprü ve 1 yarım silindir vardır.', 1], ['Kutuda küpten daha çok silindir vardır.', 0],
-  ['Turu alan oyuncu 1 puan alır.', 1], ['Turu kaybeden oyuncu 2 puan alır.', 0], ['Dik yamuktan 4 tane vardır.', 1], ['Üçgen prizmadan 4 tane vardır.', 0]];
+// Kurallar: TAZOF Equilibrio Turnuva Kuralları (revizyon 08.09.2025) + kutu içeriği (kendi kural videolarımız)
+const KURAL_E = [['Kutuda 18 parça vardır.', 1], ['Kutuda 4 tane silindir vardır.', 0], ['Kutuda 1 köprü ve 1 yarım silindir vardır.', 1], ['Kutuda küpten daha çok silindir vardır.', 0], ['Dik yamuktan 4 tane vardır.', 1], ['Üçgen prizmadan 4 tane vardır.', 0],
+  ['Turnuva başlamadan önce parçaların tam olup olmadığı kontrol edilir.', 1], ['Yapı kartın aynısı olmalıdır.', 1], ['Hakem şeklin numarasını söyler.', 1], ['Önce dizerim, kitapçığı sonra açarım.', 0], ['Hakem, kitapçık açılmadan dizilime başlanmasına izin verir.', 0],
+  ['Bir parça düşerse oyuncu toplar ve dizmeye devam eder.', 1], ['Bir parça düşünce oyun biter.', 0], ['İlk bitiren elini kaldırır ve “Bitirdim!” der.', 1], ['Bir oyuncu “Bitirdim!” deyince diğer oyuncu dizmeyi bırakır.', 0],
+  ['Hakem şekli onaylamazsa oyun devam eder.', 1], ['Dizilimi bitirmeden “Bitirdim!” diyen oyuncu uyarı cezası alır.', 1], ['Bir turda 2. uyarı cezasını alan oyuncu o turu kaybeder.', 1],
+  ['Kart sayısı söylenmediyse bir turda 5 kart uygulanır.', 1], ['Her kart 1 puan değerindedir.', 1], ['Her kart 3 puan değerindedir.', 0], ['3 kartı kazanan oyuncu olunca tur biter.', 1],
+  ['Turu alan oyuncu 1 puan, diğeri 0 puan alır.', 1], ['Berabere biten turda iki oyuncu da 0,5 puan alır.', 1], ['Turu kaybeden oyuncu 2 puan alır.', 0],
+  ['Son 1 dakika uyarısından sonra da şekil yapılamazsa yedek kart verilir.', 0], ['Son 1 dakikada da kimse şekli yapamazsa o karttan kimse puan alamaz.', 1]];
 const eKural = (i) => { const [m, d] = KURAL_E[i % KURAL_E.length]; return { metin: `Doğru mu, yanlış mı? ${m}`, cevap: d ? 'Doğru.' : 'Yanlış.', do: { alanlar: [alan('Cevap', ['Doğru', 'Yanlış'], d ? 'Doğru' : 'Yanlış')] } }; };
 const ISIM = ['Ece', 'Can', 'Ada', 'Efe', 'Elif', 'Mert', 'Zeynep', 'Kerem', 'Defne', 'Ali', 'Nehir', 'Emir'];
-function ePuan(i) { const [a, b] = karistir(ISIM).slice(0, 2), x = rnd(6), y = 5 - x;
-  if (i % 2 === 0) { const kaz = x > y ? a : b; return { metin: `Bir turda 5 şekil dizildi. ${a} ${x} şekli, ${b} ${y} şekli önce bitirdi. Turu kim alır?`, cevap: `${kaz}: daha çok şekil bitirdi (${Math.max(x, y)} – ${Math.min(x, y)}).`, do: { alanlar: [alan('Turu alan', [a, b], kaz)] } }; }
-  const T = Array.from({ length: 3 + rnd(2) }, () => rnd(2)), top = T.reduce((s, v) => s + v, 0);
-  return { metin: `Mini ligde ${a} ${T.length} tur oynadı. Tur sonuçları: ${T.map((v) => (v ? 'aldı' : 'kaybetti')).join(', ')}. ${a} kaç tur puanı topladı?`, cevap: `${top} puan: aldığı her tur 1 puan.`, do: { alanlar: [alan('Puan', sayiSec(top, 0), String(top))] } }; }
+function turOyna(a, b) { // en çok 5 kart; biri 3 karta ulaşınca biter; bazen kimse yapamaz (madde 14)
+  const K = []; let x = 0, y = 0;
+  while (K.length < 5 && x < 3 && y < 3) { const r = rnd(10); const k = r < 1 ? '-' : r < 5 ? a : b; K.push(k); if (k === a) x++; if (k === b) y++; }
+  return { K, x, y };
+}
+const ksay = (v) => String(v).replace('.', ',');
+function ePuan(i) { const [a, b] = karistir(ISIM).slice(0, 2), tip = i % 3;
+  if (tip < 2) { const { K, x, y } = turOyna(a, b), sonuc = x > y ? `${a} alır` : y > x ? `${b} alır` : 'Berabere';
+    const yaz = K.map((k, j) => `${j + 1}. kart: ${k === '-' ? 'kimse yapamadı' : k}`).join(', ');
+    if (tip === 0) return { metin: `${a} ile ${b} Equilibrio turu oynadı. ${yaz}. Turu kim alır?`, cevap: x === y ? `Berabere (${x} – ${y}): ikisi de 0,5 puan alır.` : `${x > y ? a : b} alır (${Math.max(x, y)} – ${Math.min(x, y)}): 1 puan.`, do: { alanlar: [alan('Sonuç', [`${a} alır`, `${b} alır`, 'Berabere'], sonuc)] } };
+    if (K.length === 5 && (x === 3 || y === 3)) return null; // iki neden birden doğru olurdu
+    return { metin: `${a} ile ${b} Equilibrio turu oynadı. ${yaz}. Kaç kart oynandı? Tur neden bitti?`, cevap: `${K.length} kart. ${x === 3 || y === 3 ? `${x === 3 ? a : b} 3 kartı kazandı, tur bitti.` : '5 kart tamamlandı.'}`, do: { alanlar: [alan('Kart', ['3', '4', '5'], String(K.length)), alan('Neden?', ['Biri 3 kart kazandı', '5 kart bitti'], x === 3 || y === 3 ? 'Biri 3 kart kazandı' : '5 kart bitti')] } }; }
+  const T = Array.from({ length: 3 + rnd(2) }, () => [1, 0, 0.5][rnd(3)]), top = T.reduce((s, v) => s + v, 0);
+  const O = new Set([top]); while (O.size < 4) O.add(Math.max(0, top + (rnd(7) - 3) / 2));
+  return { metin: `Mini ligde ${a} ${T.length} tur oynadı. Tur sonuçları: ${T.map((v) => (v === 1 ? 'kazandı' : v ? 'berabere' : 'kaybetti')).join(', ')}. ${a} kaç puan topladı?`, cevap: `${ksay(top)} puan: kazanılan tur 1, berabere 0,5, kaybedilen 0.`, do: { alanlar: [alan('Puan', [...O].sort((p, q) => p - q).map(ksay), ksay(top))] } }; }
 function havuz(n, f) { const R = [], gor = new Set(); let d = 0; while (R.length < n) { hata(++d < 200000, 'equilibrio üretimi ' + f.name); const q = f(R.length); if (!q) continue; const k = anahtar(q); if (gor.has(k)) continue; gor.add(k); R.push(q); } return R; }
 const EQ = { ad: ['Parçanın adı', 'Parçaları adlarıyla tanı. Yıldızlı parçaya bak.', havuz(80, eAd)], say: ['Parçaları say', 'Parçaları tek tek say; saydığını işaretlemek işini kolaylaştırır.', havuz(90, eSay).concat(havuz(30, eToplam))],
   eksik: ['Kutuyu kontrol et', 'Kutuda 18 parça vardır: 4 küp, 4 kare prizma, 4 dik yamuk, 2 silindir, 2 üçgen prizma, 1 köprü, 1 yarım silindir.', havuz(80, eEksik)], kutu: ['Kutuda neler var?', 'Kutudaki parça sayılarını hatırla.', havuz(8, eKutu)],
-  yapi: ['Yapıyı incele', 'Yapıdaki parçaları alttan üste, soldan sağa say.', havuz(110, eYapi)], kural: ['Kurallar', 'Equilibrio kurallarını hatırla.', havuz(KURAL_E.length, eKural)], puan: ['Tur ve puan', 'Her turda 5 şekil dizilir. Daha çok şekli önce bitiren turu alır ve 1 puan kazanır.', havuz(90, ePuan)] };
+  yapi: ['Yapıyı incele', 'Yapıdaki parçaları alttan üste, soldan sağa say.', havuz(110, eYapi)], kural: ['Kurallar', 'Equilibrio kurallarını hatırla.', havuz(KURAL_E.length, eKural)], puan: ['Tur ve puan', 'Bir turda en çok 5 kart uygulanır; her kart 1 puan. 3 kartı kazanan olunca tur biter. Turu alan 1, kaybeden 0, berabere biterse ikisi 0,5 puan alır.', havuz(90, ePuan)] };
 
 // ---------- havuzlar ----------
 const ETIKET_E = { kup: 1 };
