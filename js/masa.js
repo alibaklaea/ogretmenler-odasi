@@ -798,6 +798,7 @@
     else if (yol === "araclar") araclarSayfa();
     else if (yol === "canva") canvaSayfa(a1);
     else if (yol === "kulup") kulupSayfa(a1 || "AKIL", a2);
+    else if (yol === "pano") panoSayfa(a1, a2);
     else if (yol === "dokun") dokunSayfa(a1 && decodeURIComponent(a1), a2);
     else if (yol === "dokun-serbest") { dokunSayfa(); serbest = null; sunumAc([serbestSlayt()], 0, "Satranç tahtası"); }
     else if (yol === "projeler") projelerSayfa(a1 || "teknofest");
@@ -1766,6 +1767,122 @@
   function biletSayfasi(w) {
     const bir = `<div style="border:1pt dashed #555;padding:4mm;height:88mm"><b>${w.no}. hafta · ${esc(w.etkinlik.slice(0, 44))}</b><div class="s-kimlik" style="grid-template-columns:1fr"><span>Adı:</span></div>${blok({ t: "ticket" })}</div>`;
     return `<div class="sayfa"><div style="display:grid;grid-template-columns:1fr 1fr;gap:0">${bir.repeat(6)}</div></div>`;
+  }
+
+  // ---------- pano: okul ve sınıf panoları için A4 afiş sayfaları ----------
+  const PANO_TUR = [["hafta", "Haftanın panosu", "★"], ["pentago", "Pentago", "◉"], ["kure", "Küre", "●"], ["kodlama", "Kodlama Atölyesi", "⚡"], ["etwinning", "eTwinning projelerimiz", "✉"]];
+  const pBas = (renk, ust, baslik, alt) => `<div class="pn-bant" style="--pn:${renk}"><small>${esc(ust)}</small><h1>${esc(baslik)}</h1>${alt ? `<p>${esc(alt)}</p>` : ""}</div>`;
+  const pAyak = (not) => `<div class="pn-ayak"><span>${esc(KL.okul)} · ${esc(ayar.okul || "")}</span><span>${esc(not || "Öğretmenler Odası · 2026-2027")}</span></div>`;
+  const pSayfa = (ic, cls) => `<div class="sayfa pano ${cls || ""}">${ic}</div>`;
+  const pKutu = (baslik, ic, renk) => `<div class="pn-kutu" style="--pn:${renk || "#2f6f9f"}"><h3>${esc(baslik)}</h3>${ic}</div>`;
+  const pSayi = (L, renk) => `<div class="pn-sayilar" style="--pn:${renk}">${L.map(([n, a]) => `<div><b>${esc(String(n))}</b><span>${esc(a)}</span></div>`).join("")}</div>`;
+  const pCevaplar = (L) => `<div class="pn-cevap"><b>Cevaplar</b> (önce kendin çöz!)<div>${L.map((c, i) => `<span>${i + 1}) ${esc(c)}</span>`).join("")}</div></div>`;
+  function pBulmaca(Q, renk, n) { // tahtalı sorulardan ilk n tanesi
+    const S = Q.filter((q) => q.tahta || q.fen).slice(0, n);
+    return { html: `<div class="pn-bulmaca" style="--pn:${renk}">${S.map((q, i) => `<div><div class="pn-no">${i + 1}</div>${q.fen ? satrancTahta(q, false, "100%") : etkTahta(q.tahta, "100%")}<p>${esc(q.metin.replace(" Halka çiz.", "").replace(" Çarpı koy.", ""))}</p></div>`).join("")}</div>`, cevap: S.map((q) => q.cevap) };
+  }
+  const besliSay = () => { let n = 0; for (let r = 0; r < 6; r++) for (let c = 0; c < 6; c++) for (const [a, b] of [[0, 1], [1, 0], [1, 1], [1, -1]]) { const r2 = r + 4 * a, c2 = c + 4 * b; if (r2 >= 0 && r2 < 6 && c2 >= 0 && c2 < 6) n++; } return n; };
+  const pt6 = (satir, m) => ({ tur: "p", s: satir, m: m || [] });
+
+  function panoHafta(p, i) {
+    const P = KL.programlar[p], w = P.haftalar[i], H = KH[p] && KH[p][i], renk = p === "SAT" ? "#3b3f8f" : ["#d9480f", "#0b7285", "#5f3dc4", "#2b8a3e"][i % 4];
+    const oyunlar = (w.oyunlar && w.oyunlar.length ? w.oyunlar : ["Satranç"]);
+    const kural = oyunlar.flatMap((o) => (KL.kurallar[o] || []).slice(0, oyunlar.length > 2 ? 2 : oyunlar.length > 1 ? 3 : 5).map((k) => [o, k]));
+    const B = H ? pBulmaca(H.kagitlar.slice().reverse().flatMap((k) => k.sorular), renk, 3) : { html: "", cevap: [] };
+    return pSayfa(`${pBant(renk, `${P.ad} · ${i + 1}. hafta · ${tarihYaz(kulupTarih(i))}`, w.ad, w.hedef || w.amac)}
+      <div class="pn-iki">${pKutu("Bu hafta neler yaptık?", `<ul>${w.dersler.map(([b]) => `<li>${esc(b.replace(/\s*\(\d+ dk\)/, ""))}</li>`).join("")}</ul>`, renk)}
+        ${pKutu(kural.length ? "Kuralları hatırla" : "Hatırla", kural.length ? `<ol>${kural.map(([o, k]) => `<li>${oyunlar.length > 1 ? `<b>${esc(o)}:</b> ` : ""}${esc(k)}</li>`).join("")}</ol>` : `<p>${esc(w.amac)}</p>`, renk)}</div>
+      ${B.html ? `<h2 class="pn-h2" style="--pn:${renk}">Haftanın bulmacaları</h2>${B.html}${pCevaplar(B.cevap)}` : ""}
+      ${pAyak(`Çocuk Kulübü · ${P.blok}`)}`);
+  }
+  const pBant = pBas;
+
+  function panoPentago() {
+    const R = "#d9480f", E = (KE.Pentago || []), bos = Array(6).fill("......");
+    const koy = pt6(["......", "..S...", "......", "...B..", "......", "......"], [[2, 3, "*"]]);
+    const cevir = { tur: "p3", s: ["S..", ".B.", "..S"] }, cevir2 = { tur: "p3", s: ["..S", ".B.", "S.."] };
+    const bes = pt6(["......", "SSSSS.", "..B...", ".B..B.", "...B..", "......"], [[1, 0, "o"], [1, 1, "o"], [1, 2, "o"], [1, 3, "o"], [1, 4, "o"]]);
+    const adim = (n, b, t) => `<div class="pn-adim"><div class="pn-no">${n}</div>${t}<p>${b}</p></div>`;
+    const S1 = pSayfa(`${pBant(R, "Çocuk Kulübü · Akıl Oyunları", "PENTAGO", "Bilyeni koy, tablayı çevir, beşi yan yana diz!")}
+      <div class="pn-adimlar">${adim(1, "<b>Bilyeni koy.</b> Boş bir çukura bir bilye koy. Siyah başlar.", etkTahta(koy, "100%"))}
+        ${adim(2, "<b>Bir tablayı çevir.</b> Dört tabladan birini 90° çevir: saat yönünde ↻ ya da tersine ↺.", `<div class="pn-cevir">${etkTahta(cevir, "45%")}<span>↻</span>${etkTahta(cevir2, "45%")}</div>`)}
+        ${adim(3, "<b>Beşi yan yana diz.</b> Yatay, dikey ya da çapraz 5 bilye dizen kazanır.", etkTahta(bes, "100%"))}</div>
+      ${pSayi([[36, "çukur"], [4, "tabla"], [besliSay(), "farklı beşli çizgisi"], [8, "çevirme seçeneği (4 tabla × 2 yön)"]], R)}
+      <div class="pn-iki">${pKutu("Altın kurallar", `<ul><li>Bilyeyi koyunca 5 olduysa oyun biter, tablayı çevirmezsin.</li><li>Çevirme sonunda ikinizin de 5'i varsa oyun berabere.</li><li>Yalnızca rakibin 5'ini yaparsan rakibin kazanır.</li><li>Bilyeni koyduğun an hamleni yapmış sayılırsın.</li></ul>`, R)}
+        ${pKutu("Usta ipuçları", `<ul><li>Ortadaki 4 çukur (B2, E2, B5, E5) tablayla dönmez: güçlü yerlerdir.</li><li>Rakibin 4 bilyesi dizildiyse önce onu durdur.</li><li>İki ayrı yerden 5 tehdidi kur: rakip ikisini birden durduramaz.</li></ul>`, R)}</div>
+      ${pAyak("Kaynak: TAZOF Pentago Turnuva Kuralları")}`);
+    const Q = [...(E[4] ? E[4].birlikte || [] : []), ...(E[7] ? E[7].birlikte || [] : []), ...(E[9] ? E[9].birlikte || [] : []), ...(E[11] ? E[11].birlikte || [] : [])];
+    const B = pBulmaca(Q, R, 6);
+    const S2 = pSayfa(`${pBant(R, "Pentago · Bulmaca köşesi", "Sen çöz, pano kazansın!", "Her hafta bir bulmaca seç, çözümünü kâğıda yaz ve kutuya at.")}${B.html}${pCevaplar(B.cevap)}
+      ${pKutu("Pentago sözlüğü", `<div class="pn-sozluk"><span><b>Tabla:</b> 3 × 3'lük dönen parça</span><span><b>Çukur:</b> bilyenin konduğu yer</span><span><b>↻ / ↺:</b> saat yönü / tersi</span><span><b>Çift tehdit:</b> aynı anda iki 5 hazırlığı</span></div>`, R)}${pAyak("Bulmacaların cevapları bilgisayarla doğrulandı")}`);
+    return S1 + S2;
+  }
+
+  function panoKure() {
+    const R = "#5f3dc4", E = KE["Küre"] || [];
+    const bas_ = { tur: "k", s: ["TTTTTTM", ".......", ".......", ".......", ".......", ".......", "TMMMMMM"], m: [[0, 6, "o"], [6, 0, "o"]] };
+    const kut = (b, c) => `<div class="pn-adim"><div class="pn-no">${c[0]}</div>${etkTahta(b, "100%")}<p>${c[1]}</p></div>`;
+    const yak = (E[6] && E[6].birlikte && E[6].birlikte[0]) || (E[6] && E[6].sorular[0]);
+    const dort = (E[5] && E[5].birlikte && E[5].birlikte[0]) || (E[5] && E[5].sorular[0]);
+    const S1 = pSayfa(`${pBant(R, "Çocuk Kulübü · Akıl Oyunları", "KÜRE", "Sıkıştır, yakala, dörtlüye düşme!")}
+      <div class="pn-adimlar">${kut(bas_, [1, "<b>Diziliş:</b> Herkesin 7 taşı var. Halkalı taşlar <b>ajan taş</b>: morun solunda ve turuncunun sağında rakip renkten birer taş."])}
+        ${yak ? kut(yak.tahtaC || yak.tahta, [2, "<b>Sıkıştır ve al:</b> Rakip taşı kendi iki taşının arasına al. Arada kalanların hepsi alınır."]) : ""}
+        ${dort ? kut(dort.tahta, [3, "<b>Dörtlü yasağı:</b> Kendi taşların yatay, dikey ya da çapraz dörtlü olamaz; arada boşluk olsa bile."]) : ""}</div>
+      ${pSayi([[49, "kare (7 × 7)"], [7, "taş her oyuncuya"], [8, "sıkıştırma yönü"], [4, "taş alan kazanır"]], R)}
+      <div class="pn-iki">${pKutu("Nasıl hareket eder?", `<ul><li>Oyuna <b>mor</b> başlar.</li><li>Başlangıç sırasındaki taş yalnızca <b>ileri ya da çapraz</b> 1 kare gider.</li><li>Ortadaki taş <b>ileri, geri ya da çapraz</b> 1 kare gider; yana gidilmez.</li><li>Sıradan çıkan taş bir daha başlangıç sırasına dönemez.</li></ul>`, R)}
+        ${pKutu("Unutma!", `<ul><li>Kendi isteğinle iki rakibin arasına girersen seni alamazlar.</li><li>Rakibin başlangıç sırasında aynı anda tek taşın olabilir.</li><li>Dokunduğun taşı oynamak zorundasın.</li></ul>`, R)}</div>
+      ${pAyak("Kaynak: TAZOF Küre Turnuva Kuralları")}`);
+    const Q = [6, 7, 8, 9, 3].flatMap((t) => (E[t] && E[t].birlikte) || []);
+    const B = pBulmaca(Q, R, 6);
+    const S2 = pSayfa(`${pBant(R, "Küre · Bulmaca köşesi", "Hangi taşlar alınır?", "M yazan taş mor, T yazan taş turuncudur.")}${B.html}${pCevaplar(B.cevap)}${pAyak("Bulmacaların cevapları bilgisayarla doğrulandı")}`);
+    return S1 + S2;
+  }
+
+  function devre(k) { // basit bağlantı şeması: Arduino pinleri → parçalar
+    const L = k.pinler || [], h = Math.max(150, 40 + L.length * 44);
+    let s = `<svg class="pn-devre" viewBox="0 0 460 ${h}"><rect x="10" y="10" width="140" height="${h - 20}" rx="10" fill="#0b7285"/><text x="80" y="38" text-anchor="middle" fill="#fff" font-size="16" font-weight="700">ARDUINO</text>`;
+    L.forEach(([a, pin], j) => { const y = 66 + j * 44;
+      s += `<rect x="118" y="${y - 12}" width="32" height="24" rx="4" fill="#fff"/><text x="134" y="${y + 5}" text-anchor="middle" font-size="12" font-weight="700">${esc(pin)}</text><path d="M150 ${y}H270" stroke="${["#e8590c", "#2b8a3e", "#1971c2", "#c2255c"][j % 4]}" stroke-width="4"/><rect x="270" y="${y - 16}" width="180" height="32" rx="8" fill="#fff4e6" stroke="#e8590c"/><text x="360" y="${y + 5}" text-anchor="middle" font-size="12">${esc(a)}</text>`; });
+    return s + "</svg>";
+  }
+  function panoKodlama() {
+    const R = "#0b7285", w = PD.planlar.D1.haftalar.find((x) => bugun >= x.bas && bugun <= gunEkle(x.bit, 2)), H = KD.haftalar.filter((k) => !k.yok);
+    const k = (w && H.find((x) => x.no === w.no)) || H.find((x) => !x.tamam) || H[0];
+    const S1 = pSayfa(`${pBant(R, `${KD.ad} · her ${GUN_TAM[KD.gun] || "hafta"}`, "KODLAMA ATÖLYESİ", "Kâğıtta tasarla → Tinkercad'de dene → gerçek devreyi kur")}
+      <div class="pn-surec">${[["✏️", "Kâğıt", "Devreyi ve algoritmayı çiz"], ["🖥️", "Tinkercad", "Sanal devrede dene"], ["🤖", "Yapay zekâ", "İyi bir prompt yaz, kodu satır satır anla"], ["🔌", "Gerçek devre", "Kur, test et, hatayı bul"]].map(([i, b, a], j) => `<div><span>${i}</span><b>${j + 1}. ${b}</b><small>${a}</small></div>`).join("")}</div>
+      <h2 class="pn-h2" style="--pn:${R}">Bu haftanın projesi: ${esc(k.proje)}</h2>
+      <div class="pn-iki">${pKutu("Bağlantı şeması", devre(k), R)}${pKutu("Öğrendiğimiz kavramlar", `<ul>${k.kavram.split(/,\s*/).map((x) => `<li>${esc(x)}</li>`).join("")}</ul>${k.soru ? `<p class="pn-soru">“${esc(k.soru)}”</p>` : ""}`, R)}</div>
+      ${pSayi([[H.length, "haftalık proje"], [H.filter((x) => x.tamam).length, "tamamlanan"], [4, "aşama: kâğıt, Tinkercad, yapay zekâ, gerçek devre"]], R)}
+      ${pAyak("Arduino · Tinkercad · yapay zekâ destekli kodlama")}`);
+    const S2 = pSayfa(`${pBant(R, "Kodlama Atölyesi", "Yıl boyu projelerimiz", "Her hafta yeni bir sensör, yeni bir makine!")}
+      <div class="pn-proje">${H.map((x) => `<div class="${x === k ? "simdi" : x.tamam ? "bitti" : ""}"><b>${x.no}. hafta</b><span>${esc(x.proje)}</span><small>${esc(x.kavram.split(",")[0])}</small></div>`).join("")}</div>
+      ${pAyak("Turuncu kart: bu hafta · yeşil kart: tamamlandı")}`);
+    return S1 + S2;
+  }
+
+  function panoEtwinning() {
+    const R = "#1c7ed6", L = window.ETWINNING_PLAN || [];
+    const ay = (d) => tarihYaz(iso(d));
+    const kart = (p) => { const [en, tr] = p.ad.split(" (");
+      return `<div class="pn-tw"><img src="img/pano/${p.id}.jpg" alt=""><img class="pn-logo" src="img/pano/${p.id}-logo.png" alt=""><div><h3>${esc((tr || "").replace(/\)$/, "") || en)}</h3><small>${esc(en)}</small><p>${esc(p.aciklama.split(". ").slice(0, 2).join(". "))}.</p><span class="pn-tarih">${ay(p.baslangic)} – ${ay(p.sonTarih)}</span></div></div>`; };
+    const S1 = pSayfa(`${pBant(R, "Avrupa okullarıyla birlikte öğreniyoruz", "eTwinning PROJELERİMİZ", "8-16 yaş · İngilizce · Avrupa'dan ortak okullar")}
+      <div class="pn-twler">${L.slice(0, 2).map(kart).join("")}</div>
+      ${pKutu("eTwinning nedir?", `<p>eTwinning, Avrupa'daki okulların internet üzerinden birlikte proje yaptığı güvenli bir platformdur. Öğrenciler farklı ülkelerden arkadaşlarıyla takım olur, ortak ürünler hazırlar ve birbirinden öğrenir.</p>`, R)}${pAyak("eTwinning · European School Education Platform")}`);
+    const S2 = pSayfa(`${pBant(R, "eTwinning projelerimiz", "Barış, sanat ve doğa için", "Projelerimizi TwinSpace'te takip edebilirsiniz.")}
+      <div class="pn-twler">${L.slice(2).map(kart).join("")}</div>${pAyak("Görseller proje logolarıdır; öğrencilerimizin oylamasıyla güncellenecek")}`);
+    return S1 + S2;
+  }
+
+  function panoSayfa(tur, no) {
+    tur = PANO_TUR.some(([k]) => k === tur) ? tur : "hafta";
+    const prog = no && no.startsWith("SAT") ? "SAT" : "AKIL", i = no ? Math.max(0, +(no.replace(/\D/g, "") || 1) - 1) : kulupSimdi();
+    const html = tur === "pentago" ? panoPentago() : tur === "kure" ? panoKure() : tur === "kodlama" ? panoKodlama() : tur === "etwinning" ? panoEtwinning() : panoHafta(prog, Math.min(i, KL.programlar[prog].haftalar.length - 1));
+    const haftaSec = tur === "hafta" ? `<select id="pnHafta" style="width:auto">${["AKIL", "SAT"].flatMap((p) => KL.programlar[p].haftalar.map((w, j) => `<option value="${p}${j + 1}" ${p === prog && j === i ? "selected" : ""}>${esc(KL.programlar[p].ad)} · ${j + 1}. hafta: ${esc(w.ad)}</option>`)).join("")}</select>` : "";
+    $("#sahne").innerHTML = `<div class="ust-baslik"><div><h1>Pano</h1><p>Okul ve sınıf panoları için hazır afişler. A4 yazdırın ya da yazdırırken kâğıt boyutunu A3 seçip büyük basın.</p></div>
+      <div class="dugmeler">${PANO_TUR.map(([k, a, ik]) => `<a class="dugme kucuk${k === tur ? " ana" : ""}" href="#pano/${k}">${ik} ${esc(a)}</a>`).join("")}</div></div>
+      <div class="dugmeler" style="margin-bottom:14px">${haftaSec}<button class="dugme ana" id="pnBas">🖨 Panoyu yazdır</button></div><div class="ekran-onizleme pn-onizleme">${html}</div>`;
+    $("#pnBas").onclick = () => bas(html);
+    if ($("#pnHafta")) $("#pnHafta").onchange = (e) => { location.hash = `pano/hafta/${e.target.value}`; };
   }
 
   // ---------- belirli gün ve haftalar ----------

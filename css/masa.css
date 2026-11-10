@@ -528,3 +528,47 @@ html.uygulama .dk-alan .ct-tahta, html.uygulama .dk-tahta { width: 520px; width:
 .tz-madde { padding-left: 22px; font-size: .9rem; }
 .tz-madde li { margin-bottom: 4px; }
 .tz-madde.baski { font-size: 10.5pt; line-height: 1.4; }
+
+/* pano afişleri */
+.sayfa.pano { padding: 9mm 10mm 8mm; display: flex; flex-direction: column; gap: 4mm; font-size: 11pt; }
+.pn-bant { background: var(--pn); color: #fff; border-radius: 6mm; padding: 6mm 8mm; position: relative; overflow: hidden; }
+.pn-bant::after { content: ""; position: absolute; right: -18mm; top: -18mm; width: 60mm; height: 60mm; border-radius: 50%; background: rgba(255,255,255,.14); }
+.pn-bant small { font-size: 10pt; letter-spacing: .08em; text-transform: uppercase; opacity: .9; }
+.pn-bant h1 { font-size: 30pt; margin: 1mm 0; line-height: 1.05; color: #fff; }
+.pn-bant p { margin: 0; font-size: 12.5pt; }
+.pn-h2 { font-size: 15pt; margin: 1mm 0 0; color: var(--pn); border-bottom: 1.2mm solid var(--pn); padding-bottom: 1mm; }
+.pn-iki { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+.pn-kutu { border: .7mm solid var(--pn); border-radius: 4mm; padding: 3mm 4mm; background: #fff; }
+.pn-kutu h3 { margin: 0 0 2mm; font-size: 13pt; color: var(--pn); }
+.pn-kutu ul, .pn-kutu ol { margin: 0; padding-left: 5mm; } .pn-kutu li { margin-bottom: 1.2mm; }
+.pn-adimlar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; }
+.pn-adim, .pn-bulmaca > div { position: relative; border: .5mm dashed #bbb; border-radius: 4mm; padding: 3mm; background: #fffdf7; }
+.pn-adim p, .pn-bulmaca p { margin: 2mm 0 0; font-size: 10.5pt; line-height: 1.3; }
+.pn-no { position: absolute; left: -2mm; top: -2mm; width: 9mm; height: 9mm; border-radius: 50%; background: var(--pn, #d9480f); color: #fff; font-weight: 800; display: grid; place-items: center; font-size: 13pt; }
+.pn-adimlar .pn-no { background: #222; }
+.pn-cevir { display: flex; align-items: center; justify-content: center; gap: 2mm; font-size: 22pt; }
+.pn-sayilar { display: grid; grid-template-columns: repeat(auto-fit, minmax(30mm, 1fr)); gap: 3mm; }
+.pn-sayilar div { background: color-mix(in srgb, var(--pn) 12%, #fff); border-radius: 4mm; padding: 2.5mm; text-align: center; }
+.pn-sayilar b { display: block; font-size: 24pt; color: var(--pn); line-height: 1; } .pn-sayilar span { font-size: 9.5pt; }
+.pn-bulmaca { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; }
+.pn-bulmaca > div svg { max-height: 52mm; }
+.pn-cevap { margin-top: auto; border-top: .5mm dashed #999; padding-top: 2mm; font-size: 8.5pt; color: #444; }
+.pn-cevap div { display: flex; flex-wrap: wrap; gap: 1mm 5mm; transform: rotate(180deg); }
+.pn-ayak { margin-top: auto; display: flex; justify-content: space-between; font-size: 8pt; color: #666; border-top: .3mm solid #ccc; padding-top: 1.5mm; }
+.pn-sozluk { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5mm 4mm; }
+.pn-surec { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; }
+.pn-surec div { background: #e3fafc; border-radius: 4mm; padding: 3mm; text-align: center; display: flex; flex-direction: column; gap: 1mm; }
+.pn-surec span { font-size: 22pt; } .pn-surec small { font-size: 9pt; }
+.pn-devre { width: 100%; height: auto; }
+.pn-soru { font-style: italic; color: #0b7285; margin: 2mm 0 0; }
+.pn-proje { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2mm; }
+.pn-proje div { border: .5mm solid #ccc; border-radius: 3mm; padding: 1.8mm; display: flex; flex-direction: column; gap: .6mm; font-size: 8.5pt; line-height: 1.2; }
+.pn-proje div b { color: #0b7285; } .pn-proje div small { color: #666; }
+.pn-proje .simdi { border-color: #e8590c; background: #fff4e6; } .pn-proje .bitti { border-color: #2b8a3e; background: #ebfbee; }
+.pn-twler { display: flex; flex-direction: column; gap: 5mm; }
+.pn-tw { position: relative; border-radius: 5mm; overflow: hidden; border: .6mm solid #1c7ed6; background: #fff; }
+.pn-tw > img:first-child { width: 100%; height: 52mm; object-fit: cover; display: block; }
+.pn-tw .pn-logo { position: absolute; right: 4mm; top: 4mm; width: 28mm; height: 28mm; background: #fff; border-radius: 50%; padding: 1mm; }
+.pn-tw > div { padding: 3mm 5mm 4mm; } .pn-tw h3 { margin: 0; font-size: 15pt; color: #1c7ed6; } .pn-tw small { color: #555; }
+.pn-tw p { margin: 2mm 0; font-size: 10.5pt; } .pn-tarih { display: inline-block; background: #1c7ed6; color: #fff; border-radius: 3mm; padding: .8mm 3mm; font-size: 9.5pt; }
+.pn-onizleme .sayfa.pano { margin-bottom: 18px; }
