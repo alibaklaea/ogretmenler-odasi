@@ -799,6 +799,7 @@
     else if (yol === "canva") canvaSayfa(a1);
     else if (yol === "kulup") kulupSayfa(a1 || "AKIL", a2);
     else if (yol === "pano") panoSayfa(a1, a2);
+    else if (yol === "formlar") formlarSayfa();
     else if (yol === "dokun") dokunSayfa(a1 && decodeURIComponent(a1), a2);
     else if (yol === "dokun-serbest") { dokunSayfa(); serbest = null; sunumAc([serbestSlayt()], 0, "Satranç tahtası"); }
     else if (yol === "projeler") projelerSayfa(a1 || "teknofest");
@@ -1767,6 +1768,37 @@
   function biletSayfasi(w) {
     const bir = `<div style="border:1pt dashed #555;padding:4mm;height:88mm"><b>${w.no}. hafta · ${esc(w.etkinlik.slice(0, 44))}</b><div class="s-kimlik" style="grid-template-columns:1fr"><span>Adı:</span></div>${blok({ t: "ticket" })}</div>`;
     return `<div class="sayfa"><div style="display:grid;grid-template-columns:1fr 1fr;gap:0">${bir.repeat(6)}</div></div>`;
+  }
+
+  // ---------- proje formları (TEKNOFEST ve eTwinning) ----------
+  // Öğrenci adları yalnızca bu cihazda (Ayarlar > grup öğrencileri) tutulur; site verisinde yok.
+  const PF = window.PROJE_FORM || { projeler: [] };
+  const PF_SATIR = [["durum", "Başvuru Durumu:"], ["no", "Başvuru No :"], ["ad", "Proje veya Başvurunun Adı:"], ["ozet", "Proje veya Buluş özeti:"], ["kategori", "Kategori :"], ["tarih", "Başvuru Tarihi:"], ["paydas", "Varsa Paydaşlar:"], ["ogr", "Proje Öğrencileri:"], ["danisman", "Proje Danışmanı:"]];
+  const PF_GRUP = { D1: "Destek Eğitimi 1 grubu", D3: "Destek Eğitimi 3 grubu", IKI: "Destek Eğitimi 1 ve Destek Eğitimi 3 grupları" };
+  const pfListe = (k) => String((ayar.gruplar[k] || {}).ogrenciler || "").split(/[\n,;]+/).map((x) => x.trim()).filter(Boolean);
+  const pfOgr = (P) => { const L = P.grup === "IKI" ? [...pfListe("D1"), ...pfListe("D3")] : pfListe(P.grup); return `${PF_GRUP[P.grup]}: ${L.length ? L.join(", ") : "(öğrenci adları Ayarlar'dan girilecek)"}`; };
+  const pfDeger = (P, k) => (k === "ogr" ? pfOgr(P) : k === "danisman" ? PF.danisman : P[k]);
+  const pfTablo = (P) => `<table class="pf-tablo">${PF_SATIR.map(([k, a]) => `<tr><th>${esc(a)}</th><td>${esc(pfDeger(P, k))}</td></tr>`).join("")}</table>`;
+  function pfWord(P) { // Word'ün açtığı HTML belgesi (.doc)
+    const h = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>${esc(P.ad)}</title>
+      <style>@page{size:21cm 29.7cm;margin:2cm}body{font-family:Calibri,Arial;font-size:11pt}table{border-collapse:collapse;width:100%}th,td{border:1px solid #000;padding:6pt;vertical-align:top;text-align:left}th{width:32%;font-weight:bold}</style></head>
+      <body>${pfTablo(P).replace(' class="pf-tablo"', "")}</body></html>`;
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["﻿", h], { type: "application/msword" }));
+    a.download = `${P.tur}_${P.id}_Proje_Formu.doc`; document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+  function formlarSayfa() {
+    const eksik = ["D1", "D3"].filter((k) => !pfListe(k).length);
+    $("#sahne").innerHTML = `<div class="ust-baslik"><div><h1>Proje Formları</h1><p>TEKNOFEST ve eTwinning projelerimiz, indirilen “proje formu” düzeninde. Word olarak indirin, düzenleyin, yazdırın.</p></div>
+      <div class="dugmeler"><button class="dugme ana" id="pfTum">⬇ Tümünü Word olarak indir (${PF.projeler.length})</button><button class="dugme" id="pfBas">🖨 Tümünü yazdır</button></div></div>
+      ${eksik.length ? `<div class="uyari"><b>Öğrenci adları bu cihazda yok:</b> ${eksik.map((k) => PF_GRUP[k]).join(" ve ")}. Adları <a href="#" id="pfAyar">Ayarlar</a>'da grup öğrencileri kısmına virgülle yazın. Adlar yalnızca bu cihazda saklanır, internete yüklenmez.</div>` : `<p class="not">Öğrenci adları bu cihazın Ayarlar'ından alındı; internete yüklenmez.</p>`}
+      <div class="pf-grid">${PF.projeler.map((P, i) => `<div class="kart pf-kart"><div class="gun-tarih"><span class="rozet ${P.tur === "TEKNOFEST" ? "milli" : "ab"}">${esc(P.tur)}</span><b>${esc(PF_GRUP[P.grup])}</b></div>
+        <h2>${esc(P.ad)}</h2>${pfTablo(P)}<div class="dugmeler"><button class="dugme kucuk ana" data-pf-w="${i}">⬇ Word olarak indir</button><button class="dugme kucuk" data-pf-b="${i}">🖨 Yazdır / PDF</button></div></div>`).join("")}</div>`;
+    const sayfa = (P) => `<div class="sayfa pf-sayfa"><div class="s-ust"><span>${esc(ayar.okul || "Kahramankazan BİLSEM")}</span><span>${esc(P.tur)} proje formu</span></div>${pfTablo(P)}</div>`;
+    document.querySelectorAll("[data-pf-w]").forEach((b) => b.onclick = () => pfWord(PF.projeler[+b.dataset.pfW]));
+    document.querySelectorAll("[data-pf-b]").forEach((b) => b.onclick = () => bas(sayfa(PF.projeler[+b.dataset.pfB])));
+    $("#pfTum").onclick = () => PF.projeler.forEach((P, i) => setTimeout(() => pfWord(P), i * 600));
+    $("#pfBas").onclick = () => bas(PF.projeler.map(sayfa).join(""));
+    if ($("#pfAyar")) $("#pfAyar").onclick = (e) => { e.preventDefault(); ayarAc(); };
   }
 
   // ---------- pano: okul ve sınıf panoları için A4 afiş sayfaları ----------
