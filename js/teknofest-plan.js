@@ -3,7 +3,7 @@
 window.TEKNOFEST_PLAN = [
  {
   "id": "tf-limit-pusulasi",
-  "ad": "LİMİT PUSULASI: Evimizin Enerji Bekçisi",
+  "ad": "FATURA KALKANI: Evimizin Enerji Bekçisi",
   "tur": "teknofest",
   "durum": "fikir",
   "kategori": "İnsanlık Yararına Teknolojiler · Ortaokul · Doğa Bilimleri ve Çevresel Farkındalık · Alt tema: Enerji Kaynakları ve Verimli Kullanım",
@@ -11,8 +11,8 @@ window.TEKNOFEST_PLAN = [
   "ortaklar": "",
   "baslangic": "2026-12-01",
   "sonTarih": "2027-02-28",
-  "aciklama": "2026'dan beri evlerde doğalgaz (her il için aylık), elektrik (yıllık, 2027'de 3.000 kWh) ve su limitleri var. Limit aşılırsa fatura pahalı kademeye geçiyor. Öğrenciler sayaca dışarıdan bantla takılan bir okuyucu yapıyor: elektrik sayacının ışığını ve gaz sayacının mıknatısını sayıyor, sayaç açılmıyor. Ekran, limiti haftalara ve günlere bölüyor, hava tahminine göre uyarı veriyor. Kanıt: doğruluk testi, cihaz ölçüm tablosu ve 8-10 evde A-B deneyi. Plan: Teknofest_Projeleri\\08_Limit_Pusulasi\\Proje_Plani.docx",
-  "baglanti": "https://alibaklaea.github.io/ogretmenler-odasi/limit-pusulasi/",
+  "aciklama": "2026'dan beri evlerde doğalgaz (her il için aylık), elektrik (yıllık, 2027'de 3.000 kWh) ve su limitleri var. Limit aşılırsa fatura pahalı kademeye geçiyor. Öğrenciler sayaca dışarıdan bantla takılan bir okuyucu yapıyor: elektrik sayacının ışığını ve gaz sayacının mıknatısını sayıyor, sayaç açılmıyor. Ekran, limiti haftalara ve günlere bölüyor, hava tahminine göre uyarı veriyor. Kanıt: doğruluk testi, cihaz ölçüm tablosu ve 8-10 evde A-B deneyi. Plan: Teknofest_Projeleri\\08_Fatura_Kalkani\\Proje_Plani.docx",
+  "baglanti": "https://alibaklaea.github.io/fatura-kalkani/",
   "adimlar": [
    { "ad": "Kasım sonu: Takımı kur (ortaokul, en fazla 6 öğrenci), mühendislik günlüğünü başlat", "tamam": false },
    { "ad": "1-20 Aralık: Prototip v1, elektrik ışık sayacı (ESP32 + ışık sensörü) ve OLED ekran", "tamam": false },
