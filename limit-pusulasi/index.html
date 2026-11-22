@@ -1,0 +1,1018 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1c4e80">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Limit Pusulası</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Düzen: üstte durum şeridi, altında üç sayaç kartı (Claude kullanım çizelgesi gibi çubuklar), sonra öneriler ve sekmeler */
+:root{
+  --bg:#f3f5f7; --panel:#ffffff; --ink:#15202b; --muted:#5b6876; --line:#dfe4ea;
+  --gas:#e8590c; --gas-soft:#fff0e6; --elec:#c99400; --elec-soft:#fff7d6; --water:#0b8a9a; --water-soft:#e2f6f8;
+  --ok:#2b8a3e; --warn:#d9480f; --bad:#c92a2a; --track:#e8ecf0; --accent:#1c4e80;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Figtree", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f151b; --panel:#17202a; --ink:#e8eef3; --muted:#9aa8b5; --line:#2a3642;
+  --gas:#ff8a4c; --gas-soft:#3a2216; --elec:#f2c94c; --elec-soft:#3a3214; --water:#4cc9d8; --water-soft:#123338;
+  --ok:#69db7c; --warn:#ffa94d; --bad:#ff6b6b; --track:#26323e; --accent:#8cb8e8; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f151b; --panel:#17202a; --ink:#e8eef3; --muted:#9aa8b5; --line:#2a3642;
+  --gas:#ff8a4c; --gas-soft:#3a2216; --elec:#f2c94c; --elec-soft:#3a3214; --water:#4cc9d8; --water-soft:#123338;
+  --ok:#69db7c; --warn:#ffa94d; --bad:#ff6b6b; --track:#26323e; --accent:#8cb8e8; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding-block:20px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(26px,4vw,36px);font-weight:800;letter-spacing:-.02em}
+h2{font-size:20px;font-weight:600}
+h3{font-size:16px;font-weight:600}
+.mono,.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+header.top{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-end;justify-content:space-between;margin-bottom:14px}
+.brand p{margin:4px 0 0;color:var(--muted)}
+.ilsel{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+select,input,button{font:inherit;color:inherit}
+select,input[type=text],input[type=number],input[type=date]{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0}
+button{cursor:pointer;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:8px 14px;font-weight:600}
+button.pri{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.banner{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.banner b{font-weight:700}
+.banner.alert{border-color:var(--warn)}
+.chip{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.02em}
+.chip.ok{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+.chip.warn{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
+.chip.bad{background:color-mix(in srgb,var(--bad) 16%,transparent);color:var(--bad)}
+nav.tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);margin:6px 0 18px}
+nav.tabs button{border:0;border-bottom:3px solid transparent;border-radius:0;background:none;padding:10px 12px;color:var(--muted);white-space:nowrap}
+nav.tabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent)}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0}
+.ucard{border-top:4px solid var(--c)}
+.ucard .hd{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:10px}
+.meter{margin:12px 0}
+.meter .lbl{display:flex;justify-content:space-between;gap:8px;font-size:13px;margin-bottom:5px}
+.meter .lbl b{font-weight:600}
+.bar{position:relative;height:10px;background:var(--track);border-radius:999px;overflow:visible}
+.bar .fill{position:absolute;inset:0 auto 0 0;background:var(--c);border-radius:999px;max-width:100%}
+.bar .fill.over{background:var(--bad)}
+.bar .tick{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink);opacity:.55;border-radius:2px}
+.meter .sub{font-size:12px;color:var(--muted);margin-top:4px}
+.cost{display:flex;justify-content:space-between;gap:8px;border-top:1px dashed var(--line);margin-top:12px;padding-top:10px;font-size:14px}
+.cost .num{font-weight:700}
+.advice{display:grid;gap:10px;margin-top:18px}
+.adv{display:grid;grid-template-columns:6px 1fr;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px 12px 0;overflow:hidden}
+.adv .stripe{background:var(--c);border-radius:0 4px 4px 0}
+.adv h3{font-size:15px;margin-bottom:2px}
+.adv p{margin:0;color:var(--muted);font-size:14px}
+.section-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin:26px 0 10px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:right;padding:7px 9px;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
+tr.now td{background:color-mix(in srgb,var(--accent) 9%,transparent);font-weight:600}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.form label{display:grid;gap:4px;font-size:13px;color:var(--muted)}
+.form label input,.form label select{color:var(--ink)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.drop{border:2px dashed var(--line);border-radius:12px;padding:22px;text-align:center;background:var(--panel)}
+.drop.hot{border-color:var(--accent)}
+.days{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(78px,1fr);gap:6px;overflow-x:auto;padding-bottom:6px}
+.day{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px;font-size:12px;display:grid;gap:3px;text-align:center}
+.day.seg{border-left:3px solid var(--gas)}
+.day .t{font-family:var(--f-mono);font-size:15px;font-weight:700}
+.day .g{color:var(--gas);font-family:var(--f-mono)}
+.day .e{color:var(--elec);font-family:var(--f-mono)}
+.day.today{outline:2px solid var(--accent)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+svg text{fill:var(--muted);font-family:var(--f-body)}
+.foot{margin-top:30px;font-size:12px;color:var(--muted)}
+.foot a{color:var(--accent)}
+.status{min-height:20px;font-size:13px}
+.hidden-file{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+#sumTable td{vertical-align:top}
+#sumTable small{display:block;color:var(--muted);font-family:var(--f-body);font-size:12px}
+#sumTable input{width:110px;text-align:right}
+#cihazTable td{vertical-align:middle}
+#cihazTable select,#cihazTable input{padding:5px 7px}
+#cihazTable input{width:70px;text-align:right}
+.ucnt{font-family:var(--f-mono);font-size:24px;font-weight:700;color:var(--elec)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14px}
+.kv dt{color:var(--muted)} .kv dd{margin:0;font-family:var(--f-mono)}
+@media (prefers-reduced-motion:no-preference){.bar .fill{transition:width .5s ease}}
+/* --- Telefon uygulaması düzeni --- */
+nav.bottom,.sheet,#sumCards{display:none}
+.scard{display:grid;gap:8px;padding:12px 0;border-bottom:1px solid var(--line)}
+.scard:last-child{border-bottom:0}
+.scard .g4{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.scard .g4 div{background:var(--bg);border-radius:8px;padding:8px 10px}
+.scard .g4 span{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.scard .g4 b{font-family:var(--f-mono);font-size:16px}
+.scard .g4 small{display:block;color:var(--muted);font-size:12px}
+.scard label{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.scard label input{width:120px;text-align:right}
+@media (max-width:760px){
+  body{font-size:15px}
+  .wrap{padding-block:0 calc(84px + env(safe-area-inset-bottom,0px))}
+  header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px))) 12px;padding:10px max(16px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line);align-items:center;flex-wrap:nowrap}
+  body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:21;background:var(--bg)}
+  h1{font-size:22px}
+  .brand p{display:none}
+  .ilsel #bugunTxt,.ilsel label{display:none}
+  .ilsel select{max-width:150px}
+  nav.tabs{display:none}
+  nav.bottom{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--panel);border-top:1px solid var(--line);padding:6px max(6px,env(safe-area-inset-left,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(6px,env(safe-area-inset-right,0px))}
+  nav.bottom button{border:0;background:none;padding:6px 2px;display:grid;justify-items:center;gap:2px;font-size:11px;font-weight:600;color:var(--muted);border-radius:10px}
+  nav.bottom button svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  nav.bottom button[aria-selected=true]{color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent)}
+  .sheet{position:fixed;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom,0px));z-index:29;background:var(--panel);border-top:1px solid var(--line);border-radius:16px 16px 0 0;padding:12px max(16px,env(safe-area-inset-left,0px));box-shadow:0 -8px 24px rgb(0 0 0 / .15)}
+  .sheet.open{display:grid;gap:6px}
+  .sheet button{text-align:left;padding:14px;font-size:15px}
+  #sumTable{display:none}
+  #sumCards{display:block}
+  .grid3{grid-template-columns:1fr}
+  .card{padding:14px}
+  .section-h{margin:20px 0 8px}
+  .days{grid-auto-columns:74px}
+  button,select,input[type=text],input[type=number],input[type=date]{min-height:42px}
+  #cihazTable tr:first-child{display:none}
+  #cihazTable tr{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;padding:12px 0;border-bottom:1px solid var(--line)}
+  #cihazTable td{border:0;padding:0;text-align:left;white-space:normal}
+  #cihazTable td:first-child{grid-column:1/-1;font-weight:700;font-size:16px}
+  #cihazTable td[data-l]::before{content:attr(data-l);display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-family:var(--f-body)}
+  #cihazTable td.wide{grid-column:1/-1}
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Limit Pusulası</h1>
+      <p>Doğalgaz, elektrik ve su limitlerini haftalara böler, havaya göre plan yapar.</p>
+    </div>
+    <div class="ilsel">
+      <label for="il" class="small muted">İl</label>
+      <select id="il"></select>
+      <span class="small muted" id="bugunTxt"></span>
+    </div>
+  </header>
+
+  <div id="banners"></div>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="panel" aria-selected="true">Panel</button>
+    <button role="tab" data-tab="cihaz">Cihazlarım</button>
+    <button role="tab" data-tab="plan">16 günlük plan</button>
+    <button role="tab" data-tab="fatura">Fatura yükle</button>
+    <button role="tab" data-tab="okuma">Sayaç okuma</button>
+    <button role="tab" data-tab="ortalama">İl ortalamaları</button>
+    <button role="tab" data-tab="ayar">Ayarlar</button>
+  </nav>
+  <nav class="bottom" aria-label="Uygulama menüsü">
+    <button type="button" data-tab="panel" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M4 18a8 8 0 1 1 16 0"/><path d="M12 18l4-6"/></svg>Panel</button>
+    <button type="button" data-tab="okuma"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><circle cx="12" cy="12.5" r="3.5"/><path d="M8 6l1.5-2h5L16 6"/></svg>Sayaç</button>
+    <button type="button" data-tab="fatura"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg>Fatura</button>
+    <button type="button" data-tab="cihaz"><svg viewBox="0 0 24 24"><path d="M9 3v4M15 3v4"/><rect x="6" y="7" width="12" height="7" rx="2"/><path d="M12 14v7"/></svg>Cihazlar</button>
+    <button type="button" data-more="1"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>Daha</button>
+  </nav>
+  <div class="sheet" id="sheet">
+    <button type="button" data-tab="plan">16 günlük plan ve hava</button>
+    <button type="button" data-tab="ortalama">İl ortalamaları ve limit tablosu</button>
+    <button type="button" data-tab="ayar">Ayarlar</button>
+  </div>
+
+  <!-- PANEL -->
+  <section data-view="panel">
+    <div class="card" style="margin-bottom:14px">
+      <div class="section-h" style="margin:0 0 6px"><h2>Ne kadar harcayabilirsin?</h2><span class="small muted">Hak = yasal limit ile senin hedef faturandan düşük olanı</span></div>
+      <div class="scroll"><table id="sumTable"></table></div>
+      <div id="sumCards"></div>
+      <div id="sumText" class="small" style="display:grid;gap:6px;margin-top:12px"></div>
+    </div>
+    <div class="grid3" id="cards"></div>
+    <div class="section-h"><h2>Bu haftanın önerileri</h2><span class="small muted" id="wxSrc"></span></div>
+    <div class="advice" id="advice"></div>
+  </section>
+
+  <!-- CİHAZLAR -->
+  <section data-view="cihaz" hidden>
+    <div class="section-h" style="margin-top:0"><h2>Bir kez kullanınca faturaya ne ekler?</h2><span class="small muted" id="cihazFiyat"></span></div>
+    <div class="grid3" id="useCards"></div>
+    <div class="section-h"><h2>Evdeki cihazlar</h2></div>
+    <p class="small muted" style="max-width:75ch">Her cihazın enerji sınıfını (etiketteki harf) ve ne kadar kullandığını gir. 2021'den sonra alınan cihazlarda yeni etiket (A–G), daha eskilerde eski etiket (A+++–D) vardır. Etiketin fotoğrafını yüklersen sınıfı ve tüketimi Claude okur. Ütü, saç kurutma, kettle gibi etiketsiz cihazlarda gücü (W) kutusunun ya da kablosunun üstündeki yazıdan gir.</p>
+    <div class="card scroll" style="margin-top:10px"><table id="cihazTable"></table></div>
+    <div class="row" style="margin-top:12px">
+      <select id="cihazYeni" aria-label="Eklenecek cihaz"></select>
+      <button type="button" class="pri" id="cihazEkle">Cihaz ekle</button>
+      <button type="button" id="pickLabel">Enerji etiketinden oku</button>
+      <input type="file" id="labelFile" accept="image/*" class="hidden-file">
+      <span class="status" id="cihazStatus"></span>
+    </div>
+    <div class="grid3" style="margin-top:14px">
+      <div class="card" id="cihazOzet"></div>
+      <div class="card" id="cihazIpucu"></div>
+    </div>
+  </section>
+
+  <!-- PLAN -->
+  <section data-view="plan" hidden>
+    <div class="section-h"><h2>Günlük harcama hakkı</h2>
+      <div class="legend"><span><i style="background:var(--gas)"></i>Doğalgaz Sm³</span><span><i style="background:var(--elec)"></i>Elektrik kWh</span><span>Sol kenar çizgisi: yeni limit dilimi başlıyor</span></div></div>
+    <p class="small muted">Her gün için kalan limit, hava ne kadar soğuksa o güne o kadar çok pay düşecek şekilde dağıtıldı. Soğuk güne fazla, ılık güne az hak.</p>
+    <div class="days" id="days"></div>
+    <div class="section-h"><h2>Haftalık hava</h2><span class="small muted">Canlı tahmin gelmezse haftayı elle seç.</span></div>
+    <div id="wkWeather" class="grid3"></div>
+  </section>
+
+  <!-- FATURA -->
+  <section data-view="fatura" hidden>
+    <div class="grid3">
+      <div class="card">
+        <h2>Fatura fotoğrafı</h2>
+        <p class="small muted">Faturanın fotoğrafını çek ya da ekran görüntüsünü yükle. Claude dönem tarihlerini, endeksleri, tüketimi ve tutarı okur. Sen kontrol edip kaydedersin. PDF faturada sayfanın ekran görüntüsünü al.</p>
+        <div class="drop" id="drop">
+          <p style="margin:0 0 10px">Görseli buraya bırak</p>
+          <label class="row" style="justify-content:center"><button class="pri" type="button" id="pickBill">Fotoğraf seç</button></label>
+          <input type="file" id="billFile" accept="image/*" class="hidden-file" multiple>
+        </div>
+        <p class="status" id="billStatus"></p>
+      </div>
+      <div class="card">
+        <h2>Fatura bilgileri</h2>
+        <form id="billForm" class="form" style="margin-top:10px">
+          <label>Tür<select id="b_tur"><option value="gas">Doğalgaz</option><option value="elec">Elektrik</option><option value="water">Su</option></select></label>
+          <label>İlk okuma tarihi<input type="date" id="b_bas" required></label>
+          <label>Son okuma tarihi<input type="date" id="b_bit" required></label>
+          <label>İlk endeks<input type="number" step="any" id="b_e1"></label>
+          <label>Son endeks<input type="number" step="any" id="b_e2"></label>
+          <label>Tüketim (Sm³ / kWh / m³)<input type="number" step="any" id="b_tk"></label>
+          <label>Düzeltme katsayısı (gaz)<input type="number" step="any" id="b_kat"></label>
+          <label>Fatura tutarı TL<input type="number" step="any" id="b_tl"></label>
+          <label>Kademe (gaz)<select id="b_kad"><option value="">—</option><option value="1">1. kademe</option><option value="2">2. kademe</option></select></label>
+          <label>Yılbaşından beri kWh (elektrik)<input type="number" step="any" id="b_ytd"></label>
+          <div class="row" style="grid-column:1/-1"><button class="pri" type="submit">Faturayı kaydet</button><span class="status" id="billSaved"></span></div>
+        </form>
+      </div>
+    </div>
+    <div class="section-h"><h2>Kayıtlı faturalar</h2></div>
+    <div class="card scroll"><table id="billTable"></table></div>
+  </section>
+
+  <!-- OKUMA -->
+  <section data-view="okuma" hidden>
+    <div class="grid3">
+      <div class="card">
+        <h2>Haftalık sayaç okuması</h2>
+        <p class="small muted">Her hafta aynı gün sayaçları oku. Sayaç fotoğrafını yüklersen rakamları Claude okur.</p>
+        <form id="readForm" class="form" style="margin-top:10px">
+          <label>Sayaç<select id="r_tur"><option value="gas">Doğalgaz (m³)</option><option value="elec">Elektrik (kWh)</option><option value="water">Su (m³)</option></select></label>
+          <label>Tarih<input type="date" id="r_tarih" required></label>
+          <label>Endeks<input type="number" step="any" id="r_endeks" required></label>
+          <div class="row" style="grid-column:1/-1">
+            <button class="pri" type="submit">Okumayı kaydet</button>
+            <button type="button" id="pickMeter">Sayaç fotoğrafından oku</button>
+            <input type="file" id="meterFile" accept="image/*" class="hidden-file">
+          </div>
+          <p class="status" id="readStatus" style="grid-column:1/-1"></p>
+        </form>
+      </div>
+      <div class="card">
+        <h2>Hatırlatıcı</h2>
+        <p class="small muted">Sayaç günün <b id="remDay"></b>. Bir gün önce telefonuna hatırlatma gelsin diye takvimine haftalık etkinlik ekle.</p>
+        <div class="row" style="margin-top:10px">
+          <a id="calLink" target="_blank" rel="noopener"><button type="button" class="pri">Google Takvim'e ekle</button></a>
+        </div>
+        <p class="small muted" style="margin-top:12px">Fatura okuma günlerinden bir gün önce de uyarı ekle:</p>
+        <div class="row" id="billCalLinks"></div>
+      </div>
+    </div>
+    <div class="section-h"><h2>Okumalar</h2></div>
+    <div class="card scroll"><table id="readTable"></table></div>
+  </section>
+
+  <!-- ORTALAMA -->
+  <section data-view="ortalama" hidden>
+    <div class="section-h"><h2 id="ortH">Doğalgaz limitleri ve ortalama fatura</h2></div>
+    <p class="small muted" style="max-width:70ch">BOTAŞ limiti, ilin son 5 yıllık hane ortalamasının %75 fazlasıdır. Bu yüzden tablodaki ortalama tüketim = limit ÷ 1,75. Limit aşılırsa o ayın <b>tamamı</b> 2. kademeden hesaplanır, sadece aşan kısım değil. "Sınırda sıçrama" sütunu, limiti 1 m³ geçtiğinde faturanın ne kadar arttığını gösterir.</p>
+    <div class="card" style="margin-top:12px"><div id="chart"></div></div>
+    <div class="card scroll" style="margin-top:12px"><table id="avgTable"></table></div>
+    <div class="grid3" style="margin-top:14px">
+      <div class="card"><h3>Elektrik</h3><p class="small muted">Limit yıllık: 2026'da 4.000 kWh, 1 Ocak 2027'den itibaren 3.000 kWh. Bu da ayda ortalama 333 kWh, 2027'de 250 kWh demek. Aşan aboneler son kaynak tedarik tarifesine (SKTT) geçer ve piyasa fiyatından öder. Sayaç 1 Ocak'ta sıfırlanmış sayılmaz, çünkü hem bu yılın hem geçen yılın tüketimine bakılır. SKTT, sınırı aştığın aydan 3 ay sonra başlar. 2026 toplamın 3.000 kWh'i geçerse 2027'de SKTT'ye girersin.</p></div>
+      <div class="card"><h3>Su</h3><p class="small muted">Su tarifesini belediyeler belirler, kademeler ilden ile değişir. Örneğin İzmir'de ilk kademe Haziran 2026'da 6 m³'e çıktı. Antalya ASAT'ta 0–20 / 21–40 / 40+ m³ kademeleri var. Kendi kademelerini Ayarlar'dan gir.</p></div>
+      <div class="card"><h3>Isınmada gaz mı elektrik mi?</h3><p class="small muted" id="swapInfo"></p></div>
+    </div>
+  </section>
+
+  <!-- AYARLAR -->
+  <section data-view="ayar" hidden>
+    <form id="setForm">
+      <div class="card"><h2>Genel</h2>
+        <div class="form" style="margin-top:10px">
+          <label>Haftalık sayaç günü<select id="s_hg"><option value="1">Pazartesi</option><option value="2">Salı</option><option value="3">Çarşamba</option><option value="4">Perşembe</option><option value="5">Cuma</option><option value="6">Cumartesi</option><option value="0">Pazar</option></select></label>
+          <label>Güvenlik payı (%)<input type="number" id="s_pay" min="0" max="20" step="1"></label>
+        </div></div>
+      <div class="card" style="margin-top:12px;border-top:4px solid var(--gas)"><h2>Doğalgaz</h2>
+        <div class="form" style="margin-top:10px">
+          <label>Fatura okuma günü (ayın kaçı)<input type="number" id="s_gday" min="1" max="31"></label>
+          <label>Düzeltme katsayısı<input type="number" step="any" id="s_gkat"></label>
+          <label>1. kademe TL/Sm³ (vergili)<input type="number" step="any" id="s_gk1"></label>
+          <label>2. kademe TL/Sm³ (vergili)<input type="number" step="any" id="s_gk2"></label>
+          <label>Kombi verimi (%)<input type="number" id="s_gver" min="50" max="110"></label>
+        </div></div>
+      <div class="card" style="margin-top:12px;border-top:4px solid var(--elec)"><h2>Elektrik</h2>
+        <div class="form" style="margin-top:10px">
+          <label>Fatura okuma günü<input type="number" id="s_eday" min="1" max="31"></label>
+          <label>Birim fiyat TL/kWh (vergili)<input type="number" step="any" id="s_ep"></label>
+          <label>SKTT fiyatı TL/kWh (tahmini)<input type="number" step="any" id="s_esk"></label>
+          <label>Elektrikli ısıtıcı gücü kW<input type="number" step="any" id="s_eisi"></label>
+          <label>Kurutma makinesi kWh/çevrim<input type="number" step="any" id="s_ekur"></label>
+          <label>Yılbaşından bu tarihe kWh<input type="number" step="any" id="s_eytd"></label>
+          <label>…tarihi<input type="date" id="s_eytdt"></label>
+        </div></div>
+      <div class="card" style="margin-top:12px;border-top:4px solid var(--water)"><h2>Su</h2>
+        <div class="form" style="margin-top:10px">
+          <label>Fatura okuma günü<input type="number" id="s_wday" min="1" max="31"></label>
+          <label>Hazır tarife<select id="s_wpre"><option value="">Kendi kademelerim</option><option value="antalya">Antalya ASAT (Haz. 2026, KDV hariç)</option></select></label>
+          <label>1. kademe üst sınır m³<input type="number" step="any" id="s_w1"></label>
+          <label>1. kademe TL/m³<input type="number" step="any" id="s_w1p"></label>
+          <label>2. kademe üst sınır m³<input type="number" step="any" id="s_w2"></label>
+          <label>2. kademe TL/m³<input type="number" step="any" id="s_w2p"></label>
+          <label>3. kademe TL/m³<input type="number" step="any" id="s_w3p"></label>
+          <label>Kademe nasıl uygulanıyor<select id="s_wyon"><option value="asan">Sadece aşan kısım üst fiyattan</option><option value="tum">Tüm tüketim üst fiyattan</option></select></label>
+          <label>Çamaşır makinesi L/yıkama<input type="number" step="any" id="s_wcam"></label>
+        </div></div>
+      <div class="row" style="margin-top:14px">
+        <button class="pri" type="submit">Ayarları kaydet</button>
+        <button type="button" id="clearDemo">Örnek verileri sil, sıfırdan başla</button>
+        <button type="button" id="exportCsv">Verileri CSV indir</button>
+        <span class="status" id="setStatus"></span>
+      </div>
+    </form>
+  </section>
+
+  <div class="foot">
+    Kaynaklar: BOTAŞ il bazında aylık konut limitleri (Kasım–Aralık 2026 güncellemesi), BOTAŞ 4 Nisan 2026 toptan tarifesi (1. kademe 10,625 / 2. kademe 18 TL/Sm³, vergisiz), EPDK SKTT kararları (2026: 4.000 kWh, 2027: 3.000 kWh).
+    Vergili fiyatlar ve su kademeleri tahminidir. İlk faturanı yükleyince kendi fiyatın kullanılır. Hava: <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a>.
+    <span id="syncTxt"></span>
+  </div>
+</div>
+
+<script>
+"use strict";
+// ---------- VERİ ----------
+const LIM={"Adana":[263.74,289.96,222.81,147.70,36.58,22.40,8.91,24.54,17.03,19.51,36.02,155.93],"Adıyaman":[325.54,274.42,319.66,169.09,100.59,28.91,16.12,24.12,19.90,21.89,148.26,307.74],"Afyonkarahisar":[303.50,328.60,288.80,251.13,116.32,50.42,15.28,31.08,20.65,37.45,283.85,421.66],"Ağrı":[411.97,428.28,361.76,288.52,129.19,68.13,25.29,46.17,32.20,46.90,435.72,607.60],"Aksaray":[268.33,288.65,278.15,154.28,92.14,33.44,24.97,21.63,22.14,27.98,265.79,411.69],"Amasya":[303.14,325.85,267.21,215.93,104.88,44.78,19.20,39.88,27.30,39.20,252.21,366.63],"Ankara":[344.73,326.80,302.09,180.69,109.01,46.20,35.19,31.03,40.69,76.86,283.78,420.00],"Antalya":[221.24,230.02,220.43,124.95,55.37,21.61,16.33,14.09,14.93,16.94,41.86,157.94],"Ardahan":[390.39,404.02,359.49,308.72,175.07,108.24,46.97,36.07,35.23,65.26,520.45,732.29],"Artvin":[279.62,283.38,319.71,195.20,127.37,60.62,22.73,17.89,18.92,35.40,243.22,385.61],"Aydın":[273.05,296.22,268.08,160.65,66.24,20.84,16.54,14.54,15.23,16.75,86.42,206.50],"Balıkesir":[264.22,305.38,257.65,211.21,90.70,35.14,12.62,26.64,17.83,24.97,193.10,313.16],"Bartın":[272.09,285.93,318.85,191.59,144.22,50.35,25.36,21.16,22.51,44.36,216.51,318.06],"Batman":[332.90,343.12,256.76,177.17,60.53,38.06,17.69,38.01,27.46,32.32,232.33,402.94],"Bayburt":[345.85,358.82,313.41,274.33,128.47,71.10,24.80,46.87,31.92,50.75,428.05,600.08],"Bilecik":[292.39,323.16,277.24,217.75,124.48,48.34,17.75,37.52,27.02,47.16,232.12,356.39],"Bingöl":[303.01,308.89,274.91,228.52,94.50,43.87,19.06,21.61,19.44,24.03,306.08,462.79],"Bitlis":[367.22,355.81,326.95,297.94,161.86,77.44,38.33,34.53,34.28,40.44,413.32,588.61],"Bolu":[304.85,328.37,287.65,259.23,133.49,64.96,21.86,38.76,26.78,57.02,318.92,420.70],"Burdur":[296.73,318.34,267.02,236.60,109.67,39.74,20.63,17.22,16.84,25.13,228.10,368.81],"Bursa":[273.84,287.54,256.13,177.50,92.75,38.66,27.18,25.60,25.55,41.81,183.30,281.66],"Çanakkale":[256.76,295.16,249.67,210.89,93.52,33.78,11.92,26.58,19.15,25.59,108.47,223.39],"Çankırı":[295.44,311.27,271.50,237.18,125.14,48.41,32.95,25.66,24.26,32.95,317.63,436.63],"Çorum":[280.93,300.49,261.70,227.76,115.64,51.15,33.83,29.23,27.79,33.44,312.13,437.06],"Denizli":[310.77,307.46,316.40,185.61,93.94,31.05,21.21,18.88,19.95,25.48,128.03,260.93],"Diyarbakır":[396.53,399.53,303.05,207.76,61.25,42.23,28.60,27.63,27.74,31.69,239.16,415.54],"Düzce":[285.93,321.32,282.31,232.89,139.16,52.59,17.43,35.47,23.56,48.48,213.43,301.53],"Edirne":[291.88,278.88,316.00,181.53,100.43,36.17,19.81,16.80,17.61,41.90,195.06,334.43],"Elazığ":[372.94,376.53,305.76,247.49,73.66,35.30,13.18,34.84,21.82,26.71,283.57,439.69],"Erzincan":[326.06,328.83,291.95,185.29,106.16,45.87,29.52,25.32,25.74,36.21,350.56,509.43],"Erzurum":[420.40,410.06,358.73,262.97,154.02,63.30,40.65,33.57,34.42,62.83,507.05,696.94],"Eskişehir":[290.29,299.15,247.47,215.51,113.02,40.67,22.96,21.23,21.32,46.74,284.83,413.00],"Gaziantep":[322.46,382.62,408.17,201.02,63.40,32.41,22.19,20.90,21.14,28.32,193.69,346.68],"Giresun":[247.10,278.11,265.34,225.21,134.80,53.85,17.57,31.47,20.84,36.02,108.85,204.58],"Gümüşhane":[332.26,354.22,312.10,268.05,132.07,67.83,19.32,37.59,25.08,43.68,344.05,486.68],"Hakkari":[427.61,429.59,487.55,292.32,192.99,73.43,33.18,27.07,27.81,45.19,351.82,527.10],"Hatay":[288.00,312.11,242.85,158.99,34.55,18.01,8.30,20.18,13.90,14.88,82.60,234.41],"Iğdır":[391.84,407.44,322.79,214.48,73.80,39.74,25.99,23.31,22.24,29.37,330.37,502.08],"Isparta":[321.02,352.12,298.64,269.15,128.59,48.30,23.56,18.78,18.41,29.65,221.62,358.66],"İstanbul":[260.54,286.77,278.29,192.55,119.96,45.45,31.10,26.72,29.23,43.73,136.01,259.35],"İzmir":[276.68,308.75,257.97,157.90,66.10,26.81,19.09,17.71,18.92,25.11,67.97,196.23],"Kahramanmaraş":[345.77,343.25,271.58,209.84,66.38,28.19,21.60,24.45,27.11,29.52,159.22,317.71],"Karabük":[277.85,286.60,251.06,220.26,133.30,46.94,31.43,25.45,24.01,34.21,285.43,395.41],"Karaman":[275.47,298.24,300.65,178.90,101.17,36.72,22.98,20.62,21.35,29.82,264.15,406.18],"Kars":[359.89,381.99,321.30,273.26,154.60,84.89,41.28,35.84,32.03,53.39,499.66,682.06],"Kastamonu":[306.06,319.48,281.37,251.42,147.39,63.07,35.21,27.79,26.39,43.49,361.17,470.75],"Kayseri":[302.33,341.44,284.27,235.87,107.05,43.75,33.55,30.66,29.42,35.40,358.19,489.21],"Kırıkkale":[283.26,299.93,254.14,209.86,96.62,40.44,26.99,23.01,21.88,27.86,275.42,410.64],"Kırklareli":[280.18,268.85,341.29,183.89,101.62,38.31,20.39,18.60,19.02,39.88,219.35,348.86],"Kırşehir":[262.01,280.77,247.66,208.71,94.45,36.07,24.10,21.72,20.83,26.22,304.57,446.86],"Kilis":[279.83,401.12,376.99,214.39,55.14,28.19,19.20,19.23,18.95,21.53,115.47,280.44],"Kocaeli":[270.62,301.53,272.90,213.68,127.26,47.15,32.67,26.36,27.34,41.04,136.71,231.09],"Konya":[348.34,381.40,357.33,233.08,124.71,44.40,29.23,26.30,26.06,37.15,301.56,454.56],"Kütahya":[287.93,277.10,247.80,180.32,111.95,40.85,26.44,23.17,29.72,70.93,307.69,431.81],"Malatya":[397.11,405.88,319.88,251.53,81.90,40.95,17.12,46.08,29.23,35.89,276.05,435.31],"Manisa":[297.34,336.61,267.54,187.04,72.12,25.29,11.59,25.73,17.90,24.13,128.84,262.59],"Mardin":[310.50,275.80,331.08,142.28,68.32,29.61,19.50,19.92,22.44,24.54,164.22,335.91],"Mersin":[234.43,278.04,193.97,120.75,32.94,19.78,9.50,19.67,14.25,16.24,24.71,106.40],"Muğla":[345.00,342.00,370.86,213.57,129.17,35.18,19.90,15.80,18.64,24.80,189.74,318.59],"Muş":[413.32,416.03,379.86,308.91,134.96,61.88,38.06,32.22,31.68,36.30,365.82,543.90],"Nevşehir":[296.07,306.37,313.06,192.29,118.95,42.33,25.22,20.86,22.38,36.96,297.43,437.94],"Niğde":[347.66,342.02,364.58,221.13,128.01,39.94,25.73,22.87,24.50,33.37,312.17,445.73],"Ordu":[242.27,281.82,258.98,217.11,124.97,50.26,17.66,30.57,19.65,36.42,122.40,222.69],"Osmaniye":[274.30,294.70,230.28,163.05,38.55,22.26,9.70,23.96,16.15,19.13,59.92,192.06],"Rize":[263.36,288.94,270.67,237.84,127.12,59.13,17.55,34.88,24.66,34.18,141.96,255.41],"Sakarya":[263.20,285.85,289.73,198.24,133.16,56.47,25.88,22.94,30.59,38.97,158.24,251.30],"Samsun":[245.12,276.19,283.17,240.52,162.70,65.12,30.14,26.90,24.92,32.57,122.57,219.10],"Siirt":[331.50,349.44,268.14,198.15,68.58,38.01,16.15,30.21,20.67,26.71,184.45,359.63],"Sinop":[242.46,227.75,285.15,191.15,141.30,45.78,27.00,22.82,22.77,32.94,100.10,206.59],"Sivas":[311.08,333.62,283.45,230.79,109.73,53.17,22.66,44.08,30.29,43.17,373.42,510.74],"Şanlıurfa":[345.07,344.37,272.63,194.44,45.17,26.74,9.92,25.53,15.75,22.14,100.52,267.49],"Şırnak":[327.93,324.78,358.54,210.07,105.53,47.90,27.39,24.75,27.74,28.58,185.22,349.91],"Tekirdağ":[253.00,256.31,284.32,179.25,108.89,36.14,25.08,24.12,23.24,35.11,172.17,294.96],"Tokat":[296.92,318.96,266.35,215.85,96.22,43.42,18.90,39.24,26.72,36.59,269.33,391.13],"Trabzon":[260.63,287.12,267.07,237.69,140.72,57.44,17.76,35.28,23.94,34.88,120.40,214.99],"Tunceli":[347.60,348.58,326.76,202.14,89.76,33.76,17.22,14.81,18.11,21.53,306.22,459.90],"Uşak":[292.34,296.99,252.67,199.05,106.21,43.10,25.73,21.47,21.49,38.41,250.32,378.18],"Van":[381.61,400.75,352.29,271.20,134.16,60.69,23.80,45.40,33.06,45.17,360.50,514.50],"Yalova":[213.06,244.86,228.71,197.89,111.14,31.62,42.91,33.72,25.78,27.74,156.63,250.86],"Yozgat":[272.07,289.40,267.31,242.17,128.57,53.88,32.53,27.62,25.67,33.78,352.87,481.86],"Zonguldak":[254.75,287.63,288.68,205.73,145.65,54.23,22.56,27.58,23.68,41.91,150.50,243.51]};
+const KOOR={"Adana":[37.00,35.32],"Adıyaman":[37.76,38.28],"Afyonkarahisar":[38.76,30.54],"Ağrı":[39.72,43.05],"Aksaray":[38.37,34.03],"Amasya":[40.65,35.83],"Ankara":[39.93,32.86],"Antalya":[36.89,30.71],"Ardahan":[41.11,42.70],"Artvin":[41.18,41.82],"Aydın":[37.85,27.84],"Balıkesir":[39.65,27.88],"Bartın":[41.63,32.34],"Batman":[37.88,41.13],"Bayburt":[40.26,40.23],"Bilecik":[40.14,29.98],"Bingöl":[38.88,40.50],"Bitlis":[38.40,42.11],"Bolu":[40.74,31.61],"Burdur":[37.72,30.29],"Bursa":[40.19,29.06],"Çanakkale":[40.15,26.41],"Çankırı":[40.60,33.62],"Çorum":[40.55,34.95],"Denizli":[37.78,29.09],"Diyarbakır":[37.91,40.24],"Düzce":[40.84,31.16],"Edirne":[41.68,26.56],"Elazığ":[38.67,39.22],"Erzincan":[39.75,39.49],"Erzurum":[39.90,41.27],"Eskişehir":[39.78,30.52],"Gaziantep":[37.07,37.38],"Giresun":[40.91,38.39],"Gümüşhane":[40.46,39.48],"Hakkari":[37.58,43.74],"Hatay":[36.20,36.16],"Iğdır":[39.92,44.04],"Isparta":[37.76,30.55],"İstanbul":[41.01,28.98],"İzmir":[38.42,27.14],"Kahramanmaraş":[37.58,36.94],"Karabük":[41.20,32.62],"Karaman":[37.18,33.22],"Kars":[40.60,43.10],"Kastamonu":[41.39,33.78],"Kayseri":[38.73,35.49],"Kırıkkale":[39.85,33.51],"Kırklareli":[41.73,27.22],"Kırşehir":[39.15,34.16],"Kilis":[36.72,37.12],"Kocaeli":[40.77,29.92],"Konya":[37.87,32.48],"Kütahya":[39.42,29.98],"Malatya":[38.35,38.31],"Manisa":[38.61,27.43],"Mardin":[37.31,40.74],"Mersin":[36.81,34.64],"Muğla":[37.22,28.36],"Muş":[38.74,41.49],"Nevşehir":[38.62,34.71],"Niğde":[37.97,34.68],"Ordu":[40.98,37.88],"Osmaniye":[37.07,36.25],"Rize":[41.02,40.52],"Sakarya":[40.69,30.44],"Samsun":[41.29,36.33],"Siirt":[37.93,41.94],"Sinop":[42.03,35.15],"Sivas":[39.75,37.02],"Şanlıurfa":[37.16,38.80],"Şırnak":[37.52,42.46],"Tekirdağ":[40.98,27.51],"Tokat":[40.31,36.55],"Trabzon":[41.00,39.72],"Tunceli":[39.11,39.55],"Uşak":[38.68,29.41],"Van":[38.49,43.38],"Yalova":[40.65,29.27],"Yozgat":[39.82,34.81],"Zonguldak":[41.45,31.79]};
+const ELEC_LIMIT={2025:5000,2026:4000,2027:3000};
+const AYLAR=["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
+const GUNLER=["Pazar","Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi"];
+const GUNK=["Paz","Pzt","Sal","Çar","Per","Cum","Cmt"];
+const KWH_PER_SM3=10.64;
+
+// ---------- TARİH ----------
+const pad=n=>String(n).padStart(2,"0");
+const dn=s=>{const [y,m,d]=s.split("-").map(Number);return Math.round(Date.UTC(y,m-1,d)/864e5)};
+const ds=n=>{const d=new Date(n*864e5);return d.getUTCFullYear()+"-"+pad(d.getUTCMonth()+1)+"-"+pad(d.getUTCDate())};
+const ymd=n=>{const d=new Date(n*864e5);return {y:d.getUTCFullYear(),m:d.getUTCMonth()+1,d:d.getUTCDate(),wd:d.getUTCDay()}};
+const dim=(y,m)=>new Date(Date.UTC(y,m,0)).getUTCDate();
+const mk=(y,m,d)=>Math.round(Date.UTC(y,m-1,d)/864e5);
+const nowLocal=()=>{const t=new Date();return mk(t.getFullYear(),t.getMonth()+1,t.getDate())};
+const TODAY=nowLocal();
+const fmtD=n=>{const o=ymd(n);return o.d+" "+AYLAR[o.m-1]};
+const fmtDs=n=>{const o=ymd(n);return o.d+" "+AYLAR[o.m-1].slice(0,3)};
+const f1=x=>(x==null||!isFinite(x))?"—":x.toLocaleString("tr-TR",{maximumFractionDigits:1,minimumFractionDigits:0});
+const f0=x=>(x==null||!isFinite(x))?"—":Math.round(x).toLocaleString("tr-TR");
+const tl=x=>(x==null||!isFinite(x))?"—":Math.round(x).toLocaleString("tr-TR")+" TL";
+
+// ---------- DURUM ----------
+function defaultState(){return{
+  v:1, demo:false, il:"Ankara", hg:1, pay:3,
+  gas:{day:20,kat:0.92,k1:17.88,k2:26.73,ver:90},
+  elec:{day:15,p:3.24,sktt:6.97,isi:2,kur:2.5,ytd:null,ytdt:null},
+  water:{day:10,pre:"",t1:10,p1:30,t2:20,p2:45,p3:70,yon:"asan",cam:50},
+  readings:[], bills:[], wx:{}, savedAt:0,
+  hedef:{gas:null,elec:null,water:null},
+  cihazlar:defaultCihazlar()
+}}
+function defaultCihazlar(){return [
+  {k:"buzdolabi",sinif:"e-A+"},{k:"camasir",sinif:"e-A++"},{k:"bulasik",sinif:"e-A+"},{k:"firin",sinif:"e-A"},
+  {k:"tv",sinif:"e-A+"},{k:"utu"},{k:"sac"},{k:"kettle"},{k:"cay"},{k:"led"},{k:"modem"},{k:"pc"}
+].map((c,i)=>Object.assign({id:"c"+i},c))}
+function demoState(){
+  const s=defaultState(); s.demo=true; s.il="Ankara";
+  // örnek: son 5 haftada haftalık okumalar (açıkça örnek)
+  const g0=5120, e0=21480, w0=812; let g=g0,e=e0,w=w0;
+  const start=TODAY-35;
+  for(let i=0;i<=5;i++){const n=start+i*7; if(n>TODAY)break;
+    s.readings.push({id:"dg"+i,t:"gas",d:ds(n),v:Math.round(g*10)/10});
+    s.readings.push({id:"de"+i,t:"elec",d:ds(n),v:Math.round(e)});
+    s.readings.push({id:"dw"+i,t:"water",d:ds(n),v:Math.round(w*10)/10});
+    g+=55+i*14; e+=68+((i%2)*9); w+=2.6;}
+  s.elec.ytd=2300; s.elec.ytdt=ds(start);
+  return s;
+}
+let S=null; const LSK="limitPusulasi.v1";
+function loadLocal(){try{const r=localStorage.getItem(LSK);if(r){return JSON.parse(r)}}catch(e){}return null}
+function mergeDefaults(x){const d=defaultState();return Object.assign(d,x,{gas:Object.assign(d.gas,x.gas||{}),elec:Object.assign(d.elec,x.elec||{}),water:Object.assign(d.water,x.water||{}),hedef:Object.assign(d.hedef,x.hedef||{}),cihazlar:Array.isArray(x.cihazlar)?x.cihazlar:d.cihazlar})}
+S=mergeDefaults(loadLocal()||demoState());
+
+let db=null, userId=null, saveTimer=null;
+function save(){S.savedAt=Date.now();try{localStorage.setItem(LSK,JSON.stringify(S))}catch(e){}
+  clearTimeout(saveTimer);saveTimer=setTimeout(pushRemote,800)}
+async function pushRemote(){if(!db||!userId)return;try{await db.doc("data/users/"+userId+"/state").set({json:JSON.stringify(S),savedAt:S.savedAt});setSync("Hesabına kaydedildi.")}catch(e){setSync("Hesaba kaydedilemedi, bu tarayıcıda saklanıyor.")}}
+function setSync(t){document.getElementById("syncTxt").textContent=" "+t}
+
+// ---------- SAYAÇ İNTERPOLASYONU ----------
+function reads(t){return S.readings.filter(r=>r.t===t).map(r=>({n:dn(r.d),v:+r.v})).sort((a,b)=>a.n-b.n)}
+function E(t,x){const R=reads(t);if(!R.length)return null;
+  for(let i=0;i<R.length;i++){if(R[i].n===x)return R[i].v;
+    if(R[i].n>x){if(i===0)return null;const a=R[i-1],b=R[i];return a.v+(b.v-a.v)*(x-a.n)/(b.n-a.n)}}
+  return null}
+function lastRead(t){const R=reads(t);return R.length?R[R.length-1]:null}
+function firstRead(t){const R=reads(t);return R.length?R[0]:null}
+// tüketim [a,b) aralığında (b en fazla son okuma)
+function used(t,a,b){const lr=lastRead(t);if(!lr)return null;const bb=Math.min(b,lr.n);if(bb<=a)return 0;
+  const ea=E(t,a),eb=E(t,bb);if(ea==null||eb==null)return null;return Math.max(0,eb-ea)}
+
+// ---------- HAVA ----------
+let WX={src:"none",t:{}}; // t: {n: tmean}
+async function loadWeather(){
+  const k=KOOR[S.il];if(!k)return;
+  const url="https://api.open-meteo.com/v1/forecast?latitude="+k[0]+"&longitude="+k[1]+"&daily=temperature_2m_max,temperature_2m_min&timezone=Europe%2FIstanbul&forecast_days=16&past_days=14";
+  try{const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),6000);
+    const r=await fetch(url,{signal:ctl.signal});clearTimeout(to);if(!r.ok)throw 0;const j=await r.json();
+    const t={};j.daily.time.forEach((d,i)=>{const a=j.daily.temperature_2m_max[i],b=j.daily.temperature_2m_min[i];if(a!=null&&b!=null)t[dn(d)]=(a+b)/2});
+    WX={src:"live",t};
+  }catch(e){WX={src:"normal",t:{}}}
+  render();
+}
+// İklim vekili: BOTAŞ limit profilinden günlük ısınma ihtiyacı
+function climate(il){const L=LIM[il];const per=L.map((v,i)=>v/1.75/dim(2026,i+1));
+  const base=Math.min(...per); const Lmax=Math.max(...L);
+  const hddMax=8+Math.max(0,(Lmax-230))/190*19; const c=(Math.max(...per)-base)/hddMax;
+  return {base,c,per}}
+function weekKey(n){const ws=weekStart(n);return ds(ws)}
+const WXMUL={soguk:1.35,normal:1,ilik:0.65};
+function hdd(n){const cl=climate(S.il);let h;
+  if(WX.t[n]!=null) h=Math.max(0,18-WX.t[n]);
+  else{const o=ymd(n);h=Math.max(0,(cl.per[o.m-1]-cl.base)/cl.c)}
+  const man=S.wx[weekKey(n)];if(man&&WX.t[n]==null)h*=WXMUL[man]||1;
+  return h}
+function tmean(n){if(WX.t[n]!=null)return WX.t[n];return null}
+function wGas(n){const cl=climate(S.il);return cl.base+cl.c*hdd(n)}
+
+// ---------- DÖNEMLER ----------
+function billDayIn(y,m,day){return mk(y,m,Math.min(day,dim(y,m)))}
+function billPeriod(n,day){const o=ymd(n);let b=billDayIn(o.y,o.m,day);let start,end;
+  if(n>=b){start=b;const nm=o.m===12?{y:o.y+1,m:1}:{y:o.y,m:o.m+1};end=billDayIn(nm.y,nm.m,day)}
+  else{end=b;const pm=o.m===1?{y:o.y-1,m:12}:{y:o.y,m:o.m-1};start=billDayIn(pm.y,pm.m,day)}
+  return {start,end}}
+function monthStart(n){const o=ymd(n);return mk(o.y,o.m,1)}
+function nextMonthStart(n){const o=ymd(n);return o.m===12?mk(o.y+1,1,1):mk(o.y,o.m+1,1)}
+// Gaz dilimi = fatura dönemi ∩ takvim ayı (BOTAŞ limiti dilim gün sayısıyla orantılanır)
+function gasSeg(n){const bp=billPeriod(n,S.gas.day);return {start:Math.max(bp.start,monthStart(n)),end:Math.min(bp.end,nextMonthStart(n))}}
+function gasDailyLimit(n){const o=ymd(n);return LIM[S.il][o.m-1]/dim(o.y,o.m)}
+function sum(a,b,f){let s=0;for(let n=a;n<b;n++)s+=f(n);return s}
+function weekStart(n){const wd=ymd(n).wd;const back=(wd-S.hg+7)%7;return n-back}
+const payF=()=>1-(S.pay||0)/100;
+
+// ---------- DOĞALGAZ ANALİZİ ----------
+function gasRate(){// Sm³ / ağırlık birimi, son 14 gün
+  const lr=lastRead("gas"),fr=firstRead("gas");if(!lr||!fr||lr.n===fr.n)return null;
+  const a=Math.max(fr.n,lr.n-14);const u=used("gas",a,lr.n);if(u==null)return null;
+  const w=sum(a,lr.n,wGas);return w>0?u*S.gas.kat/w:null}
+function gasSegInfo(seg){
+  const lim=sum(seg.start,seg.end,gasDailyLimit);
+  const fr=firstRead("gas"),lr=lastRead("gas");
+  let trackStart=seg.start;
+  if(E("gas",seg.start)==null){trackStart=(fr&&fr.n>seg.start&&fr.n<seg.end)?fr.n:null}
+  let usedSm3=null, upto=null;
+  if(trackStart!=null&&lr){upto=Math.min(lr.n,seg.end);const u=used("gas",trackStart,upto);usedSm3=u==null?null:u*S.gas.kat}
+  const untracked=trackStart==null?lim:sum(seg.start,trackStart,gasDailyLimit);
+  const r=gasRate();
+  const fromN=upto!=null?Math.max(upto,seg.start):seg.start;
+  const futW=sum(Math.max(fromN,seg.start),seg.end,wGas);
+  const proj=r!=null&&usedSm3!=null?usedSm3+r*futW+(trackStart>seg.start?r*sum(seg.start,trackStart,wGas):0):null;
+  let target=lim*payF();
+  if(S.hedef&&S.hedef.gas){let h=0;for(let n=seg.start;n<seg.end;n++){const o=ymd(n);h+=S.hedef.gas/S.gas.k1/dim(o.y,o.m)}target=Math.min(target,h)}
+  const ratio=lim?target/lim:1;
+  const remain=usedSm3!=null?target-usedSm3-(trackStart>seg.start?untracked*ratio:0):target;
+  return {seg,lim,target,usedSm3,upto,trackStart,proj,remain,futW,r}}
+function gasAllowance(n){// n günü için planlanan hak (bugünkü bilgiye göre)
+  const seg=gasSeg(n);const I=gasSegInfo(seg);
+  const from=Math.max(TODAY, I.upto!=null?I.upto:seg.start, seg.start);
+  if(n<from){return null}
+  const W=sum(from,seg.end,wGas);return W>0?Math.max(0,I.remain)*wGas(n)/W:0}
+function gasWeek(){
+  const ws=weekStart(TODAY),we=ws+7;
+  // hafta başında kalan hak, hava ağırlığıyla
+  let plan=0;let n=ws;
+  while(n<we){const seg=gasSeg(n);const end=Math.min(seg.end,we);
+    const I=gasSegInfo(seg);
+    let usedBefore=0; if(I.trackStart!=null&&ws>I.trackStart){const u=used("gas",I.trackStart,ws);usedBefore=u==null?0:u*S.gas.kat}
+    const startForPlan=Math.max(seg.start,n);
+    const rem=I.target-usedBefore-(I.trackStart!=null&&I.trackStart>seg.start?sum(seg.start,I.trackStart,gasDailyLimit)*(I.target/I.lim):0);
+    const W=sum(startForPlan,seg.end,wGas);
+    plan+=W>0?Math.max(0,rem)*sum(startForPlan,end,wGas)/W:0;
+    n=end;}
+  const u=used("gas",ws,we);const usedW=u==null?null:u*S.gas.kat;
+  const lr=lastRead("gas");const expected=lr&&lr.n>ws?plan*sum(ws,Math.min(lr.n,we),wGas)/sum(ws,we,wGas):0;
+  return {ws,we,plan,used:usedW,expected}}
+
+// ---------- ELEKTRİK ANALİZİ ----------
+function ytdAt(x){const o=ymd(x);const y0=mk(o.y,1,1);
+  if(S.elec.ytd!=null&&S.elec.ytdt){const an=dn(S.elec.ytdt);
+    if(ymd(an).y===o.y){const d=E("elec",x),a=E("elec",an);if(d!=null&&a!=null)return S.elec.ytd+(d-a);
+      const lr=lastRead("elec");if(lr&&x>lr.n){const a2=E("elec",an);if(a2!=null)return S.elec.ytd+(lr.v-a2)}
+      return null}}
+  const e0=E("elec",y0);const lr=lastRead("elec");if(e0!=null&&lr){return E("elec",Math.min(x,lr.n))-e0}
+  return null}
+// Mevsim profili: kış (aydınlatma, ısıtıcı) ve yaz (klima) ayları daha yüksek
+const EPROF=[1.15,1.08,1.0,0.92,0.88,0.95,1.1,1.12,0.95,0.92,1.02,1.13];
+const wE=n=>EPROF[ymd(n).m-1];
+function elecRate(){const lr=lastRead("elec"),fr=firstRead("elec");if(!lr||!fr||lr.n===fr.n)return null;const a=Math.max(fr.n,lr.n-14);const u=used("elec",a,lr.n);return u==null?null:u/(lr.n-a)}
+function elecInfo(){
+  const o=ymd(TODAY);const y=o.y;const limNom=ELEC_LIMIT[y]||3000;const lim=Math.min(limNom,ELEC_LIMIT[y+1]||Infinity);const yEnd=mk(y+1,1,1);
+  const lr=lastRead("elec");const ytd=lr?ytdAt(lr.n):null;
+  const r=elecRate();const daysLeft=yEnd-(lr?lr.n:TODAY);
+  const lrN=lr?lr.n:TODAY;const recW=sum(lrN-14,lrN,wE)/14;const rw=r!=null?r/recW:null;
+  const projYear=ytd!=null&&rw!=null?ytd+rw*sum(lrN,yEnd,wE):null;
+  const target=lim*payF();
+  const hcap=S.hedef&&S.hedef.elec?S.hedef.elec/S.elec.p/30.4:Infinity;
+  const nextY=n=>(ELEC_LIMIT[y+1]||3000)*payF()*wE(n)/sum(yEnd,mk(y+2,1,1),wE);
+  const remNow=ytd!=null?Math.max(0,target-ytd):target*sum(TODAY,yEnd,wE)/sum(mk(y,1,1),yEnd,wE);const Wnow=sum(lrN,yEnd,wE);
+  const dayAllow=n=>n>=yEnd?nextY(n):Math.min(hcap*wE(n),remNow*wE(n)/Wnow);
+  const daily=dayAllow(TODAY);
+  const ws=weekStart(TODAY),we=ws+7;
+  const ytdWs=ytdAt(ws);
+  const remWs=ytdWs!=null?Math.max(0,target-ytdWs):remNow;const Wws=sum(ws,yEnd,wE);
+  const allowWs=n=>n>=yEnd?nextY(n):Math.min(hcap*wE(n),remWs*wE(n)/Wws);
+  let weekPlan=0;for(let n=ws;n<we;n++)weekPlan+=allowWs(n);
+  const weekUsed=used("elec",ws,we);
+  const bp=billPeriod(TODAY,S.elec.day);const bpUsed=used("elec",bp.start,bp.end);
+  const bpPlan=sum(bp.start,bp.end,allowWs);
+  const bpProj=bpUsed!=null&&r!=null&&lr?bpUsed+rw*sum(Math.max(lr.n,bp.start),bp.end,wE):null;
+  const monthPlan=sum(monthStart(TODAY),nextMonthStart(TODAY),dayAllow);
+  const willSktt=projYear!=null&&projYear>lim;
+  let crossN=null;if(ytd!=null&&r&&lr){if(ytd>lim)crossN=lr.n-Math.round((ytd-lim)/r);else if(projYear>lim)crossN=lr.n+Math.round((lim-ytd)/r)}
+  let sktN=null;if(crossN!=null){const c=ymd(crossN);let m=c.m+3,yy=c.y;if(m>12){m-=12;yy++}sktN=mk(yy,m,1)}
+  const price=(sktN!=null&&TODAY>=sktN)?S.elec.sktt:S.elec.p;
+  return {monthPlan,dayAllow,rw,y,lim,limNom,crossN,sktN,target,ytd,projYear,daily,r,ws,we,weekPlan,weekUsed,bp,bpUsed,bpPlan,bpProj,willSktt,price,yEnd,lr}}
+
+// ---------- SU ANALİZİ ----------
+function waterCost(m3){const W=S.water;if(m3==null)return null;
+  if(W.yon==="tum"){const p=m3<=W.t1?W.p1:(m3<=W.t2?W.p2:W.p3);return m3*p}
+  return Math.min(m3,W.t1)*W.p1+Math.max(0,Math.min(m3,W.t2)-W.t1)*W.p2+Math.max(0,m3-W.t2)*W.p3}
+function m3ForTl(t){let a=0,b=500;for(let i=0;i<40;i++){const m=(a+b)/2;if(waterCost(m)>t)b=m;else a=m}return a}
+function wBudget(){let b=S.water.t1*payF();if(S.hedef&&S.hedef.water)b=Math.min(b,m3ForTl(S.hedef.water));return b}
+function waterInfo(){const bp=billPeriod(TODAY,S.water.day);const days=bp.end-bp.start;
+  const u=used("water",bp.start,bp.end);const lr=lastRead("water");
+  const fr=firstRead("water");let r=null;if(lr&&fr&&lr.n>fr.n){const a=Math.max(fr.n,lr.n-14);const uu=used("water",a,lr.n);r=uu==null?null:uu/(lr.n-a)}
+  const proj=u!=null&&r!=null&&lr?u+r*Math.max(0,bp.end-Math.max(lr.n,bp.start)):null;
+  const ws=weekStart(TODAY);const weekPlan=wBudget()*7/days;const weekUsed=used("water",ws,ws+7);
+  return {bp,days,used:u,proj,r,ws,weekPlan,weekUsed,lr}}
+
+// ---------- ARAYÜZ ----------
+const $=id=>document.getElementById(id);
+function meter(label,usedV,limitV,unit,sub,tickV,overColor){
+  const pct=usedV==null||!limitV?0:Math.min(100,usedV/limitV*100);
+  const over=usedV!=null&&limitV&&usedV>limitV;
+  const tick=tickV!=null&&limitV?`<span class="tick" style="left:${Math.min(100,tickV/limitV*100)}%" title="Bugüne kadar beklenen"></span>`:"";
+  const right=usedV==null?`<span class="muted">okuma bekleniyor</span>`:`<span class="num">${f1(usedV)} / ${f1(limitV)} ${unit}</span>`;
+  return `<div class="meter"><div class="lbl"><b>${label}</b>${right}</div>
+    <div class="bar" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(pct)}"><span class="fill ${over?"over":""}" style="width:${pct}%"></span>${tick}</div>
+    <div class="sub">${usedV==null?"":"%"+Math.round(usedV/limitV*100)+" kullanıldı · "+(usedV<=limitV?"<b>kalan "+f1(limitV-usedV)+" "+unit+"</b> · ":"<b style='color:var(--bad)'>"+f1(usedV-limitV)+" "+unit+" fazla</b> · ")}${sub}</div></div>`}
+function status(p){if(p==null)return `<span class="chip warn">veri az</span>`;if(p<=0.97)return `<span class="chip ok">limit içinde</span>`;if(p<=1)return `<span class="chip warn">sınırda</span>`;return `<span class="chip bad">aşım riski</span>`}
+function resetTxt(n){const d=n-TODAY;return d<=0?"bugün sıfırlanır":(d===1?"yarın sıfırlanır":d+" gün sonra sıfırlanır")+" ("+fmtDs(n)+")"}
+
+function renderCards(){
+  const G=gasSegInfo(gasSeg(TODAY));const GW=gasWeek();
+  const gProjP=G.proj!=null?G.proj/G.lim:null;
+  const bp=billPeriod(TODAY,S.gas.day);
+  // fatura tahmini: dönemi oluşturan iki dilim
+  let gBill=0,gBillOk=true,gBillParts=[];
+  for(let n=bp.start;n<bp.end;){const seg=gasSeg(n);const I=gasSegInfo(seg);
+    const v=I.proj!=null?I.proj:(I.usedSm3!=null&&I.upto>=seg.end?I.usedSm3:null);
+    if(v==null){gBillOk=false;}else{const over=v>I.lim;gBill+=v*(over?S.gas.k2:S.gas.k1);gBillParts.push({seg,v,lim:I.lim,over})}
+    n=seg.end}
+  const segTxt=fmtDs(G.seg.start)+" – "+fmtDs(G.seg.end-1);
+  const gasCard=`<div class="card ucard" style="--c:var(--gas)"><div class="hd"><h2>Doğalgaz</h2>${status(gProjP)}</div>
+    ${meter("Bu hafta",GW.used,GW.plan,"Sm³",resetTxt(GW.we),GW.expected)}
+    ${meter("Bu limit dilimi",G.usedSm3,G.lim,"Sm³",segTxt+" · "+resetTxt(G.seg.end),null)}
+    <div class="sub small muted">Dilim sonu tahmini: <b class="num">${f1(G.proj)} Sm³</b> · ${S.il} ${AYLAR[ymd(TODAY).m-1]} limiti ${f1(LIM[S.il][ymd(TODAY).m-1])} Sm³</div>
+    <div class="cost"><span>Bu dönem fatura tahmini<br><span class="small muted">${fmtDs(bp.start)} – ${fmtDs(bp.end)}</span></span><span class="num">${gBillOk?tl(gBill):"—"}</span></div></div>`;
+  const EI=elecInfo();
+  const eP=EI.projYear!=null?EI.projYear/EI.lim:null;
+  const eBill=EI.bpProj!=null?EI.bpProj*EI.price:null;
+  const elecCard=`<div class="card ucard" style="--c:var(--elec)"><div class="hd"><h2>Elektrik</h2>${status(eP)}</div>
+    ${meter("Bu hafta",EI.weekUsed,EI.weekPlan,"kWh",resetTxt(EI.we),null)}
+    ${meter("Fatura dönemi",EI.bpUsed,EI.bpPlan,"kWh",fmtDs(EI.bp.start)+" – "+fmtDs(EI.bp.end)+" · "+resetTxt(EI.bp.end),null)}
+    ${meter(EI.y+" yılı toplamı",EI.ytd,EI.lim,"kWh",(EI.lim<EI.limNom?EI.y+" limiti "+f0(EI.limNom)+", ama "+(EI.y+1)+"'de SKTT'ye girmemek için sınır "+f0(EI.lim)+" kWh":"yıl sonu "+fmtDs(EI.yEnd-1))+" · 1 Ocak'ta sıfırlanmaz, geçen yıl da sayılır",null)}
+    <div class="sub small muted">Yıl sonu tahmini: <b class="num">${f0(EI.projYear)} kWh</b> · günlük hakkın <b class="num">${f1(EI.daily)} kWh</b></div>
+    <div class="cost"><span>Bu dönem fatura tahmini</span><span class="num">${tl(eBill)}</span></div></div>`;
+  const WI=waterInfo();
+  const wP=WI.proj!=null?WI.proj/S.water.t1:null;
+  const waterCard=`<div class="card ucard" style="--c:var(--water)"><div class="hd"><h2>Su</h2>${status(wP)}</div>
+    ${meter("Bu hafta",WI.weekUsed,WI.weekPlan,"m³",resetTxt(WI.ws+7),null)}
+    ${meter("1. kademe (dönem)",WI.used,S.water.t1,"m³",fmtDs(WI.bp.start)+" – "+fmtDs(WI.bp.end)+" · "+resetTxt(WI.bp.end),null)}
+    <div class="sub small muted">Dönem sonu tahmini: <b class="num">${f1(WI.proj)} m³</b> · 2. kademe ${f1(S.water.t1)}–${f1(S.water.t2)} m³</div>
+    <div class="cost"><span>Bu dönem fatura tahmini</span><span class="num">${tl(waterCost(WI.proj))}</span></div></div>`;
+  $("cards").innerHTML=gasCard+elecCard+waterCard;
+  return {G,GW,EI,WI,gBillParts}}
+
+function adv(color,title,text){return `<div class="adv" style="--c:var(${color})"><span class="stripe"></span><div><h3>${title}</h3><p>${text}</p></div></div>`}
+function renderAdvice(ctx){
+  const {G,GW,EI,WI}=ctx;const out=[];
+  const heatKwhPerSm3=KWH_PER_SM3*(S.gas.ver/100);
+  // 1) Gaz dilim projeksiyonu
+  if(G.proj!=null){
+    const gap=G.proj-G.lim;
+    if(gap>0){
+      const kwh=gap*heatKwhPerSm3;const hours=kwh/(S.elec.isi||2);
+      const overCost=G.proj*(S.gas.k2-S.gas.k1); // tüm dilim 2. kademeye kayar
+      const elecCost=kwh*EI.price-gap*S.gas.k1;
+      const eSlack=EI.projYear!=null?EI.target-EI.projYear:null;
+      let t=`Bu gidişle ${fmtDs(G.seg.end-1)} tarihine kadar <b>${f1(G.proj)} Sm³</b> harcarsın. Limit <b>${f1(G.lim)} Sm³</b>. Limit aşılırsa bu dilimin tamamı 2. kademeden hesaplanır ve fatura yaklaşık <b>${tl(overCost)}</b> artar. `;
+      if(eSlack!=null&&eSlack>kwh){t+=`Elektrikte yıllık <b>${f0(eSlack)} kWh</b> boşluğun var. Fazla olan ${f1(gap)} Sm³'ü elektrikli ısıtıcıyla karşılarsan bu yaklaşık <b>${f0(kwh)} kWh</b> eder. ${S.elec.isi} kW ısıtıcıyla dilim sonuna kadar toplam <b>${f1(hours)} saat</b> çalıştırman gerekir, maliyeti yaklaşık ${tl(Math.max(0,elecCost))}. Bu, gaz limitini aşmaktan ${elecCost<overCost?"<b>daha ucuz</b>":"daha pahalı"}.`}
+      else t+=`Elektrikte de boşluk az. Termostatı 1–2 °C düşür ve kullanılmayan odaların peteklerini kıs.`;
+      out.push(adv("--bad","Doğalgaz: bu dilimde limit aşılacak gibi",t));
+    }else{
+      out.push(adv("--ok","Doğalgaz: limit içinde gidiyorsun",`Dilim sonu tahmini ${f1(G.proj)} Sm³, limit ${f1(G.lim)} Sm³. Önünde <b>${f1(-gap)} Sm³</b> pay var.`));
+    }
+  }
+  // 2) Hava karşılaştırması bu hafta / gelecek hafta (aynı dilimde mi?)
+  const ws=GW.ws, nws=ws+7;
+  const tAvg=(a,b)=>{let s=0,c=0;for(let n=a;n<b;n++){const t=tmean(n);if(t!=null){s+=t;c++}}return c?s/c:null};
+  const t1=tAvg(Math.max(TODAY,ws),ws+7),t2=tAvg(nws,nws+7);
+  const h1=sum(ws,ws+7,hdd)/7,h2=sum(nws,nws+7,hdd)/7;
+  const sameSeg=gasSeg(ws+6).start===gasSeg(nws).start;
+  if(h1>0||h2>0){
+    const diff=h2-h1;
+    if(Math.abs(diff)>1.2){
+      const tTxt=t1!=null&&t2!=null?` (bu hafta ort. ${f1(t1)} °C, haftaya ${f1(t2)} °C)`:" (mevsim normallerine göre)";
+      if(diff<0){out.push(adv("--gas","Haftaya hava daha ılık",`Önümüzdeki hafta daha az ısınma gerekecek${tTxt}. ${sameSeg?`İki hafta aynı limit diliminde. Bu hafta haftalık planın biraz üstüne çıkabilirsin, haftaya düşük tüketimle dengelenir.`:`Ama haftaya yeni bir limit dilimi başlıyor. Bu dilimde kalan payını aşma, aradaki fark yeni dilime taşınmaz.`}`))}
+      else{out.push(adv("--warn","Haftaya hava soğuyor",`Önümüzdeki hafta daha soğuk${tTxt}. ${sameSeg?`Bu hafta biraz tasarruf et, haftaya kombi daha çok çalışacak. Plan, soğuk günlere daha çok pay ayırdı.`:`Haftaya yeni dilim başlıyor. Soğuk hafta yeni dilimin payından harcanacak, bu dilimde kalan payını rahat kullanabilirsin.`}`))}
+    }
+  }
+  // 3) Okuma günü yarın mı? (gaz dilimi sonu)
+  const segEnd=G.seg.end;
+  if(segEnd-TODAY===1||segEnd-TODAY===2){
+    const slack=G.lim-(G.proj!=null?G.proj:G.lim);
+    const why=billPeriod(TODAY,S.gas.day).end===segEnd?"fatura okuma günü":"ay sonu, yeni ayın limiti başlıyor";
+    if(slack>2)out.push(adv("--gas",(segEnd-TODAY===1?"Yarın":"Öbür gün")+" doğalgaz "+why,`Bu dilimde yaklaşık <b>${f1(slack)} Sm³</b> pay kalacak. Bu pay yeni dilime taşınmaz, kullanmazsan boşa gider. Bugün evi biraz daha ısıtabilir, banyo ve sıcak su işlerini bugüne alabilirsin.`));
+    else out.push(adv("--warn",(segEnd-TODAY===1?"Yarın":"Öbür gün")+" doğalgaz "+why,`Bu dilimde pay kalmadı. Yoğun ısınmayı ve uzun sıcak suyu ${fmtDs(segEnd)} sonrasına bırak, o gün yeni limit dilimi başlıyor.`));
+  }
+  // 4) Elektrik
+  if(EI.projYear!=null){
+    if(EI.projYear>EI.lim){const gecti=EI.ytd>EI.lim;out.push(adv("--bad",gecti?"Elektrik: yıllık sınırı geçtin":"Elektrik: yıllık sınır aşılacak gibi",`Yıl sonu tahmini <b>${f0(EI.projYear)} kWh</b>, sınır <b>${f0(EI.lim)} kWh</b>.${EI.lim<EI.limNom?` ${EI.y} limiti ${f0(EI.limNom)} kWh görünse de EPDK geçen yılın tüketimine de baktığı için ${EI.y} toplamın ${EI.y+1}'nin ${f0(EI.lim)} kWh sınırıyla da karşılaştırılıyor.`:""} Sınırı ${EI.crossN?fmtD(EI.crossN)+" civarında ":""}${gecti?"geçtiğin":"geçeceğin"} için, geçtiğin aydan 3 ay sonra, <b>${EI.sktN?fmtD(EI.sktN)+" "+ymd(EI.sktN).y:""}</b> itibarıyla son kaynak tarifesine (SKTT) geçersin ve <b>o takvim yılının sonuna kadar</b> bu tarifede kalırsın. Yıl içinde az harcasan da çıkamazsın (EPDK/Enerjisa). kWh fiyatı yaklaşık ${f1(S.elec.p)} TL'den ${f1(S.elec.sktt)} TL'ye çıkar. ${gecti?"Bu yıl için geçiş artık önlenemez. Tasarruf yine de faturanı düşürür.":`Kalan günlerde günde en fazla <b>${f1(EI.daily)} kWh</b> kullanırsan sınırın altında kalırsın.`}`))}
+    const wk=EI.weekUsed!=null?EI.weekUsed-EI.weekPlan*((Math.min(EI.lr?EI.lr.n:TODAY,EI.we)-EI.ws)/7):0;
+    const cycles=S.elec.kur>0?Math.floor(Math.max(0,EI.weekPlan-(EI.weekUsed||0))/S.elec.kur):0;
+    if(EI.weekUsed!=null&&wk>S.elec.kur){out.push(adv("--elec","Kurutma makinesini bu hafta kullanma",`Bu hafta elektrikte planın ${f1(wk)} kWh önündesin. Bir kurutma ${f1(S.elec.kur)} kWh harcıyor. Çamaşırı askıda kurut ya da kurutmayı ${fmtD(EI.we)} gününe, yeni haftaya bırak.`))}
+    else if(EI.weekUsed!=null){out.push(adv("--elec","Elektrik bu hafta rahat",`Haftalık hakkın ${f1(EI.weekPlan)} kWh. Kalan payla yaklaşık <b>${cycles}</b> kurutma yapabilirsin.`))}
+    if(EI.y===2026&&EI.yEnd-TODAY<=70){out.push(adv("--elec","2027'de sınır 3.000 kWh'e düşüyor",`1 Ocak 2027'de sayaç sıfırlanmış sayılmaz. EPDK hem bu yılın hem geçen yılın tüketimine bakar. 2026 toplamın 3.000 kWh'i geçerse, geçtiğin aydan 3 ay sonra SKTT'ye geçersin (örneğin Aralık'ta geçersen 1 Mart 2027'de). Bu yüzden ağır işleri Ocak'a ertelemek de kurtarmaz, çünkü 2027'de de yıllık 3.000 kWh (günde ortalama 8,2 kWh) sınırı var. ${EI.ytd!=null?`Şu an 2026 toplamın ${f0(EI.ytd)} kWh, 3.000'e ${EI.ytd<3000?f0(3000-EI.ytd)+" kWh kaldı":"ulaştın"}.`:""}`))}
+  }
+  // 5) Su
+  if(WI.proj!=null){
+    const gap=WI.proj-S.water.t1;
+    if(gap>0){const lt=gap*1000/(S.water.cam||50);out.push(adv("--water","Su: 1. kademe aşılacak gibi",`Dönem sonu tahmini ${f1(WI.proj)} m³, 1. kademe ${f1(S.water.t1)} m³. Aradaki fark yaklaşık <b>${f0(lt)} çamaşır yıkaması</b> eder. ${WI.bp.end-TODAY<=2?`Okuma günü ${fmtD(WI.bp.end)}. Çamaşırı o güne kadar ertelersen yeni döneme yazılır.`:"Çamaşırı tam yükle yıkamak ve duşu kısaltmak farkı kapatır."}`))}
+    else out.push(adv("--water","Su: 1. kademede kalıyorsun",`Dönem sonu tahmini ${f1(WI.proj)} m³. 1. kademe sınırına ${f1(-gap)} m³ var.`));
+  }
+  // okuma hatırlatma
+  const lastG=lastRead("gas");if(!lastG||TODAY-lastG.n>7)out.unshift(adv("--accent","Sayaç okuması gecikti",`Son doğalgaz okuması ${lastG?fmtD(lastG.n):"yok"}. Planın doğru çıkması için her ${GUNLER[S.hg]} sayaçları oku ve <b>Sayaç okuma</b> sekmesine gir.`));
+  $("advice").innerHTML=out.join("")||`<p class="muted">Öneri için en az iki sayaç okuması ya da bir fatura gerekli.</p>`;
+  $("wxSrc").textContent=WX.src==="live"?"Hava: Open-Meteo 16 günlük tahmin":"Hava: canlı tahmin alınamadı, mevsim normali kullanılıyor (Plan sekmesinden haftayı elle seç)";
+}
+
+function renderBanners(){const b=[];
+  if(S.demo)b.push(`<div class="banner alert"><b>Örnek veriler gösteriliyor.</b><span class="muted">Ankara'da bir hanenin son 5 haftası. İlk faturanı yükleyince ya da Ayarlar'dan "sıfırdan başla" deyince silinir.</span></div>`);
+  const tom=TODAY+1;const evs=[];
+  if(weekStart(tom)===tom)evs.push("yarın haftalık sayaç günü ("+GUNLER[S.hg]+")");
+  [["gas","doğalgaz"],["elec","elektrik"],["water","su"]].forEach(([k,n])=>{const bp=billPeriod(TODAY,S[k].day);if(bp.end===tom)evs.push("yarın "+n+" fatura okuması")});
+  if(evs.length)b.push(`<div class="banner"><b>Hatırlatma:</b><span>${evs.join(" · ")}. Sayaç fotoğrafını çekip yükle.</span></div>`);
+  $("banners").innerHTML=b.join("")}
+
+function renderPlan(){
+  const days=[];
+  for(let n=TODAY;n<TODAY+16;n++){
+    const segStart=gasSeg(n).start===n;
+    const ga=gasAllowance(n);
+    const EI=elecInfo();const ed=EI.dayAllow(n);
+    const t=tmean(n);
+    days.push(`<div class="day ${segStart?"seg":""} ${n===TODAY?"today":""}"><span class="muted">${GUNK[ymd(n).wd]} ${fmtDs(n)}</span>
+      <span class="t">${t!=null?f1(t)+"°":"—"}</span><span class="g">${f1(ga)} Sm³</span><span class="e">${f1(ed)} kWh</span></div>`)}
+  $("days").innerHTML=days.join("");
+  // haftalık el ile hava
+  const wks=[];const w0=weekStart(TODAY);
+  for(let i=0;i<4;i++){const ws=w0+i*7;const k=ds(ws);const live=WX.t[ws+3]!=null;
+    const cur=S.wx[k]||"normal";
+    wks.push(`<div class="card"><h3>${fmtDs(ws)} – ${fmtDs(ws+6)}</h3>
+      <p class="small muted">${live?"Canlı tahmin var: ort. "+f1((()=>{let s=0,c=0;for(let n=ws;n<ws+7;n++)if(WX.t[n]!=null){s+=WX.t[n];c++}return c?s/c:null})())+" °C":"Tahmin yok, mevsim normali"}</p>
+      <div class="row">${["soguk","normal","ilik"].map(v=>`<button type="button" data-wk="${k}" data-v="${v}" ${live?"disabled":""} aria-pressed="${cur===v}" style="${cur===v?"border-color:var(--accent);color:var(--accent)":""}">${{soguk:"Soğuk",normal:"Normal",ilik:"Ilık"}[v]}</button>`).join("")}</div></div>`)}
+  $("wkWeather").innerHTML=wks.join("");
+  $("wkWeather").querySelectorAll("button[data-wk]").forEach(b=>b.onclick=()=>{S.wx[b.dataset.wk]=b.dataset.v;save();render()});
+}
+
+function renderAvg(){
+  const L=LIM[S.il];const m0=ymd(TODAY).m-1;
+  $("ortH").textContent=S.il+": doğalgaz limitleri ve ortalama fatura";
+  let rows=`<tr><th>Ay</th><th>Limit Sm³</th><th>İl ortalaması Sm³</th><th>Ortalama fatura</th><th>Limitte fatura</th><th>Limit +1 m³</th><th>Sınırda sıçrama</th></tr>`;
+  L.forEach((v,i)=>{const avg=v/1.75;const atL=v*S.gas.k1;const over=(v+1)*S.gas.k2;
+    rows+=`<tr class="${i===m0?"now":""}"><td>${AYLAR[i]}</td><td class="num">${f1(v)}</td><td class="num">${f1(avg)}</td><td class="num">${tl(avg*S.gas.k1)}</td><td class="num">${tl(atL)}</td><td class="num">${tl(over)}</td><td class="num">+${tl(over-atL)}</td></tr>`});
+  const yearAvg=L.reduce((a,b)=>a+b,0)/1.75;
+  rows+=`<tr><td><b>Yıllık</b></td><td class="num">${f0(L.reduce((a,b)=>a+b,0))}</td><td class="num">${f0(yearAvg)}</td><td class="num">${tl(yearAvg*S.gas.k1)}</td><td></td><td></td><td></td></tr>`;
+  $("avgTable").innerHTML=rows;
+  // grafik
+  const W=720,H=240,pl=44,pr=10,pt=14,pb=28;const mx=Math.max(...L)*1.08;const bw=(W-pl-pr)/12;
+  const y=v=>pt+(H-pt-pb)*(1-v/mx);let g="";
+  const step=mx>400?100:50;for(let v=0;v<=mx;v+=step){g+=`<line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${pl-6}" y="${y(v)+4}" text-anchor="end" font-size="11">${v}</text>`}
+  // kendi faturalarım (aylık Sm³) — faturalardan ay bazında
+  const mine=Array(12).fill(null);S.bills.filter(b=>b.t==="gas"&&b.tk).forEach(b=>{const a=dn(b.bas),c=dn(b.bit);const per=b.tk/Math.max(1,c-a);for(let n=a;n<c;n++){const m=ymd(n).m-1;mine[m]=(mine[m]||0)+per}});
+  L.forEach((v,i)=>{const x=pl+i*bw;g+=`<rect x="${x+bw*0.18}" y="${y(v)}" width="${bw*0.3}" height="${y(0)-y(v)}" fill="var(--gas)" opacity="${i===m0?1:0.75}"><title>${AYLAR[i]} limit ${f1(v)} Sm³</title></rect>`;
+    const a=v/1.75;g+=`<rect x="${x+bw*0.5}" y="${y(a)}" width="${bw*0.3}" height="${y(0)-y(a)}" fill="var(--muted)" opacity=".45"><title>${AYLAR[i]} ortalama ${f1(a)} Sm³</title></rect>`;
+    if(mine[i]!=null)g+=`<circle cx="${x+bw/2}" cy="${y(mine[i])}" r="5" fill="var(--accent)"><title>Senin ${AYLAR[i]}: ${f1(mine[i])} Sm³</title></circle>`;
+    g+=`<text x="${x+bw/2}" y="${H-8}" text-anchor="middle" font-size="11">${AYLAR[i].slice(0,3)}</text>`});
+  $("chart").innerHTML=`<div class="legend" style="margin-bottom:6px"><span><i style="background:var(--gas)"></i>Limit</span><span><i style="background:var(--muted);opacity:.45"></i>İl ortalaması</span><span><i style="background:var(--accent);border-radius:50%"></i>Senin faturaların</span></div><div class="scroll"><svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:520px" role="img" aria-label="Aylık doğalgaz limiti grafiği">${g}</svg></div>`;
+  const heatK=KWH_PER_SM3*(S.gas.ver/100);
+  $("swapInfo").innerHTML=`1 Sm³ doğalgaz kombide yaklaşık ${f1(heatK)} kWh ısı verir. 1. kademede ısının kWh'i ${f1(S.gas.k1/heatK)} TL, 2. kademede ${f1(S.gas.k2/heatK)} TL. Elektrikli ısıtıcıda ${f1(S.elec.p)} TL. Yani normalde gaz ucuzdur. Ama gaz limitini birkaç m³ aşmak bütün ayı pahalı kademeye taşır. O durumda aradaki farkı elektrikle kapatmak daha ucuza gelir. Panel bunu senin için hesaplar.`;
+}
+
+function renderTables(){
+  const nm={gas:"Doğalgaz",elec:"Elektrik",water:"Su"};const un={gas:"m³",elec:"kWh",water:"m³"};
+  const R=[...S.readings].sort((a,b)=>b.d.localeCompare(a.d)||a.t.localeCompare(b.t));
+  let h=`<tr><th>Tarih</th><th>Sayaç</th><th>Endeks</th><th>Önceki okumadan beri</th><th></th></tr>`;
+  R.forEach(r=>{const prev=reads(r.t).filter(x=>x.n<dn(r.d)).pop();const d=prev?(+r.v-prev.v):null;
+    h+=`<tr><td>${fmtD(dn(r.d))} ${ymd(dn(r.d)).y}</td><td>${nm[r.t]}</td><td class="num">${f1(+r.v)}</td><td class="num">${d!=null?f1(d)+" "+un[r.t]+" / "+(dn(r.d)-prev.n)+" gün":"—"}</td><td><button type="button" data-del="${r.id}">Sil</button></td></tr>`});
+  $("readTable").innerHTML=R.length?h:`<tr><td class="muted">Henüz okuma yok.</td></tr>`;
+  $("readTable").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{S.readings=S.readings.filter(r=>r.id!==b.dataset.del);save();render()});
+  let bh=`<tr><th>Dönem</th><th>Tür</th><th>Tüketim</th><th>Tutar</th><th>Birim</th><th>Kademe</th><th></th></tr>`;
+  [...S.bills].sort((a,b)=>b.bit.localeCompare(a.bit)).forEach(b=>{bh+=`<tr><td>${fmtDs(dn(b.bas))} – ${fmtDs(dn(b.bit))} ${ymd(dn(b.bit)).y}</td><td>${nm[b.t]}</td><td class="num">${f1(b.tk)}</td><td class="num">${tl(b.tl)}</td><td class="num">${b.tk&&b.tl?f1(b.tl/b.tk)+" TL":"—"}</td><td>${b.kad||"—"}</td><td><button type="button" data-bdel="${b.id}">Sil</button></td></tr>`});
+  $("billTable").innerHTML=S.bills.length?bh:`<tr><td class="muted">Henüz fatura yok.</td></tr>`;
+  $("billTable").querySelectorAll("[data-bdel]").forEach(b=>b.onclick=()=>{S.bills=S.bills.filter(x=>x.id!==b.dataset.bdel);save();render()});
+}
+
+function calUrl(title,startN,details,freq){const d=ds(startN).replace(/-/g,"");
+  const p=new URLSearchParams({action:"TEMPLATE",text:title,dates:d+"T180000/"+d+"T181500",details,ctz:"Europe/Istanbul"});
+  if(freq)p.set("recur","RRULE:"+freq);return "https://calendar.google.com/calendar/render?"+p.toString()}
+function renderReminders(){
+  $("remDay").textContent=GUNLER[S.hg];
+  const nextRead=weekStart(TODAY)+7;const prev=nextRead-1;
+  const wd=["SU","MO","TU","WE","TH","FR","SA"][(S.hg+6)%7];
+  $("calLink").href=calUrl("Yarın sayaç günü: doğalgaz, elektrik, su",prev>=TODAY?prev:prev+7,"Limit Pusulası: yarın sayaçların fotoğrafını çek ve uygulamaya yükle.","FREQ=WEEKLY;BYDAY="+wd);
+  const L=[["gas","Doğalgaz"],["elec","Elektrik"],["water","Su"]].map(([k,n])=>{const bp=billPeriod(TODAY,S[k].day);const d=S[k].day;
+    const before=d>1?d-1:28;
+    return `<a target="_blank" rel="noopener" href="${calUrl("Yarın "+n.toLowerCase()+" fatura okuması",bp.end-1>=TODAY?bp.end-1:bp.end+27,"Bugün kalan limit payını değerlendir ya da yoğun işleri yarına bırak.","FREQ=MONTHLY;BYMONTHDAY="+before)}"><button type="button">${n} (her ayın ${before}'i)</button></a>`});
+  $("billCalLinks").innerHTML=L.join("");
+}
+
+function fillSettings(){const g=S.gas,e=S.elec,w=S.water;
+  const set=(id,v)=>{const el=$(id);if(el)el.value=v==null?"":v};
+  set("s_hg",S.hg);set("s_pay",S.pay);set("s_gday",g.day);set("s_gkat",g.kat);set("s_gk1",g.k1);set("s_gk2",g.k2);set("s_gver",g.ver);
+  set("s_eday",e.day);set("s_ep",e.p);set("s_esk",e.sktt);set("s_eisi",e.isi);set("s_ekur",e.kur);set("s_eytd",e.ytd);set("s_eytdt",e.ytdt);
+  set("s_wday",w.day);set("s_wpre",w.pre);set("s_w1",w.t1);set("s_w1p",w.p1);set("s_w2",w.t2);set("s_w2p",w.p2);set("s_w3p",w.p3);set("s_wyon",w.yon);set("s_wcam",w.cam)}
+
+function render(){
+  $("bugunTxt").textContent=fmtD(TODAY)+" "+ymd(TODAY).y+", "+GUNLER[ymd(TODAY).wd];
+  renderBanners();renderSummary();const ctx=renderCards();renderAdvice(ctx);renderCihaz();renderPlan();renderAvg();renderTables();renderReminders();
+}
+
+// ---------- ÖZET: AYLIK / HAFTALIK / GÜNLÜK HAK ----------
+function usedFrom(t,a,b){if(E(t,a)!=null){const u=used(t,a,b);return u==null?null:{u,from:a}}
+  const R=reads(t).filter(r=>r.n>=a&&r.n<b);if(!R.length)return null;const u=used(t,R[0].n,b);return u==null?null:{u,from:R[0].n}}
+function renderSummary(){
+  const o=ymd(TODAY),ms=monthStart(TODAY),me=nextMonthStart(TODAY),days=me-ms,ay=AYLAR[o.m-1];
+  // Doğalgaz (takvim ayı)
+  const L=LIM[S.il][o.m-1];const hG=S.hedef.gas?S.hedef.gas/S.gas.k1:null;const gHak=Math.min(L*payF(),hG??Infinity);
+  const gu=usedFrom("gas",ms,me);const gUsed=gu?gu.u*S.gas.kat:null;const r=gasRate();const glr=lastRead("gas");
+  const gProj=gUsed!=null&&r!=null&&glr?gUsed+r*sum(Math.max(glr.n,ms),me,wGas)+(gu.from>ms?r*sum(ms,gu.from,wGas):0):null;
+  const gBill=gProj!=null?gProj*(gProj>L?S.gas.k2:S.gas.k1):null;
+  const GW=gasWeek();const gToday=gasAllowance(TODAY);
+  // Elektrik
+  const EI=elecInfo();const eHak=EI.monthPlan;const eu=usedFrom("elec",ms,me);const eUsed=eu?eu.u:null;
+  const eProj=eUsed!=null&&EI.r!=null&&EI.lr?eUsed+EI.rw*sum(Math.max(EI.lr.n,ms),me,wE)+(eu.from>ms?EI.rw*sum(ms,eu.from,wE):0):null;
+  const eBill=eProj!=null?eProj*EI.price:null;
+  // Su (fatura dönemi)
+  const WI=waterInfo();const wHak=wBudget();
+  const cell=(v,u,t)=>`<td class="num">${f1(v)} ${u}${t!=null?`<small>≈ ${tl(t)}</small>`:""}</td>`;
+  const inp=(k)=>`<td><input type="number" min="0" step="50" id="hd_${k}" data-hedef="${k}" placeholder="yok" value="${S.hedef[k]??""}" aria-label="Hedef aylık fatura TL"></td>`;
+  let h=`<tr><th></th><th>Bu ay hakkın</th><th>Bu hafta hakkın</th><th>Bugün</th><th>Bu ay harcanan</th><th>Ay sonu tahmini</th><th>Hedef aylık fatura TL</th></tr>`;
+  h+=`<tr><td><span class="dot" style="background:var(--gas)"></span><b>Doğalgaz</b><small>${ay}, ${S.il}</small></td>${cell(gHak,"Sm³",gHak*S.gas.k1)}${cell(GW.plan,"Sm³",GW.plan*S.gas.k1)}${cell(gToday,"Sm³",gToday!=null?gToday*S.gas.k1:null)}${cell(gUsed,"Sm³",gUsed!=null?gUsed*S.gas.k1:null)}<td class="num">${f1(gProj)} Sm³<small>≈ ${tl(gBill)}${gProj!=null&&gProj>L?" (2. kademe!)":""}</small></td>${inp("gas")}</tr>`;
+  h+=`<tr><td><span class="dot" style="background:var(--elec)"></span><b>Elektrik</b><small>${ay}</small></td>${cell(eHak,"kWh",eHak*EI.price)}${cell(EI.weekPlan,"kWh",EI.weekPlan*EI.price)}${cell(EI.daily,"kWh",EI.daily*EI.price)}${cell(eUsed,"kWh",eUsed!=null?eUsed*EI.price:null)}<td class="num">${f0(eProj)} kWh<small>≈ ${tl(eBill)}</small></td>${inp("elec")}</tr>`;
+  h+=`<tr><td><span class="dot" style="background:var(--water)"></span><b>Su</b><small>${fmtDs(WI.bp.start)} – ${fmtDs(WI.bp.end)}</small></td>${cell(wHak,"m³",waterCost(wHak))}${cell(WI.weekPlan,"m³",waterCost(WI.weekPlan))}${cell(wHak/WI.days,"m³",null)}${cell(WI.used,"m³",waterCost(WI.used))}<td class="num">${f1(WI.proj)} m³<small>≈ ${tl(waterCost(WI.proj))}</small></td>${inp("water")}</tr>`;
+  $("sumTable").innerHTML=h;
+  const sc=(k,ad,color,sub,a,w,d,pr,u)=>`<div class="scard"><div><span class="dot" style="background:var(${color})"></span><b>${ad}</b> <span class="small muted">${sub}</span></div>
+    <div class="g4"><div><span>Bu ay hakkın</span><b>${a[0]}</b><small>${a[1]}</small></div><div><span>Bu hafta</span><b>${w[0]}</b><small>${w[1]}</small></div>
+    <div><span>Bugün</span><b>${d[0]}</b><small>${d[1]}</small></div><div><span>Ay sonu tahmini</span><b>${pr[0]}</b><small>${pr[1]}</small></div></div>
+    <label for="hm_${k}">Hedef aylık fatura (TL)<input type="number" min="0" step="50" id="hm_${k}" data-hedef="${k}" placeholder="yok" value="${S.hedef[k]??""}"></label></div>`;
+  const pairs=(v,u,t)=>[f1(v)+" "+u,t!=null?"≈ "+tl(t):""];
+  $("sumCards").innerHTML=
+    sc("gas","Doğalgaz","--gas",ay,pairs(gHak,"Sm³",gHak*S.gas.k1),pairs(GW.plan,"Sm³",GW.plan*S.gas.k1),pairs(gToday,"Sm³",gToday!=null?gToday*S.gas.k1:null),[f1(gProj)+" Sm³","≈ "+tl(gBill)+(gProj!=null&&gProj>L?" · 2. kademe!":"")])+
+    sc("elec","Elektrik","--elec",ay,pairs(eHak,"kWh",eHak*EI.price),pairs(EI.weekPlan,"kWh",EI.weekPlan*EI.price),pairs(EI.daily,"kWh",EI.daily*EI.price),[f0(eProj)+" kWh","≈ "+tl(eBill)])+
+    sc("water","Su (dönem)","--water",fmtDs(WI.bp.start)+" – "+fmtDs(WI.bp.end),pairs(wHak,"m³",waterCost(wHak)),pairs(WI.weekPlan,"m³",waterCost(WI.weekPlan)),[f1(wHak/WI.days)+" m³",f0(wHak/WI.days*1000)+" litre"],[f1(WI.proj)+" m³","≈ "+tl(waterCost(WI.proj))]);
+  document.querySelectorAll("#sumTable [data-hedef],#sumCards [data-hedef]").forEach(i=>i.onchange=()=>{const v=parseFloat(i.value);S.hedef[i.dataset.hedef]=isFinite(v)&&v>0?v:null;save();render()});
+  const t=[];
+  const gLimTl=L*S.gas.k1;
+  t.push(`<div><span class="dot" style="background:var(--gas)"></span><b>Doğalgaz:</b> ${S.il}'da ${ay} limiti <b>${f1(L)} Sm³</b> (≈ ${tl(gLimTl)}). ${hG!=null&&hG<L*payF()?`Senin hedefin ${tl(S.hedef.gas)}, bu da <b>${f1(hG)} Sm³</b> ediyor. Plan hedefine göre yapıldı.`:hG!=null?`Hedefin (${tl(S.hedef.gas)}) limitten yüksek, plan limite göre yapıldı.`:`Hedef girmedin, plan limitin %${100-S.pay}'si hedeflenerek yapıldı.`} Bu hafta en fazla <b>${f1(GW.plan)} Sm³</b>, bugün <b>${f1(gToday)} Sm³</b> harca. Limiti aşarsan ayın tamamı 2. kademeden (${f1(S.gas.k2)} TL/Sm³) hesaplanır.</div>`);
+  t.push(`<div><span class="dot" style="background:var(--elec)"></span><b>Elektrik:</b> Yıllık sınır <b>${f0(EI.lim)} kWh</b>${EI.lim<EI.limNom?` (${EI.y} limiti ${f0(EI.limNom)} kWh, ama ${EI.y+1}'de SKTT'ye girmemek için ${EI.y} toplamın ${f0(EI.lim)} kWh'i geçmemeli)`:""}. Yılın kalanına göre bu ay hakkın <b>${f0(eHak)} kWh</b> (≈ ${tl(eHak*EI.price)}), haftalık <b>${f1(EI.weekPlan)} kWh</b>, günlük <b>${f1(EI.daily)} kWh</b>. Aralık–Şubat (aydınlatma, ısıtıcı) ve Temmuz–Ağustos (klima) tüketimi genelde %10–15 yüksek gelir. Plan bu aylara daha çok pay ayırır, yıl sonu tahminini de buna göre yapar.${S.hedef.elec?` Hedefin ${tl(S.hedef.elec)} = ayda ${f0(S.hedef.elec/S.elec.p)} kWh.`:""}</div>`);
+  t.push(`<div><span class="dot" style="background:var(--water)"></span><b>Su:</b> 1. kademe ${f1(S.water.t1)} m³. Bu dönem hakkın <b>${f1(wHak)} m³</b>, haftalık <b>${f1(WI.weekPlan)} m³</b> (yaklaşık ${f0(WI.weekPlan*1000/7)} litre/gün).</div>`);
+  $("sumText").innerHTML=t.join("");
+}
+
+// ---------- CİHAZLAR ----------
+const CIHAZ=[
+ {k:"buzdolabi",ad:"Buzdolabı",tip:"yil",kwh:300,etiket:true},
+ {k:"dondurucu",ad:"Derin dondurucu",tip:"yil",kwh:250,etiket:true},
+ {k:"camasir",ad:"Çamaşır makinesi",tip:"cevrim",kwh:0.9,etiket:true,su:50,hafta:4,birim:"yıkama (40 °C)"},
+ {k:"bulasik",ad:"Bulaşık makinesi",tip:"cevrim",kwh:1.0,etiket:true,su:11,hafta:5,birim:"yıkama"},
+ {k:"kurutma",ad:"Kurutma makinesi",tip:"cevrim",kwh:2.5,etiket:true,hafta:2,birim:"kurutma"},
+ {k:"firin",ad:"Elektrikli fırın",tip:"cevrim",kwh:1.0,etiket:true,hafta:3,birim:"pişirme (1 saat)"},
+ {k:"klima",ad:"Klima",tip:"saat",w:1000,etiket:true,gun:0,birim:"saat"},
+ {k:"tv",ad:"Televizyon",tip:"saat",w:100,etiket:true,gun:4,birim:"saat"},
+ {k:"utu",ad:"Ütü",tip:"dk",w:2200,dk:30,duty:0.6,hafta:2,birim:"ütüleme"},
+ {k:"sac",ad:"Saç kurutma makinesi",tip:"dk",w:2000,dk:10,duty:1,hafta:7,birim:"kurutma"},
+ {k:"kettle",ad:"Su ısıtıcı (kettle)",tip:"dk",w:2000,dk:4,duty:1,hafta:14,birim:"kaynatma"},
+ {k:"cay",ad:"Çay makinesi",tip:"dk",w:1700,dk:30,duty:0.4,hafta:7,birim:"demleme"},
+ {k:"mikro",ad:"Mikrodalga",tip:"dk",w:1000,dk:5,duty:1,hafta:7,birim:"ısıtma"},
+ {k:"supurge",ad:"Elektrikli süpürge",tip:"dk",w:850,dk:30,duty:1,hafta:2,birim:"süpürme"},
+ {k:"ocak",ad:"Elektrikli ocak",tip:"dk",w:1800,dk:40,duty:0.6,hafta:7,birim:"yemek"},
+ {k:"isitici",ad:"Elektrikli ısıtıcı",tip:"saat",w:2000,gun:0,birim:"saat"},
+ {k:"pc",ad:"Bilgisayar",tip:"saat",w:60,gun:4,birim:"saat"},
+ {k:"modem",ad:"Modem",tip:"saat",w:10,gun:24,birim:"saat"},
+ {k:"led",ad:"Aydınlatma (LED, tüm ev)",tip:"saat",w:60,gun:5,birim:"saat"}
+];
+const SINIF=[["e-A+++","A+++ (eski)"],["e-A++","A++ (eski)"],["e-A+","A+ (eski)"],["e-A","A (eski)"],["e-B","B (eski)"],["e-C","C (eski)"],["e-D","D (eski)"],["y-A","A (yeni)"],["y-B","B (yeni)"],["y-C","C (yeni)"],["y-D","D (yeni)"],["y-E","E (yeni)"],["y-F","F (yeni)"],["y-G","G (yeni)"]];
+const MULT={"e-A+++":.7,"e-A++":.85,"e-A+":1,"e-A":1.15,"e-B":1.35,"e-C":1.55,"e-D":1.8,"y-A":.55,"y-B":.65,"y-C":.75,"y-D":.88,"y-E":1,"y-F":1.15,"y-G":1.3};
+function calcC(c){const T=CIHAZ.find(x=>x.k===c.k);if(!T)return null;const m=T.etiket?(MULT[c.sinif]||1):1;
+  let use=null,month=0;const hafta=c.hafta??T.hafta,gun=c.gun??T.gun,dk=c.dk??T.dk,w=c.w??T.w;
+  if(T.tip==="yil"){const y=c.yil||T.kwh*m;month=y/12}
+  else if(T.tip==="cevrim"){use=c.kwh||T.kwh*m;month=use*hafta*52/12}
+  else if(T.tip==="saat"){use=w*m/1000;month=use*gun*30.4}
+  else{use=w/1000*dk/60*T.duty;month=use*hafta*52/12}
+  const suM3=T.su?T.su*hafta*52/12/1000:0;
+  return {T,m,use,month,suM3,hafta,gun,dk,w}}
+function renderCihaz(){
+  const p=S.elec.p;$("cihazFiyat").textContent="Elektrik "+f1(p)+" TL/kWh ile (faturandan güncellenir)";
+  const rows=S.cihazlar.map(c=>({c,r:calcC(c)})).filter(x=>x.r);
+  const total=rows.reduce((a,x)=>a+x.r.month,0);const totSu=rows.reduce((a,x)=>a+x.r.suM3,0);
+  // tek kullanım kartları
+  const once=rows.filter(x=>x.r.use!=null&&x.r.T.tip!=="saat"||["klima","isitici"].includes(x.c.k)&&x.r.use);
+  $("useCards").innerHTML=once.map(({c,r})=>{const T=r.T;const lbl=T.tip==="saat"?"1 saat":"bir "+T.birim+(T.tip==="dk"?" ("+r.dk+" dk)":"");
+    const su=T.su?` + ${f0(T.su)} L su (≈ ${tl(T.su/1000*S.water.p1)})`:"";
+    return `<div class="card"><h3>${T.ad}</h3><div class="ucnt">${(r.use*p).toLocaleString("tr-TR",{maximumFractionDigits:2,minimumFractionDigits:2})} TL</div>
+    <p class="small muted" style="margin:4px 0 0">${lbl} = ${f1(r.use)} kWh${su}<br>Senin kullanımınla ayda <b>${tl(r.month*p)}</b></p></div>`}).join("");
+  // tablo
+  let h=`<tr><th>Cihaz</th><th>Enerji sınıfı</th><th>Güç W</th><th>Kullanım</th><th>Bir kullanım</th><th>Aylık kWh</th><th>Aylık TL</th><th>Pay</th><th></th></tr>`;
+  rows.sort((a,b)=>b.r.month-a.r.month).forEach(({c,r})=>{const T=r.T;
+    const sel=T.etiket?`<select data-cid="${c.id}" data-f="sinif">${SINIF.map(([v,t])=>`<option value="${v}" ${(c.sinif||"e-A+")===v?"selected":""}>${t}</option>`).join("")}</select>`:`<span class="muted small">etiket yok</span>`;
+    const wIn=(T.tip==="saat"||T.tip==="dk")?`<input type="number" min="0" data-cid="${c.id}" data-f="w" value="${r.w}">`:`<span class="muted small">—</span>`;
+    let use="";if(T.tip==="yil")use=`<span class="small muted">sürekli</span>`;
+    else if(T.tip==="saat")use=`günde <input type="number" min="0" step="0.5" data-cid="${c.id}" data-f="gun" value="${r.gun}"> saat`;
+    else if(T.tip==="cevrim")use=`haftada <input type="number" min="0" step="1" data-cid="${c.id}" data-f="hafta" value="${r.hafta}"> kez`;
+    else use=`haftada <input type="number" min="0" data-cid="${c.id}" data-f="hafta" value="${r.hafta}"> × <input type="number" min="0" data-cid="${c.id}" data-f="dk" value="${r.dk}"> dk`;
+    const one=r.use!=null?`${f1(r.use)} kWh<small class="muted" style="display:block">${(r.use*p).toLocaleString("tr-TR",{maximumFractionDigits:2})} TL</small>`:`${f1(r.month/30.4)} kWh/gün`;
+    h+=`<tr><td>${T.ad}${c.yil||c.kwh?` <span class="chip ok">etiketten</span>`:""}</td><td data-l="Enerji sınıfı">${sel}</td><td data-l="Güç W">${wIn}</td><td data-l="Kullanım" class="wide">${use}</td><td class="num" data-l="Bir kullanım">${one}</td><td class="num" data-l="Aylık kWh">${f1(r.month)}</td><td class="num" data-l="Aylık TL">${tl(r.month*p)}</td><td class="num" data-l="Faturadaki payı">%${total?Math.round(r.month/total*100):0}</td><td><button type="button" data-cdel="${c.id}">Sil</button></td></tr>`});
+  $("cihazTable").innerHTML=h;
+  $("cihazTable").querySelectorAll("[data-cid]").forEach(el=>el.onchange=()=>{const c=S.cihazlar.find(x=>x.id===el.dataset.cid);if(!c)return;const f=el.dataset.f;
+    if(f==="sinif"){c.sinif=el.value;delete c.yil;delete c.kwh}else{const v=parseFloat(el.value);c[f]=isFinite(v)?v:undefined}save();render()});
+  $("cihazTable").querySelectorAll("[data-cdel]").forEach(b=>b.onclick=()=>{S.cihazlar=S.cihazlar.filter(x=>x.id!==b.dataset.cdel);save();render()});
+  // özet
+  const y=ymd(TODAY).y;const limM=(ELEC_LIMIT[y]||3000)/12;const limM2=(ELEC_LIMIT[y+1]||3000)/12;
+  const EI=elecInfo();const meas=EI.r!=null?EI.r*30.4:null;
+  $("cihazOzet").innerHTML=`<h3>Cihazların toplamı</h3><dl class="kv" style="margin-top:8px">
+    <dt>Aylık elektrik</dt><dd>${f0(total)} kWh ≈ ${tl(total*p)}</dd>
+    <dt>Çamaşır + bulaşık suyu</dt><dd>${f1(totSu)} m³ ≈ ${tl(totSu*S.water.p1)}</dd>
+    <dt>${y} aylık limit payı</dt><dd>${f0(limM)} kWh (%${Math.round(total/limM*100)})</dd>
+    <dt>${y+1} aylık limit payı</dt><dd>${f0(limM2)} kWh (%${Math.round(total/limM2*100)})</dd>
+    <dt>Sayaçtan ölçülen</dt><dd>${meas!=null?f0(meas)+" kWh/ay":"okuma bekleniyor"}</dd></dl>
+    <p class="small muted" style="margin:10px 0 0">${meas!=null?(meas>total*1.15?`Sayaç, listedeki cihazlardan ayda yaklaşık ${f0(meas-total)} kWh fazla gösteriyor. Listede olmayan bir cihaz var ya da kullanım süreleri az girilmiş.`:meas<total*0.85?`Liste sayaçtan fazla çıkıyor, kullanım süreleri biraz yüksek girilmiş olabilir.`:`Liste sayaçla uyumlu.`):"Sayaç okumaları girilince liste ölçülen tüketimle karşılaştırılır."}</p>`;
+  // ipuçları
+  const tips=[];const top=rows.slice(0,3).map(x=>x.r.T.ad+" ("+tl(x.r.month*p)+")");
+  if(top.length)tips.push(`En çok harcayan üç cihaz: <b>${top.join(", ")}</b>.`);
+  rows.forEach(({c,r})=>{const T=r.T;if(!T.etiket||c.yil||c.kwh)return;const best=c.sinif&&c.sinif.startsWith("y-")?.55:.7;
+    if(r.m>best+0.25&&r.month>8){const save_=r.month*(1-best/r.m);tips.push(`${T.ad} ${(SINIF.find(s=>s[0]===(c.sinif||"e-A+"))||[0,"A+"])[1]} sınıfında. En verimli sınıfla ayda yaklaşık <b>${f0(save_)} kWh (${tl(save_*p)})</b> daha az harcar.`)}});
+  const utu=rows.find(x=>x.c.k==="utu");if(utu)tips.push(`Ütüyü haftada bir kez toplu yapmak, ısınma kaybını azaltır. Her ütüleme ≈ ${(utu.r.use*p).toLocaleString("tr-TR",{maximumFractionDigits:2})} TL.`);
+  const kur=rows.find(x=>x.c.k==="kurutma");if(kur)tips.push(`Bir kurutma ≈ ${(kur.r.use*p).toLocaleString("tr-TR",{maximumFractionDigits:2})} TL. Askıda kurutmak bunu sıfırlar. Haftalık elektrik hakkın dolduysa Panel bunu ayrıca hatırlatır.`);
+  const fir=rows.find(x=>x.c.k==="firin");if(fir)tips.push(`Fırını önceden ısıtmadan kullanmak ve kapağı açmamak her pişirmede yaklaşık %10–20 tasarruf sağlar.`);
+  $("cihazIpucu").innerHTML=`<h3>Öneriler</h3><ul class="small" style="margin:8px 0 0;padding-left:18px;display:grid;gap:6px">${tips.map(t=>`<li>${t}</li>`).join("")}</ul><p class="small muted" style="margin:10px 0 0">Tüketimler, enerji sınıfına göre tipik değerlerden hesaplanır. Etiketteki kWh değerini okutursan o değer kullanılır.</p>`;
+  const cs=$("cihazYeni");if(!cs.options.length)CIHAZ.forEach(T=>{const o=document.createElement("option");o.value=T.k;o.textContent=T.ad;cs.appendChild(o)});
+}
+$("cihazEkle").onclick=()=>{const k=$("cihazYeni").value;const T=CIHAZ.find(x=>x.k===k);S.cihazlar.push({id:uid(),k,sinif:T&&T.etiket?"e-A+":undefined});save();render();$("cihazStatus").textContent=(T?T.ad:"Cihaz")+" eklendi."};
+const LABEL_PROMPT=`Bu bir ev aletinin AB enerji etiketi fotoğrafı. YALNIZCA şu JSON'u döndür:
+{"cihaz":"buzdolabi"|"dondurucu"|"camasir"|"bulasik"|"kurutma"|"firin"|"klima"|"tv"|null,"etiket_turu":"eski"|"yeni","sinif":"A+++"|"A++"|"A+"|"A"|"B"|"C"|"D"|"E"|"F"|"G"|null,"yillik_kwh":number|null,"kwh_100_cevrim":number|null,"kwh_cevrim":number|null}
+Eski etiket A+++–D ölçeğini, yeni etiket (2021 sonrası, QR kodlu) A–G ölçeğini kullanır. Yeni çamaşır/bulaşık etiketinde "kWh/100 çevrim" yazar. Okuyamadığını null bırak.`;
+$("pickLabel").onclick=()=>$("labelFile").click();
+$("labelFile").onchange=async e=>{const f=e.target.files[0];if(!f)return;if(!sample){$("cihazStatus").textContent="Bu görünümde etiket okunamıyor. Sınıfı listeden seç.";return}
+  $("cihazStatus").textContent="Claude etiketi okuyor…";
+  try{const j=await sample.json(LABEL_PROMPT,{images:[f]});const T=CIHAZ.find(x=>x.k===j.cihaz);if(!T){$("cihazStatus").textContent="Cihaz türü anlaşılamadı. Listeden ekleyip sınıfı seç.";return}
+    const c={id:uid(),k:T.k};if(j.sinif)c.sinif=(j.etiket_turu==="yeni"?"y-":"e-")+j.sinif;
+    if(T.tip==="yil"&&j.yillik_kwh)c.yil=j.yillik_kwh;
+    if(T.tip==="cevrim"){if(j.kwh_100_cevrim)c.kwh=j.kwh_100_cevrim/100;else if(j.kwh_cevrim)c.kwh=j.kwh_cevrim}
+    S.cihazlar.push(c);save();render();$("cihazStatus").textContent=T.ad+" eklendi: "+(j.sinif||"sınıf okunamadı")+(c.yil?", yılda "+c.yil+" kWh":"")+(c.kwh?", çevrim başı "+f1(c.kwh)+" kWh":"")+". Kullanım sıklığını düzelt."}
+  catch(err){$("cihazStatus").textContent=sampleErr(err)}};
+
+// ---------- OLAYLAR ----------
+const ilSel=$("il");Object.keys(LIM).forEach(k=>{const o=document.createElement("option");o.value=o.textContent=k;ilSel.appendChild(o)});
+ilSel.value=S.il;ilSel.onchange=()=>{S.il=ilSel.value;save();WX={src:"none",t:{}};render();loadWeather()};
+function showTab(t){const more=["plan","ortalama","ayar"].includes(t);
+  document.querySelectorAll("nav.tabs button").forEach(x=>x.setAttribute("aria-selected",x.dataset.tab===t));
+  document.querySelectorAll("nav.bottom button").forEach(x=>x.setAttribute("aria-selected",x.dataset.more?more:x.dataset.tab===t));
+  document.querySelectorAll("[data-view]").forEach(v=>v.hidden=v.dataset.view!==t);
+  $("sheet").classList.remove("open");window.scrollTo(0,0);try{localStorage.setItem(LSK+".tab",t)}catch(e){}}
+document.querySelectorAll("nav.tabs button,nav.bottom button[data-tab],#sheet button").forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+document.querySelector("nav.bottom button[data-more]").onclick=()=>$("sheet").classList.toggle("open");
+try{const t=localStorage.getItem(LSK+".tab");if(t&&document.querySelector(`[data-view="${t}"]`))showTab(t)}catch(e){}
+$("r_tarih").value=ds(TODAY);
+const uid=()=>Math.random().toString(36).slice(2,10);
+function dropDemo(){if(S.demo){const keep={il:S.il,hg:S.hg,pay:S.pay,gas:S.gas,elec:Object.assign({},S.elec,{ytd:null,ytdt:null}),water:S.water};S=mergeDefaults(keep);S.demo=false}}
+$("readForm").onsubmit=e=>{e.preventDefault();dropDemo();const t=$("r_tur").value,d=$("r_tarih").value,v=parseFloat($("r_endeks").value);
+  if(!d||!isFinite(v)){$("readStatus").textContent="Tarih ve endeksi gir.";return}
+  const prev=reads(t).filter(x=>x.n<dn(d)).pop();if(prev&&v<prev.v){$("readStatus").textContent="Bu endeks bir önceki okumadan küçük ("+f1(prev.v)+"). Rakamları kontrol et.";return}
+  S.readings=S.readings.filter(r=>!(r.t===t&&r.d===d));S.readings.push({id:uid(),t,d,v});save();$("readStatus").textContent="Kaydedildi.";$("r_endeks").value="";render()};
+$("setForm").onsubmit=e=>{e.preventDefault();const n=id=>{const v=parseFloat($(id).value);return isFinite(v)?v:null};
+  S.hg=+$("s_hg").value;S.pay=n("s_pay")??3;
+  Object.assign(S.gas,{day:n("s_gday")||20,kat:n("s_gkat")||0.92,k1:n("s_gk1")||17.88,k2:n("s_gk2")||26.73,ver:n("s_gver")||90});
+  Object.assign(S.elec,{day:n("s_eday")||15,p:n("s_ep")||3.24,sktt:n("s_esk")||6.97,isi:n("s_eisi")||2,kur:n("s_ekur")||2.5,ytd:n("s_eytd"),ytdt:$("s_eytdt").value||null});
+  Object.assign(S.water,{day:n("s_wday")||10,pre:$("s_wpre").value,t1:n("s_w1")||10,p1:n("s_w1p")||0,t2:n("s_w2")||20,p2:n("s_w2p")||0,p3:n("s_w3p")||0,yon:$("s_wyon").value,cam:n("s_wcam")||50});
+  save();render();$("setStatus").textContent="Kaydedildi."};
+$("s_wpre").onchange=()=>{if($("s_wpre").value==="antalya"){$("s_w1").value=20;$("s_w1p").value=33.31;$("s_w2").value=40;$("s_w2p").value=81.93;$("s_w3p").value=117.05}};
+$("clearDemo").onclick=()=>{const b=$("clearDemo");if(b.dataset.ok!=="1"){b.dataset.ok="1";b.textContent="Emin misin? Tekrar bas";setTimeout(()=>{b.dataset.ok="";b.textContent="Örnek verileri sil, sıfırdan başla"},4000);return}
+  const keep={il:S.il};S=mergeDefaults(keep);S.demo=false;save();fillSettings();render();b.dataset.ok="";b.textContent="Örnek verileri sil, sıfırdan başla";$("setStatus").textContent="Sıfırlandı."};
+$("billForm").onsubmit=e=>{e.preventDefault();dropDemo();const n=id=>{const v=parseFloat($(id).value);return isFinite(v)?v:null};
+  const t=$("b_tur").value,bas=$("b_bas").value,bit=$("b_bit").value;if(!bas||!bit||bit<=bas){$("billSaved").textContent="Dönem tarihlerini kontrol et.";return}
+  const b={id:uid(),t,bas,bit,e1:n("b_e1"),e2:n("b_e2"),tk:n("b_tk"),kat:n("b_kat"),tl:n("b_tl"),kad:$("b_kad").value||null,ytd:n("b_ytd")};
+  if(t==="gas"&&b.tk==null&&b.e1!=null&&b.e2!=null)b.tk=(b.e2-b.e1)*(b.kat||S.gas.kat);
+  if(t!=="gas"&&b.tk==null&&b.e1!=null&&b.e2!=null)b.tk=b.e2-b.e1;
+  S.bills.push(b);
+  if(b.e1!=null){S.readings=S.readings.filter(r=>!(r.t===t&&r.d===bas));S.readings.push({id:uid(),t,d:bas,v:b.e1})}
+  if(b.e2!=null){S.readings=S.readings.filter(r=>!(r.t===t&&r.d===bit));S.readings.push({id:uid(),t,d:bit,v:b.e2})}
+  const day=ymd(dn(bit)).d;
+  if(t==="gas"){S.gas.day=day;if(b.kat)S.gas.kat=b.kat;if(b.tk&&b.tl){const p=b.tl/b.tk;if(b.kad==="2")S.gas.k2=Math.round(p*100)/100;else{S.gas.k1=Math.round(p*100)/100;S.gas.k2=Math.round(p*18/10.625*100)/100}}}
+  if(t==="elec"){S.elec.day=day;if(b.tk&&b.tl)S.elec.p=Math.round(b.tl/b.tk*100)/100;if(b.ytd!=null){S.elec.ytd=b.ytd;S.elec.ytdt=bit}}
+  if(t==="water"){S.water.day=day}
+  save();fillSettings();render();$("billSaved").textContent="Kaydedildi. Fiyatlar ve okuma günü bu faturaya göre güncellendi."};
+$("exportCsv").onclick=async()=>{const rows=["tur,tarih,endeks"].concat(S.readings.map(r=>`${r.t},${r.d},${r.v}`));
+  rows.push("","tur,ilk,son,tuketim,tutar,kademe");S.bills.forEach(b=>rows.push(`${b.t},${b.bas},${b.bit},${b.tk??""},${b.tl??""},${b.kad??""}`));
+  const dl=await window.claude?.use?.("downloads").catch(()=>null);if(!dl){$("setStatus").textContent="Bu görünümde dosya indirilemiyor.";return}
+  try{await dl.save({filename:"limit-pusulasi.csv",data:rows.join("\n")});$("setStatus").textContent="İndirildi."}catch(e){$("setStatus").textContent=e.code==="declined"?"İndirme iptal edildi.":"İndirilemedi."}};
+
+// ---------- CLAUDE İLE OKUMA ----------
+let sample=null;
+const BILL_PROMPT=`Bu görsel(ler) Türkiye'den bir doğalgaz, elektrik ya da su faturası. Faturayı oku ve YALNIZCA şu JSON nesnesini döndür:
+{"tur":"gas"|"elec"|"water","ilk_okuma":"YYYY-MM-DD"|null,"son_okuma":"YYYY-MM-DD"|null,"ilk_endeks":number|null,"son_endeks":number|null,"tuketim":number|null,"duzeltme_katsayisi":number|null,"tutar_tl":number|null,"kademe":1|2|null,"yillik_tuketim_kwh":number|null}
+Kurallar: doğalgazda "tuketim" düzeltilmiş tüketimdir (Sm³), sayaçtan okunan m³ değil. Elektrikte kWh, suda m³. "yillik_tuketim_kwh" elektrik faturasında yılbaşından beri ya da son 12 ay tüketimi yazıyorsa onu yaz. Türkçe sayı biçimini çevir: "1.234,56" → 1234.56. Okuyamadığın alanı null bırak, tahmin etme.`;
+const METER_PROMPT=`Bu bir sayaç fotoğrafı (doğalgaz, elektrik ya da su). Sayaçtaki endeksi oku. Kırmızı haneler ya da virgülden sonrası ondalıktır. YALNIZCA şu JSON'u döndür: {"tur":"gas"|"elec"|"water"|null,"endeks":number|null,"emin":true|false}`;
+function sampleErr(e){const m={not_granted:"Claude'a izin verilmedi. Bilgileri elle girebilirsin.",rate_limited:"Şu an çok istek var, biraz sonra tekrar dene.",image_rejected:"Bu görsel okunamadı. Daha net bir fotoğraf dene.",invalid_json:"Fatura net okunamadı. Daha yakından çekip tekrar dene ya da elle gir.",images_unavailable:"Bu görünümde görsel gönderilemiyor. Bilgileri elle gir.",session_expired:"Oturum süresi dolmuş, yeniden giriş yap."};return m[e&&e.code]||"Okunamadı. Bilgileri elle girebilirsin."}
+async function readBill(files){if(!files||!files.length)return;
+  if(!sample){$("billStatus").textContent="Bu görünümde otomatik okuma yok. Bilgileri sağdaki forma elle gir.";return}
+  $("billStatus").textContent="Claude faturayı okuyor… (ilk kullanımda izin isteyebilir)";
+  try{const j=await sample.json(BILL_PROMPT,{images:[...files].slice(0,4)});
+    if(!j||typeof j!=="object")throw {code:"invalid_json"};
+    if(["gas","elec","water"].includes(j.tur))$("b_tur").value=j.tur;
+    const set=(id,v)=>{if(v!=null&&v!=="")$(id).value=v};
+    set("b_bas",j.ilk_okuma);set("b_bit",j.son_okuma);set("b_e1",j.ilk_endeks);set("b_e2",j.son_endeks);set("b_tk",j.tuketim);set("b_kat",j.duzeltme_katsayisi);set("b_tl",j.tutar_tl);
+    $("b_kad").value=j.kademe?String(j.kademe):"";set("b_ytd",j.yillik_tuketim_kwh);
+    $("billStatus").textContent="Okundu. Rakamları faturayla karşılaştır, sonra Kaydet'e bas.";
+  }catch(e){$("billStatus").textContent=sampleErr(e)}}
+async function readMeter(file){if(!file)return;if(!sample){$("readStatus").textContent="Bu görünümde fotoğraftan okuma yok. Endeksi elle gir.";return}
+  $("readStatus").textContent="Claude sayacı okuyor…";
+  try{const j=await sample.json(METER_PROMPT,{images:[file],modelTier:"default"});
+    if(j&&["gas","elec","water"].includes(j.tur))$("r_tur").value=j.tur;
+    if(j&&j.endeks!=null){$("r_endeks").value=j.endeks;$("readStatus").textContent=(j.emin?"Okundu: ":"Emin değilim, kontrol et: ")+j.endeks+". Doğruysa Kaydet'e bas."}
+    else $("readStatus").textContent="Rakamlar okunamadı. Daha yakından çek ya da elle gir.";
+  }catch(e){$("readStatus").textContent=sampleErr(e)}}
+$("pickBill").onclick=()=>$("billFile").click();
+$("billFile").onchange=e=>readBill(e.target.files);
+$("pickMeter").onclick=()=>$("meterFile").click();
+$("meterFile").onchange=e=>readMeter(e.target.files[0]);
+const drop=$("drop");["dragenter","dragover"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("hot")}));
+["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("hot")}));
+drop.addEventListener("drop",e=>readBill([...e.dataTransfer.files].filter(f=>f.type.startsWith("image/"))));
+
+// ---------- BAŞLAT ----------
+fillSettings();render();loadWeather();
+(async()=>{if(!window.claude||!claude.use)return;
+  try{sample=await claude.use("sample");if(sample){const lim=await sample.limits().catch(()=>null);if(!lim||!lim.images){sample=null}}}catch(e){sample=null}
+  try{const u=await claude.use("user");db=await claude.use("db");if(u&&db){userId=await u.id();
+      const snap=await db.doc("data/users/"+userId+"/state").get();
+      const data=snap&&(typeof snap.data==="function"?snap.data():snap.data);
+      if(data&&data.json){const remote=JSON.parse(data.json);if((remote.savedAt||0)>(S.savedAt||0)){S=mergeDefaults(remote);ilSel.value=S.il;fillSettings();render();loadWeather()}
+        setSync("Verilerin hesabında saklanıyor.")}
+      else{setSync("Verilerin hesabında saklanacak.");if(!S.demo)pushRemote()}}}
+  catch(e){setSync("Veriler bu tarayıcıda saklanıyor.")}
+})();
+</script>
+
+</body>
+</html>
