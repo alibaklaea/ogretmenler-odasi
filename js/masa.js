@@ -169,8 +169,9 @@
   let projeler = JSON.parse(localStorage.getItem("masa.projeler") || "null") || JSON.parse(JSON.stringify(window.PROJELER || []));
   const projeKaydet = () => { localStorage.setItem("masa.projeler", JSON.stringify(projeler)); seritCiz(); };
   // eTwinning plan kartları: yeni plan geldiğinde her cihazda kendiliğinden güncellenir; işaretlenen adımlar ve Kalite Etiketi taslağı korunur.
-  const planBirlestir = () => { const P = JSON.parse(JSON.stringify(window.ETWINNING_PLAN || [])), var_ = new Set(projeler.map((p) => p.id)); projeler = projeler.map((p) => { const y = P.find((x) => x.id === p.id); if (!y) return p; const bitti = new Set((p.adimlar || []).filter((a) => a.tamam).map((a) => a.ad)); return { ...p, ad: y.ad, kategori: y.kategori, aciklama: y.aciklama, ortaklar: y.ortaklar, baslangic: y.baslangic, sonTarih: y.sonTarih, adimlar: y.adimlar.map((a) => ({ ...a, tamam: bitti.has(a.ad) })) }; }).concat(P.filter((p) => !var_.has(p.id))); localStorage.setItem("masa.projeler", JSON.stringify(projeler)); localStorage.setItem("masa.planImza", JSON.stringify(window.ETWINNING_PLAN || [])); };
-  if (window.ETWINNING_PLAN && localStorage.getItem("masa.planImza") !== JSON.stringify(window.ETWINNING_PLAN)) planBirlestir();
+  const planHepsi = () => (window.ETWINNING_PLAN || []).concat(window.TEKNOFEST_PLAN || []);
+  const planBirlestir = () => { const P = JSON.parse(JSON.stringify(planHepsi())), var_ = new Set(projeler.map((p) => p.id)); projeler = projeler.map((p) => { const y = P.find((x) => x.id === p.id); if (!y) return p; const bitti = new Set((p.adimlar || []).filter((a) => a.tamam).map((a) => a.ad)); return { ...p, ad: y.ad, kategori: y.kategori, aciklama: y.aciklama, ortaklar: y.ortaklar, baslangic: y.baslangic, sonTarih: y.sonTarih, adimlar: y.adimlar.map((a) => ({ ...a, tamam: bitti.has(a.ad) })) }; }).concat(P.filter((p) => !var_.has(p.id))); localStorage.setItem("masa.projeler", JSON.stringify(projeler)); localStorage.setItem("masa.planImza", JSON.stringify(planHepsi())); };
+  if (planHepsi().length && localStorage.getItem("masa.planImza") !== JSON.stringify(planHepsi())) planBirlestir();
 
   function kalanGun(t) { return t ? Math.round((iso(t) - bugun) / 864e5) : null; }
 
@@ -1774,7 +1775,7 @@
   // Öğrenci adları yalnızca bu cihazda (Ayarlar > grup öğrencileri) tutulur; site verisinde yok.
   const PF = window.PROJE_FORM || { projeler: [] };
   const PF_SATIR = [["durum", "Başvuru Durumu:"], ["no", "Başvuru No :"], ["ad", "Proje veya Başvurunun Adı:"], ["ozet", "Proje veya Buluş özeti:"], ["kategori", "Kategori :"], ["tarih", "Başvuru Tarihi:"], ["paydas", "Varsa Paydaşlar:"], ["ogr", "Proje Öğrencileri:"], ["danisman", "Proje Danışmanı:"]];
-  const PF_GRUP = { D1: "Destek Eğitimi 1 grubu", D3: "Destek Eğitimi 3 grubu", IKI: "Destek Eğitimi 1 ve Destek Eğitimi 3 grupları" };
+  const PF_GRUP = { D1: "Destek Eğitimi 1 grubu", D3: "Destek Eğitimi 3 grubu", IKI: "Destek Eğitimi 1 ve Destek Eğitimi 3 grupları", KOD: "Kodlama Atölyesi grubu" };
   const pfListe = (k) => String((ayar.gruplar[k] || {}).ogrenciler || "").split(/[\n,;]+/).map((x) => x.trim()).filter(Boolean);
   const pfOgr = (P) => { const L = P.grup === "IKI" ? [...pfListe("D1"), ...pfListe("D3")] : pfListe(P.grup); return `${PF_GRUP[P.grup]}: ${L.length ? L.join(", ") : "(öğrenci adları Ayarlar'dan girilecek)"}`; };
   const pfDeger = (P, k) => (k === "ogr" ? pfOgr(P) : k === "danisman" ? PF.danisman : P[k]);
