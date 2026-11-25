@@ -620,3 +620,10 @@ html.uygulama .dk-alan .ct-tahta, html.uygulama .dk-tahta { width: 520px; width:
 .dv-kk { columns: 2; column-gap: 5mm; font-size: 8pt; line-height: 1.25; margin: 1mm 0 0; padding: 0; list-style: none; }
 .dv-kk li { break-inside: avoid; margin-bottom: 1mm; padding-left: 4.2mm; position: relative; }
 .dv-kk li::before { content: "☐"; position: absolute; left: 0; }
+
+/* ---------- kodlama: hazır Arduino kodu ---------- */
+.kod-yol ol { margin: 6px 0 6px 1.2em; padding: 0; } .kod-yol li { margin-bottom: 3px; }
+.kod-kart { margin-top: 14px; }
+.kod-blok { background: #1e2329; color: #e9ecef; border-radius: 10px; padding: 14px 16px; overflow: auto; font: 14px/1.5 Consolas, "Cascadia Mono", monospace; tab-size: 2; margin-top: 10px; max-height: 70vh; }
+.kod-blok .kw { color: #74c0fc; font-weight: 700; } .kod-blok .st { color: #ffd43b; } .kod-blok .yo { color: #8ce99a; font-style: italic; }
+.slayt .kod-blok.tahta { font-size: clamp(14px, 1.45vw, 26px); max-height: 78vh; margin: 0; }

@@ -850,7 +850,7 @@
         <div class="gun-satir">${haftaGunleri(w).map((g) => `<span class="gun-kutu ${g.kapali ? "kapali" : g.yarim ? "yarim" : ""}" title="${esc(g.t ? g.t.ad : "Ders günü")}">${g.ad} ${g.d.getDate()}</span>`).join("")}</div>
       </div>
       <div class="gezgin">${once ? `<a class="dugme" href="#hafta/${once.no}/${sekme}">‹ ${once.no}. hafta</a>` : ""}${sonra ? `<a class="dugme" href="#hafta/${sonra.no}/${sekme}">${sonra.no}. hafta ›</a>` : ""}</div></div>
-      <div class="sekmeler" role="tablist">${SEKMELER.map(([k, ad]) => `<button role="tab" aria-selected="${k === sekme}" data-k="${k}">${ad}${k === "gunler" && gunler.length ? ` (${gunler.length})` : ""}</button>`).join("")}</div>
+      <div class="sekmeler" role="tablist">${(plan === "KOD" && window.KODLAR && KODLAR[w.no] ? [SEKMELER[0], ["kod", "Arduino Kodu"], ...SEKMELER.slice(1)] : SEKMELER).map(([k, ad]) => `<button role="tab" aria-selected="${k === sekme}" data-k="${k}">${ad}${k === "gunler" && gunler.length ? ` (${gunler.length})` : ""}</button>`).join("")}</div>
       <div id="sekmeIcerik"></div>`;
     $("#sahne").innerHTML = html;
     document.querySelectorAll(".sekmeler button").forEach((b) => b.onclick = () => location.hash = `hafta/${w.no}/${b.dataset.k}`);
@@ -859,6 +859,7 @@
     const tatilUyari = ig < 5 ? `<div class="uyari">Bu hafta ${5 - ig} gün tatil: ${[...new Set(haftaGunleri(w).filter((g) => g.t).map((g) => g.t.ad))].join(", ")}. Yıllık planda bu hafta ${w.saat} ders saati olarak planlanmış.</div>` : "";
     if (sekme === "etkinlik") ic.innerHTML = tatilUyari + etkinlikSekme(w, P);
     if (sekme === "hazirlik") hazirlikSekme(ic, w, P);
+    if (sekme === "kod") kodSekme(ic, w);
     if (sekme === "gunluk") gunlukSekme(ic, w, P, tatilUyari);
     if (sekme === "sunum") sunumSekme(ic, w, P, gunler);
     if (sekme === "kagit") kagitSekme(ic, w, P);
@@ -905,6 +906,7 @@
         <div class="dv-sahne">${DEVRE.svg(dv)}</div>${DEVRE.tablo(dv)}
         <div class="dugmeler" style="margin:10px 0"><button class="dugme kucuk ana" data-dv-video="${k.no}/${i}">▶ Kabloları tek tek göster (sesli video)</button><button class="dugme kucuk" data-dv-sun="${k.no}/${i}">Tahtada adım adım</button><button class="dugme kucuk" data-dv-bas="${k.no}/${i}">Şemayı yazdır</button></div>
         <p><b>USB'yi takmadan önce kontrol:</b></p><ul class="dv-liste">${DEVRE.kontrol(dv).map((x) => `<li>${esc(x)}</li>`).join("")}</ul></details>`).join("")}
+      ${window.KODLAR && KODLAR[k.no] ? `<p><a class="dugme kucuk ana" href="#hafta/${k.no}/kod">💾 Bu devrenin hazır Arduino kodu</a></p>` : ""}
       <p><b>Ders öncesi kablo hazırlığı (bir grup için):</b> ${esc(DEVRE.kablolar(V[0]))}.</p></div>`;
   }
   document.addEventListener("click", (e) => {
@@ -913,6 +915,38 @@
     if (b.dataset.dvBas) { bas(kagitHTML(DEVRE.kagit(no)[i], null, `${no}. hafta · ${KD.ad}`)); return; }
     sunumAc(DEVRE.slaytlar(no, sl, "baglanti", i), 0, `${no}. hafta · ${dv.ad}`, !!b.dataset.dvVideo, !!b.dataset.dvVideo);
   });
+
+  // ---------- kodlama: Arduino'ya yüklenecek hazır kod ----------
+  function kodRenkle(t) {
+    const KW = /^(void|int|long|float|bool|const|unsigned|String|if|else|for|while|return|true|false|#include)$/;
+    return t.split("\n").map((satir) => {
+      const i = satir.indexOf("//"), kod = i >= 0 ? satir.slice(0, i) : satir, yorum = i >= 0 ? satir.slice(i) : "";
+      const k = kod.split(/("[^"]*"|#include|\b\w+\b)/).map((x) => x.startsWith('"') ? `<span class="st">${esc(x)}</span>` : KW.test(x) ? `<b class="kw">${esc(x)}</b>` : esc(x)).join("");
+      return k + (yorum ? `<span class="yo">${esc(yorum)}</span>` : "");
+    }).join("\n");
+  }
+  function kodIndir(ad, kod) {
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([kod + "\n"], { type: "text/plain" })); a.download = ad + ".ino";
+    document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+  const dosyaAdi = (t) => t.toLocaleLowerCase("tr").replace(/[çğıöşü]/g, (c) => ({ ç: "c", ğ: "g", ı: "i", ö: "o", ş: "s", ü: "u" }[c])).replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+  function kodSekme(ic, w) {
+    const L = KODLAR[w.no] || [], V = (window.DEVRE && DEVRE.H[w.no]) || [];
+    ic.innerHTML = `<div class="kart kod-yol"><b>Arduino'ya yükleme:</b> <ol><li>Arduino IDE'yi aç → Dosya → Yeni.</li><li>Aşağıdaki kodu <b>Kopyala</b> düğmesiyle al, IDE'deki her şeyi silip yapıştır (ya da <b>.ino indir</b> ile dosyayı aç).</li><li>Gerekiyorsa kütüphaneyi kur: Araçlar → Kütüphaneleri Yönet → adını ara → Yükle.</li><li>Araçlar → Kart: <b>Arduino Uno</b>; Araçlar → Port: Arduino'nun takılı olduğu COM portu.</li><li><b>Yükle (→)</b> düğmesine bas. Sonra Seri Monitörü aç, hızı <b>9600</b> yap.</li></ol>
+      <p class="not">Kodlardaki pinler bu haftanın bağlantı şemasıyla birebir aynı. Öğrencilerin yapay zekâyla yazdığı kod çalışmazsa bu kodla karşılaştırın. Tinkercad'de: Kod → Metin → hepsini silip yapıştır.</p></div>
+      ${L.map((c, i) => { const dv = V[c.v] || { ad: w.etkinlik }, ad = `hafta${w.no}_${dosyaAdi(dv.ad)}`;
+        return `<div class="kart kod-kart"><div class="parca-baslik"><h2 style="margin:0">${esc(dv.ad)}</h2>${dv.tinker ? '<span class="rozet">Tinkercad</span>' : '<span class="rozet">Gerçek Arduino</span>'}</div>
+        ${c.lib ? `<p><b>Kurulacak kütüphane:</b> ${c.lib.map(esc).join(", ")}</p>` : ""}${c.ayar ? `<p><b>Değiştirebileceğin sayılar:</b> ${esc(c.ayar)}</p>` : ""}
+        <div class="dugmeler"><button class="dugme kucuk ana" data-kod-kopya="${i}">📋 Kopyala</button><button class="dugme kucuk" data-kod-indir="${i}" data-ad="${ad}">⬇ ${ad}.ino indir</button><button class="dugme kucuk" data-kod-tahta="${i}">Tahtada büyük göster</button></div>
+        <pre class="kod-blok"><code>${kodRenkle(c.kod)}</code></pre></div>`; }).join("")}`;
+    ic.querySelectorAll("[data-kod-kopya]").forEach((b) => b.onclick = async () => {
+      const t = L[+b.dataset.kodKopya].kod;
+      try { await navigator.clipboard.writeText(t); } catch (e) { const x = document.createElement("textarea"); x.value = t; document.body.append(x); x.select(); document.execCommand("copy"); x.remove(); }
+      b.textContent = "✓ Kopyalandı"; setTimeout(() => { b.textContent = "📋 Kopyala"; }, 1800); });
+    ic.querySelectorAll("[data-kod-indir]").forEach((b) => b.onclick = () => kodIndir(b.dataset.ad, L[+b.dataset.kodIndir].kod));
+    ic.querySelectorAll("[data-kod-tahta]").forEach((b) => b.onclick = () => { const c = L[+b.dataset.kodTahta];
+      sunumAc([sl("kod", `<div class="etiket">${w.no}. hafta · Arduino kodu</div><pre class="kod-blok tahta"><code>${kodRenkle(c.kod)}</code></pre>`, "")], 0, `${w.no}. hafta · Arduino kodu`); });
+  }
 
   // ---------- ders öncesi hazırlık: ihtiyaç listesi, öğretmen evrakı, videolar ----------
   const hzVeri = (w) => HZ[plan + "-" + w.no] || { liste: [], icerik: [], video: [] };
