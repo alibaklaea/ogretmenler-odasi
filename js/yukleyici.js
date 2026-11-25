@@ -21,10 +21,13 @@ window.ARDUINO = (function () {
   }
 
   // seri port okuyucu: gelen baytları kuyrukta biriktirir
+  let kayit = [], t0 = 0; // tanı kaydı: kartla konuşulan baytlar
+  const hx = (b) => { const a = Array.from(b); return a.slice(0, 10).map((x) => x.toString(16).padStart(2, "0")).join(" ") + (a.length > 10 ? ` …(${a.length} bayt)` : ""); };
+  const kaydet = (t) => { if (kayit.length < 400) kayit.push(`${String(Date.now() - t0).padStart(5)} ms  ${t}`); };
   function okuyucu(port) {
     const kuyruk = []; let bekleyen = null, dur = false;
     const r = port.readable.getReader();
-    (async () => { try { while (!dur) { const { value, done } = await r.read(); if (done) break; if (value) { kuyruk.push(...value); if (bekleyen) bekleyen(); } } } catch (e) { /* port kapandı */ } })();
+    (async () => { try { while (!dur) { const { value, done } = await r.read(); if (done) break; if (value && value.length) { kaydet("← " + hx(value)); kuyruk.push(...value); if (bekleyen) bekleyen(); } } } catch (e) { kaydet("okuma durdu: " + e.message); } })();
     return {
       async al(n, ms = 600) {
         const bitis = Date.now() + ms;
@@ -46,24 +49,29 @@ window.ARDUINO = (function () {
     const durum = o.durum || (() => {}), baud = o.baud || 115200;
     const veri = o.veri || hexCoz(hexMetin);
     const port = o.port || await portSec();
+    if (!o.kayitDevam) { kayit = []; t0 = Date.now(); } kaydet(`port açılıyor, hız ${baud}`);
     await port.open({ baudRate: baud });
     const w = port.writable.getWriter(), R = okuyucu(port);
-    const yaz = (b) => w.write(new Uint8Array(b));
+    const yaz = (b) => { kaydet("→ " + hx(b)); return w.write(new Uint8Array(b)); };
+    const sinyal = async (v) => { kaydet(`DTR/RTS ${v ? 1 : 0}`); await port.setSignals({ dataTerminalReady: v, requestToSend: v }); };
     let adim = "";
     const komut = async (b, cevap = 0, ms = 1000) => { await yaz([...b, 0x20]); let x;
       try { x = await R.al(cevap + 2, ms); } catch (e) { throw new Error(`Arduino cevap vermedi (${adim}).`); }
       if (x[0] !== 0x14 || x[x.length - 1] !== 0x10) throw new Error(`Arduino beklenmeyen cevap verdi (${adim}).`); return x.slice(1, 1 + cevap); };
-    async function bagla() {
-      let senkron = false;
-      for (let deneme = 0; deneme < 5 && !senkron; deneme++) {
-        await port.setSignals({ dataTerminalReady: false, requestToSend: false }); await bekle(150);
-        await port.setSignals({ dataTerminalReady: true, requestToSend: true }); await bekle(deneme ? 80 + deneme * 40 : 50);
+    async function bagla() { // avrdude (Arduino IDE) ile aynı sıra: reset, iki atma senkronu, sonra uzun beklemeli denemeler
+      for (let deneme = 0; deneme < 2; deneme++) {
+        await sinyal(false); await bekle(250);
+        await sinyal(true); await bekle(50);
         R.temizle();
-        for (let i = 0; i < 10 && !senkron; i++) { try { await yaz([0x30, 0x20]); const x = await R.al(2, 150); if (x[0] === 0x14 && x[1] === 0x10) senkron = true; } catch (e) { R.temizle(); } }
+        for (let i = 0; i < 2; i++) { await yaz([0x30, 0x20]); await bekle(60); R.temizle(); }
+        for (let i = 0; i < 6; i++) {
+          await yaz([0x30, 0x20]);
+          let x = []; try { x = await R.al(2, 400); } catch (e) { R.temizle(); continue; }
+          if (x[0] === 0x14 && x[1] === 0x10) { await bekle(30); R.temizle(); kaydet("eşleşti"); return; }
+          await bekle(50); R.temizle();
+        }
       }
-      if (!senkron) throw new Error("Arduino'ya bağlanılamadı. Kart türü (Uno / eski Nano) doğru mu? Seri Monitör ya da Arduino IDE açıksa kapatın.");
-      await bekle(60); R.temizle(); // geç gelen eski cevapları at
-      adim = "eşleşme"; await komut([0x30]);
+      throw new Error("Arduino'ya bağlanılamadı. Kart türü (Uno / eski Nano) doğru mu? Seri Monitör ya da Arduino IDE açıksa kapatın.");
     }
     try {
       let son = null;
@@ -95,7 +103,7 @@ window.ARDUINO = (function () {
           adim = "bitiş"; await komut([0x51]).catch(() => {});
           durum(`Yükleme tamamlandı ✓ (${veri.length} bayt). Program çalışıyor.`, 100);
           return port;
-        } catch (e) { son = e; if (e.kesin || /bağlanılamadı/.test(e.message)) throw e; }
+        } catch (e) { son = e; kaydet("HATA: " + e.message); if (e.kesin || /bağlanılamadı/.test(e.message)) throw e; }
       }
       throw son;
     } finally {
@@ -114,5 +122,5 @@ window.ARDUINO = (function () {
     return async () => { dur = true; try { await r.cancel(); } catch (e) { } r.releaseLock(); await port.close().catch(() => {}); };
   }
 
-  return { destek, hexCoz, yukle, monitor, portSec };
+  return { destek, hexCoz, yukle, monitor, portSec, kayit: () => kayit.join(String.fromCharCode(10)) };
 })();

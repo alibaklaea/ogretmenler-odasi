@@ -647,3 +647,4 @@ html.uygulama .dk-alan .ct-tahta, html.uygulama .dk-tahta { width: 520px; width:
 .bbo-dene .dlk:hover { fill: #1c7ed6; }
 @keyframes bbYan { from { opacity: .15; } to { opacity: .6; } }
 .slayt h2.bbo-b { margin: 0 0 1vh; } .slayt h2.bbo-b b { color: var(--vurgu); }
+.yk-kayit { margin-top: 8px; font-weight: 400; color: #212529; } .yk-kayit pre { max-height: 260px; overflow: auto; background: #fff; padding: 8px; font: 12px/1.35 Consolas, monospace; border-radius: 6px; }

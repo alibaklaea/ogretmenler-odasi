@@ -971,6 +971,7 @@
       if (mesgul) return; mesgul = true; ic.querySelectorAll("[data-yukle]").forEach((x) => { x.disabled = true; });
       try {
         await monKapat();
+        $("#ykDurum").querySelectorAll(".yk-kayit").forEach((x) => x.remove());
         ykDurum("Kod hazırlanıyor…", 0);
         const g = (window.HEXLER || {})[`${w.no}_${b.dataset.yukle}`];
         let hex = "", veri = null;
@@ -981,11 +982,15 @@
         try { await ARDUINO.yukle(hex, { veri, port, baud: hiz, durum: (t, y) => ykDurum(t, y) }); }
         catch (e) { if (!/bağlanılamadı/.test(e.message)) throw e; // kart türü yanlış seçilmiş olabilir: öbür hızı dene
           const oteki = hiz === 115200 ? 57600 : 115200;
-          await ARDUINO.yukle(hex, { veri, port, baud: oteki, durum: (t, y) => ykDurum(`${t} (${oteki === 57600 ? "eski Nano" : "Uno"} ayarıyla)`, y) }); }
+          await ARDUINO.yukle(hex, { veri, port, baud: oteki, kayitDevam: true, durum: (t, y) => ykDurum(`${t} (${oteki === 57600 ? "eski Nano" : "Uno"} ayarıyla)`, y) }); }
         ykDurum(`✓ Yükleme tamamlandı: ${(V[L[+b.dataset.yukle].v] || {}).ad || "program"} Arduino'da çalışıyor.`, 100);
       } catch (e) {
         const m = /No port selected|NotFoundError/.test(e.name + e.message) ? "Arduino seçilmedi. Tekrar basıp listeden seçin." : /Failed to open|InvalidStateError|NetworkError/.test(e.name + e.message) ? "Port açılamadı: Arduino IDE ya da başka bir sekme Arduino'yu kullanıyor olabilir. Kapatıp kabloyu çıkarıp takın." : e.message;
         ykDurum("✗ " + m, 0, true);
+        const k = ARDUINO.kayit && ARDUINO.kayit();
+        if (k) { const d = document.createElement("details"); d.className = "yk-kayit"; d.innerHTML = `<summary>Teknik kayıt (öğretmen için: bunun fotoğrafını Claude'a gönder)</summary><button class="dugme kucuk">📋 Kaydı kopyala</button><pre></pre>`;
+          d.querySelector("pre").textContent = k; d.querySelector("button").onclick = () => navigator.clipboard.writeText(k).then(() => { d.querySelector("button").textContent = "✓ Kopyalandı"; });
+          $("#ykDurum").append(d); }
       } finally { mesgul = false; ic.querySelectorAll("[data-yukle]").forEach((x) => { x.disabled = false; }); }
     });
     if ($("#ykMon")) $("#ykMon").onclick = async () => {
