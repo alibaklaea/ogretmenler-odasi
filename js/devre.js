@@ -433,9 +433,105 @@ window.DEVRE = (function () {
     const ard = W.filter((w) => w.tur === "ard").sort((a, b) => a.sut - b.sut); ard.forEach((w, i) => { w.kat = i % 2; });
     return (L.bb = { P, W, N, X, Y, Wd: X(N) + 300, H: 590 });
   }
-  function tahta(dv) {
-    const T = tahtaYerlesim(dv), { P, W, N, X, Y } = T, xR = X(N) + 16;
-    let s = `<svg class="dv dv-tahta" viewBox="0 0 ${T.Wd} ${T.H}" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif" role="img" aria-label="Breadboard yerleşimi"><rect width="${T.Wd}" height="${T.H}" fill="#fbfcfd"/>`;
+  // breadboard kurulum adımları: önce parçalar (soldan sağa), sonra kablolar (numara sırasıyla).
+  // Her adım: svg (çizim), pts (kamera kutusu), uc (yanıp sönen halkalar), html (liste satırları), baslik, anlat (sesli metin)
+  const buyukHarf = (t) => t.charAt(0).toLocaleUpperCase("tr") + t.slice(1);
+  const sesle = (t) => t.replace(/<[^>]+>/g, "").replace(/(\d+)\s?kΩ/g, "$1 kilo ohm").replace(/(\d+)\s?Ω/g, "$1 ohm").replace(/\(\+\)/g, "(artı)").replace(/\(−\)/g, "(eksi)").replace(/\+/g, " artı ").replace(/−/g, " eksi ")
+    .replace(/([a-j])(\d+)\b/g, "$1 $2").replace(/\s+/g, " ").trim();
+  function tahtaAdim(dv) {
+    const T = tahtaYerlesim(dv); if (T.adim) return T.adim;
+    const { P, W, N, X, Y } = T, A = [];
+    P.forEach(({ q, F, c }) => {
+      let s = ""; const pts = [], uc = [], html = [];
+      (F.seri || []).forEach(([r, a, b, deg]) => { const y = Y(r), x1 = X(c + a), x2 = X(c + b), m = (x1 + x2) / 2, bant = R_BANT[deg] || R_BANT["220Ω"];
+        s += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="#9aa1a8" stroke-width="3"/><rect x="${m - 16}" y="${y - 7}" width="32" height="14" rx="6" fill="#e9d8a6" stroke="#8a6d3b" stroke-width="1.5"/>`
+          + bant.map((cl, i) => `<rect x="${m - 11 + i * 7}" y="${y - 7}" width="4" height="14" fill="${cl}"/>`).join("") + `<circle cx="${x1}" cy="${y}" r="4" fill="#495057"/><circle cx="${x2}" cy="${y}" r="4" fill="#495057"/>`
+          + `<text x="${m}" y="${y + 20}" text-anchor="middle" font-size="10" font-weight="700" fill="#5c3d0c">${deg}</text>`;
+        pts.push([x1, y], [x2, y + 24]); uc.push([x1, y], [x2, y]); });
+      s += F.ciz(X, Y, c, q);
+      F.bacak.forEach(([, r, d]) => { const x = X(c + d), y = Y(r); s += `<circle cx="${x}" cy="${y}" r="5.5" fill="#ced4da" stroke="#212529" stroke-width="2"/>`; pts.push([x, y]); uc.push([x, y]); });
+      const xs = F.bacak.map(([, , d]) => X(c + d)), mx = (Math.min(...xs) + Math.max(...xs)) / 2;
+      s += `<text x="${mx}" y="30" text-anchor="middle" font-size="14" font-weight="800" fill="#212529">${esc(buyukHarf(q.kisa))}</text>`;
+      pts.push([mx, 14], [Math.min(...xs) - 30, Y("j") + 10], [Math.max(...xs) + 30, Y("a") - 20]);
+      const b = F.bacak.map(([, r, d]) => r + (c + d)).join(", ");
+      html.push(`<b>${esc(q.ad)}</b>: bacaklar <b>${b}</b> deliklerine. ${esc(F.not)}`);
+      (F.seri || []).forEach(([r, a, bb, deg]) => html.push(`${deg} direnç: <b>${r}${c + a}</b> ile <b>${r}${c + bb}</b> arasına (yatay).`));
+      A.push({ tur: "parca", svg: s, pts, uc, html, renk: "#495057", baslik: `<span>${esc(q.ad)}</span><i>→</i><span><b>${b}</b></span>`,
+        anlat: sesle(`${q.ad}. Bacaklarını ${b.replace(/, (?=[^,]*$)/, " ve ")} deliklerine tak. ${F.not}${(F.seri || []).map(([r, a, bb, deg]) => ` ${deg} direnci ${r}${c + a} ile ${r}${c + bb} arasına yatay olarak tak.`).join("")}`) });
+    });
+    const kablo = (d, renk) => { const c = RENK[renk][0]; return `<path d="${d}" fill="none" stroke="#1b1b1b" stroke-width="8" stroke-linecap="round"/><path d="${d}" fill="none" stroke="${c}" stroke-width="5" stroke-linecap="round"/>`; };
+    const ucC = (x, y, renk) => `<circle cx="${x}" cy="${y}" r="5" fill="${RENK[renk][0]}" stroke="#1b1b1b" stroke-width="2"/>`;
+    const etiket = (x, y, t, renk, no) => { const c = RENK[renk][0], w = 34 + t.length * 8.2, koyu = ACIK.has(renk);
+      return `<rect x="${x - w / 2}" y="${y - 12}" width="${w}" height="24" rx="12" fill="${c}" stroke="#1b1b1b" stroke-width="1.5"/><circle cx="${x - w / 2 + 12}" cy="${y}" r="9" fill="#fff"/><text x="${x - w / 2 + 12}" y="${y + 4}" text-anchor="middle" font-size="11" font-weight="800" fill="#212529">${no}</text><text x="${x - w / 2 + 25}" y="${y + 5}" font-size="13" font-weight="800" fill="${koyu ? "#212529" : "#fff"}">${esc(t)}</text>`; };
+    const etW = (t) => 34 + t.length * 8.2;
+    W.forEach((w) => {
+      const k = w.k, rn = RENK[k.renk][1], rk = RENK[k.renk][0], hat = k.ray === "+" ? "üstteki + (kırmızı) hat" : "alttaki − (mavi) hat", hatS = k.ray === "+" ? "artı" : "eksi";
+      const bas = `${sira(k.no)} kablo, ${rn}. `, ad = (k.p ? `${k.p.iy} ${k.q.u.replace(/\s*\([^)]*\)/g, "")}` : "");
+      let s = "", pts = [], uc = [], html, baslik, anlat;
+      if (w.tur === "modsin") {
+        html = `${k.no}. kablo (${rn}): ${esc(k.p.iy)} ${esc(k.q.u.replace(/\s*\([^)]*\)/g, ""))} → ${k.tur === "p" ? esc(hedefMetin(k)) : `Arduino <b>${k.uk}</b>`} (breadboard'a uğramaz).`;
+        baslik = `<span>${esc(buyukHarf(k.p.kisa))} <b>${esc(k.q.e)}</b></span><i>→</i><span><b>${esc(k.tur === "p" ? kisaHedef(k) : "Arduino " + k.uk)}</b></span>`;
+        anlat = bas + `${buyukHarf(ad)} ${k.tur === "p" ? hedefMetin(k) : `Arduino'nun ${pinSoz(k.uk)} pinine`} tak. Bu kablo breadboard'a uğramaz.`;
+      } else if (w.tur === "ur") { const y = k.ray === "+" ? RAY.ustArti : RAY.altEksi, x = X(1);
+        s = kablo(`M${x} ${y} H${BX - 40} L${BX - 60} ${y}`, k.renk) + ucC(x, y, k.renk) + etiket(BX - 112, y, `Arduino ${k.uk}`, k.renk, k.no);
+        pts = [[x + 120, y], [BX - 112 - etW(`Arduino ${k.uk}`) / 2, y]]; uc = [[x, y]];
+        html = `${k.no}. kablo (${rn}): Arduino <b>${k.uk}</b> → ${hat}.`;
+        baslik = `<span>Arduino <b>${k.uk}</b></span><i>→</i><span><b>${k.ray === "+" ? "+ hat (5V)" : "− hat (GND)"}</b></span>`;
+        anlat = bas + `Arduino'nun ${k.uk === "5V" ? "5 volt" : "GND"} pinini breadboard'un ${k.ray === "+" ? "üstteki artı" : "alttaki eksi"} hattına tak. Hattın herhangi bir deliği olur.`;
+      } else if (w.tur === "mod") { const y0 = w.ray === "+" ? RAY.ustArti : RAY.altEksi, x = X(N - w.s), et = `${k.p.kisa} ${k.q.e}`;
+        const ex = X(N) + 206, ey = w.ray === "+" ? 130 + w.s * 30 : y0 - 70 - w.s * 30, xs = ex - etW(et) / 2;
+        const d = w.ray === "+" ? `M${x} ${y0} C ${x} ${y0 - 34}, ${xs - 20} ${y0 - 30}, ${xs} ${ey}` : `M${x} ${y0} C ${x} ${y0 + 40}, ${xs - 20} ${y0 + 30}, ${xs} ${ey}`;
+        s = kablo(d, k.renk) + ucC(x, y0, k.renk) + etiket(ex, ey, et, k.renk, k.no);
+        pts = [[x - 40, y0], [ex + etW(et) / 2, ey]]; uc = [[x, y0]];
+        html = `${k.no}. kablo (${rn}): ${esc(k.p.iy)} ${esc(k.q.u.replace(/\s*\([^)]*\)/g, ""))} → ${k.ray === "+" ? "üstteki + hat" : "alttaki − hat"} (herhangi bir delik).`;
+        baslik = `<span>${esc(buyukHarf(k.p.kisa))} <b>${esc(k.q.e)}</b></span><i>→</i><span><b>${k.ray === "+" ? "+ hat (5V)" : "− hat (GND)"}</b></span>`;
+        anlat = bas + `${buyukHarf(ad)} breadboard'un ${k.ray === "+" ? "üstteki artı" : "alttaki eksi"} hattına tak. Hattın herhangi bir deliği olur.`;
+      } else {
+        const x = X(w.sut), y = Y(w.r), del = `${w.r}${w.sut}`;
+        if (w.tur === "dir") { const yr = k.ray === "+" ? RAY.ustArti : RAY.altEksi, x2 = X(w.sut + 1), bant = R_BANT[k.q.r] || R_BANT["10kΩ"], mx = (x + x2) / 2, my = (y + yr) / 2;
+          const ang = Math.atan2(yr - y, x2 - x) * 180 / Math.PI;
+          s = `<line x1="${x}" y1="${y}" x2="${x2}" y2="${yr}" stroke="#9aa1a8" stroke-width="3"/><g transform="translate(${mx},${my}) rotate(${ang})"><rect x="-16" y="-7" width="32" height="14" rx="6" fill="#e9d8a6" stroke="#8a6d3b" stroke-width="1.5"/>${bant.map((cl, i) => `<rect x="${-11 + i * 7}" y="-7" width="4" height="14" fill="${cl}"/>`).join("")}</g>`
+            + `<circle cx="${x}" cy="${y}" r="4" fill="#495057"/><circle cx="${x2}" cy="${yr}" r="4" fill="#495057"/><text x="${x2 + 10}" y="${my + 4}" font-size="10" font-weight="700" fill="#5c3d0c">${k.q.r}</text>`
+            + rozet(x2 + 14, yr + 18, k.no, k.renk);
+          pts = [[x - 40, y], [x2 + 60, yr + 30]]; uc = [[x, y], [x2, yr]];
+          html = `${k.no}. ${k.q.r} direnç: <b>${del}</b> deliğinden ${k.ray === "+" ? "üstteki + hatta" : "alttaki − hatta"}.`;
+          baslik = `<span>${k.q.r} direnç <b>${del}</b></span><i>→</i><span><b>${k.ray === "+" ? "+ hat" : "− hat (GND)"}</b></span>`;
+          anlat = `${k.q.r} direnç. Bir bacağını ${del} deliğine, öbür bacağını breadboard'un ${k.ray === "+" ? "üstteki artı" : "alttaki eksi"} hattına tak. Direncin yönü fark etmez.`;
+        } else if (w.tur === "ray") { const yr = k.ray === "+" ? RAY.ustArti : RAY.altEksi, karsi = (k.ray === "+") !== (w.yari === "u");
+          const d = karsi ? `M${x} ${yr} C ${x - 34} ${yr + (k.ray === "+" ? 60 : -60)}, ${x - 34} ${y + (k.ray === "+" ? -40 : 40)}, ${x} ${y}` : `M${x} ${yr} L${x} ${y}`;
+          s = kablo(d, k.renk) + ucC(x, yr, k.renk) + ucC(x, y, k.renk) + rozet(x + 15, (yr + y) / 2, k.no, k.renk);
+          pts = [[x - 60, y], [x + 60, yr]]; uc = [[x, y], [x, yr]];
+          html = `${k.no}. kablo (${rn}): <b>${del}</b> → ${k.ray === "+" ? "üstteki + hat" : "alttaki − hat"}.`;
+          baslik = `<span><b>${del}</b></span><i>→</i><span><b>${k.ray === "+" ? "+ hat (5V)" : "− hat (GND)"}</b></span>`;
+          anlat = bas + `Bir ucunu ${del} deliğine, öbür ucunu breadboard'un ${k.ray === "+" ? "üstteki artı" : "alttaki eksi"} hattına tak.`;
+        } else { // Arduino pinine giden kablo: üst yarıdan yukarı, alt yarıdan aşağı çıkar
+          const asagi = w.yari === "a", ye = asagi ? 482 + w.kat * 34 : 14, xe = x - 16, et = `Arduino ${k.uk}`;
+          const d = asagi ? `M${x} ${y} C ${x - 18} ${y + 20}, ${xe} ${y + 30}, ${xe} ${RAY.altArti + 20} L${xe} ${ye - 12}` : `M${x} ${y} L${x} ${ye + 12}`;
+          s = kablo(d, k.renk) + ucC(x, y, k.renk) + etiket(xe, ye, et, k.renk, k.no);
+          pts = [[x - 60, y], [xe - etW(et) / 2, ye + 14], [xe + etW(et) / 2, ye - 14]]; uc = [[x, y]];
+          html = `${k.no}. kablo (${rn}): <b>${del}</b> → Arduino <b>${k.uk}</b>.`;
+          baslik = `<span><b>${del}</b></span><i>→</i><span>Arduino <b>${k.uk}</b></span>`;
+          anlat = bas + `Bir ucunu ${del} deliğine, öbür ucunu Arduino'nun ${pinSoz(k.uk)} pinine tak.`;
+        }
+      }
+      A.push({ tur: "kablo", no: k.no, renk: rk, renkAd: rn, etk: w.tur === "dir" ? `${k.no}. adım · ${k.q.r} direnç` : `${k.no}. kablo · ${rn}`, svg: s, pts, uc, html: [html], baslik, anlat: sesle(anlat) });
+    });
+    return (T.adim = A);
+  }
+  // o: { adim: kaç adım görünsün (yoksa hepsi), yakin: kamera son adıma yaklaşır }
+  function tahta(dv, o = {}) {
+    const T = tahtaYerlesim(dv), A = tahtaAdim(dv), { N, X } = T, n = o.adim == null ? A.length : o.adim, yeni = o.adim != null && n ? A[n - 1] : null;
+    let vb = [0, 0, T.Wd, T.H];
+    if (o.yakin && yeni && yeni.tur === "kablo" && yeni.pts.length) { // kamera: yeni adımın bölgesi, en az tahtanın yarısı kadar
+      const xs = yeni.pts.map((p) => p[0]), ys = yeni.pts.map((p) => p[1]), oran = 16 / 8.2;
+      let x0 = Math.min(...xs) - 60, x1 = Math.max(...xs) + 60, y0 = Math.min(...ys) - 70, y1 = Math.max(...ys) + 50;
+      if (x1 - x0 < T.Wd * 0.64) { const m = (x0 + x1) / 2; x0 = m - T.Wd * 0.32; x1 = m + T.Wd * 0.32; }
+      if ((x1 - x0) / (y1 - y0) < oran) { const g = (y1 - y0) * oran, m = (x0 + x1) / 2; x0 = m - g / 2; x1 = m + g / 2; } else { const g = (x1 - x0) / oran, m = (y0 + y1) / 2; y0 = m - g / 2; y1 = m + g / 2; }
+      if (x1 - x0 > T.Wd) { x0 = 0; x1 = T.Wd; } if (x0 < 0) { x1 -= x0; x0 = 0; } if (x1 > T.Wd) { x0 -= x1 - T.Wd; x1 = T.Wd; }
+      if (y1 - y0 > T.H) { y0 = 0; y1 = T.H; } if (y0 < 0) { y1 -= y0; y0 = 0; } if (y1 > T.H) { y0 -= y1 - T.H; y1 = T.H; }
+      vb = [x0, y0, x1 - x0, y1 - y0].map((v) => Math.round(v));
+    }
+    let s = `<svg class="dv dv-tahta" viewBox="${vb.join(" ")}" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif" role="img" aria-label="Breadboard yerleşimi"><rect width="${T.Wd}" height="${T.H}" fill="#fbfcfd"/>`;
     s += `<rect x="${BX - 34}" y="40" width="${X(N) - BX + 68}" height="410" rx="12" fill="#f8f9fa" stroke="#ced4da" stroke-width="2.5"/>`;
     s += `<rect x="${BX - 34}" y="${SATIR.e + 14}" width="${X(N) - BX + 68}" height="20" fill="#e9ecef"/><text x="${X(N) + 26}" y="${SATIR.e + 29}" font-size="11" font-weight="700" fill="#868e96">oluk</text>`;
     const rayCizgi = (y, renk, isaret, kul) => `<rect x="${BX - 12}" y="${y - 10}" width="${X(N) - BX + 24}" height="20" rx="4" fill="${renk}" opacity="${kul ? .16 : .05}"/><line x1="${BX - 12}" y1="${y + (y < 200 ? -11 : 11)}" x2="${X(N) + 12}" y2="${y + (y < 200 ? -11 : 11)}" stroke="${renk}" stroke-width="2.5" opacity="${kul ? 1 : .3}"/>`
@@ -445,66 +541,26 @@ window.DEVRE = (function () {
       const x = X(k);
       [RAY.ustEksi, RAY.ustArti, RAY.altEksi, RAY.altArti].forEach((y) => { s += `<rect x="${x - 3.5}" y="${y - 3.5}" width="7" height="7" rx="1.5" fill="#adb5bd"/>`; });
       Object.values(SATIR).forEach((y) => { s += `<rect x="${x - 3.5}" y="${y - 3.5}" width="7" height="7" rx="1.5" fill="#868e96"/>`; });
-      if (k === 1 || k % 5 === 0) s += `<text x="${x}" y="${SATIR.a - 14}" text-anchor="middle" font-size="11" font-weight="700" fill="#495057">${k}</text><text x="${x}" y="${SATIR.j + 22}" text-anchor="middle" font-size="11" font-weight="700" fill="#495057">${k}</text>`;
+      if (k === 1 || k % 5 === 0 || o.yakin) s += `<text x="${x}" y="${SATIR.a - 14}" text-anchor="middle" font-size="11" font-weight="700" fill="#495057">${k}</text><text x="${x}" y="${SATIR.j + 22}" text-anchor="middle" font-size="11" font-weight="700" fill="#495057">${k}</text>`;
     }
     Object.entries(SATIR).forEach(([r, y]) => { s += `<text x="${BX - 22}" y="${y + 4}" text-anchor="middle" font-size="12" font-weight="700" fill="#495057">${r}</text><text x="${X(N) + 22}" y="${y + 4}" text-anchor="middle" font-size="12" font-weight="700" fill="#495057">${r}</text>`; });
     s += `<text x="12" y="${RAY.ustArti - 26}" font-size="13" font-weight="800" fill="#e03131">üstteki + hat = 5V</text><text x="12" y="${RAY.altEksi + 38}" font-size="13" font-weight="800" fill="#1c7ed6">alttaki − hat = GND</text>`;
-    // parçalar
-    P.forEach(({ q, F, c }) => {
-      (F.seri || []).forEach(([r, a, b, deg]) => { const y = Y(r), x1 = X(c + a), x2 = X(c + b), m = (x1 + x2) / 2, bant = R_BANT[deg] || R_BANT["220Ω"];
-        s += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="#9aa1a8" stroke-width="3"/><rect x="${m - 16}" y="${y - 7}" width="32" height="14" rx="6" fill="#e9d8a6" stroke="#8a6d3b" stroke-width="1.5"/>`
-          + bant.map((cl, i) => `<rect x="${m - 11 + i * 7}" y="${y - 7}" width="4" height="14" fill="${cl}"/>`).join("") + `<circle cx="${x1}" cy="${y}" r="4" fill="#495057"/><circle cx="${x2}" cy="${y}" r="4" fill="#495057"/>`
-          + `<text x="${m}" y="${y + 20}" text-anchor="middle" font-size="10" font-weight="700" fill="#5c3d0c">${deg}</text>`; });
-      s += F.ciz(X, Y, c, q);
-      F.bacak.forEach(([, r, d]) => { s += `<circle cx="${X(c + d)}" cy="${Y(r)}" r="5.5" fill="#ced4da" stroke="#212529" stroke-width="2"/>`; });
-      const xs = F.bacak.map(([, , d]) => X(c + d)), mx = (Math.min(...xs) + Math.max(...xs)) / 2;
-      s += `<text x="${mx}" y="30" text-anchor="middle" font-size="14" font-weight="800" fill="#212529">${esc(q.kisa.charAt(0).toLocaleUpperCase("tr") + q.kisa.slice(1))}</text>`;
-    });
-    // kablolar
-    const kablo = (d, renk) => { const c = RENK[renk][0]; return `<path d="${d}" fill="none" stroke="#1b1b1b" stroke-width="8" stroke-linecap="round"/><path d="${d}" fill="none" stroke="${c}" stroke-width="5" stroke-linecap="round"/>`; };
-    const uc = (x, y, renk) => `<circle cx="${x}" cy="${y}" r="5" fill="${RENK[renk][0]}" stroke="#1b1b1b" stroke-width="2"/>`;
-    const etiket = (x, y, t, renk, no) => { const c = RENK[renk][0], w = 34 + t.length * 8.2, koyu = ACIK.has(renk);
-      return `<rect x="${x - w / 2}" y="${y - 12}" width="${w}" height="24" rx="12" fill="${c}" stroke="#1b1b1b" stroke-width="1.5"/><circle cx="${x - w / 2 + 12}" cy="${y}" r="9" fill="#fff"/><text x="${x - w / 2 + 12}" y="${y + 4}" text-anchor="middle" font-size="11" font-weight="800" fill="#212529">${no}</text><text x="${x - w / 2 + 25}" y="${y + 5}" font-size="13" font-weight="800" fill="${koyu ? "#212529" : "#fff"}">${esc(t)}</text>`; };
-    W.forEach((w) => {
-      const k = w.k; if (w.tur === "modsin") return;
-      if (w.tur === "ur") { const y = k.ray === "+" ? RAY.ustArti : RAY.altEksi, x = X(1);
-        s += kablo(`M${x} ${y} H${BX - 40} L${BX - 60} ${y}`, k.renk) + uc(x, y, k.renk) + etiket(BX - 112, y, `Arduino ${k.uk}`, k.renk, k.no); return; }
-      if (w.tur === "mod") { const y0 = w.ray === "+" ? RAY.ustArti : RAY.altEksi, x = X(N - w.s), et = `${k.p.kisa} ${k.q.e}`;
-        const ex = X(N) + 206, ey = w.ray === "+" ? 130 + w.s * 30 : y0 - 70 - w.s * 30, xs = ex - (34 + et.length * 8.2) / 2;
-        const d = w.ray === "+" ? `M${x} ${y0} C ${x} ${y0 - 34}, ${xs - 20} ${y0 - 30}, ${xs} ${ey}` : `M${x} ${y0} C ${x} ${y0 + 40}, ${xs - 20} ${y0 + 30}, ${xs} ${ey}`;
-        s += kablo(d, k.renk) + uc(x, y0, k.renk) + etiket(ex, ey, et, k.renk, k.no); return; }
-      const x = X(w.sut), y = Y(w.r);
-      if (w.tur === "dir") { const yr = k.ray === "+" ? RAY.ustArti : RAY.altEksi, x2 = X(w.sut + 1), bant = R_BANT[k.q.r] || R_BANT["10kΩ"], mx = (x + x2) / 2, my = (y + yr) / 2;
-        const ang = Math.atan2(yr - y, x2 - x) * 180 / Math.PI;
-        s += `<line x1="${x}" y1="${y}" x2="${x2}" y2="${yr}" stroke="#9aa1a8" stroke-width="3"/><g transform="translate(${mx},${my}) rotate(${ang})"><rect x="-16" y="-7" width="32" height="14" rx="6" fill="#e9d8a6" stroke="#8a6d3b" stroke-width="1.5"/>${bant.map((cl, i) => `<rect x="${-11 + i * 7}" y="-7" width="4" height="14" fill="${cl}"/>`).join("")}</g>`
-          + `<circle cx="${x}" cy="${y}" r="4" fill="#495057"/><circle cx="${x2}" cy="${yr}" r="4" fill="#495057"/><text x="${x2 + 10}" y="${my + 4}" font-size="10" font-weight="700" fill="#5c3d0c">${k.q.r}</text>`
-          + rozet(x2 + 14, yr + 18, k.no, k.renk); return; }
-      if (w.tur === "ray") { const yr = k.ray === "+" ? RAY.ustArti : RAY.altEksi, karsi = (k.ray === "+") !== (w.yari === "u");
-        const d = karsi ? `M${x} ${yr} C ${x - 34} ${yr + (k.ray === "+" ? 60 : -60)}, ${x - 34} ${y + (k.ray === "+" ? -40 : 40)}, ${x} ${y}` : `M${x} ${yr} L${x} ${y}`;
-        s += kablo(d, k.renk) + uc(x, yr, k.renk) + uc(x, y, k.renk) + rozet(x + 15, (yr + y) / 2, k.no, k.renk); return; }
-      // Arduino pinine giden kablo: üst yarıdan yukarı, alt yarıdan aşağı çıkar
-      const asagi = w.yari === "a", ye = asagi ? 482 + w.kat * 34 : 14, xe = x - 16;
-      const d = asagi ? `M${x} ${y} C ${x - 18} ${y + 20}, ${xe} ${y + 30}, ${xe} ${RAY.altArti + 20} L${xe} ${ye - 12}` : `M${x} ${y} L${x} ${ye + 12}`;
-      s += kablo(d, k.renk) + uc(x, y, k.renk) + etiket(xe, ye, `Arduino ${k.uk}`, k.renk, k.no);
-    });
-    s += `<text x="${BX - 34}" y="${T.H - 24}" font-size="13" fill="#495057">Aynı sütundaki 5 delik (a-e ya da f-j) içeriden birbirine bağlıdır; oluk iki yarıyı ayırır.</text><text x="${BX - 34}" y="${T.H - 6}" font-size="13" fill="#495057">Kenardaki uzun + ve − hatlar boydan boya bağlıdır. Kablo numaraları yukarıdaki şemayla aynıdır.</text>`;
+    A.slice(0, n).forEach((a) => { s += a === yeni ? `<g class="bb-yeni">${a.svg}</g>` : yeni ? `<g opacity=".5">${a.svg}</g>` : a.svg; });
+    if (yeni) s += yeni.uc.map(([x, y]) => `<circle class="dv-nabiz" cx="${x}" cy="${y}" r="13" fill="none" stroke="#f08c00" stroke-width="4"/>`).join("");
+    if (!yeni) s += `<text x="${BX - 34}" y="${T.H - 24}" font-size="13" fill="#495057">Aynı sütundaki 5 delik (a-e ya da f-j) içeriden birbirine bağlıdır; oluk iki yarıyı ayırır.</text><text x="${BX - 34}" y="${T.H - 6}" font-size="13" fill="#495057">Kenardaki uzun + ve − hatlar boydan boya bağlıdır. Kablo numaraları yukarıdaki şemayla aynıdır.</text>`;
     return s + "</svg>";
   }
-  function tahtaListe(dv) {
-    const T = tahtaYerlesim(dv), Z = [];
-    T.P.forEach(({ q, F, c }) => {
-      const b = F.bacak.map(([, r, d]) => r + (c + d)).join(", ");
-      Z.push(`<b>${esc(q.ad)}</b>: bacaklar <b>${b}</b> deliklerine. ${esc(F.not)}`);
-      (F.seri || []).forEach(([r, a, bb, deg]) => Z.push(`${deg} direnç: <b>${r}${c + a}</b> ile <b>${r}${c + bb}</b> arasına (yatay).`));
-    });
-    T.W.forEach((w) => { const k = w.k, rn = RENK[k.renk][1];
-      if (w.tur === "ur") Z.push(`${k.no}. kablo (${rn}): Arduino <b>${k.uk}</b> → ${k.ray === "+" ? "üstteki + (kırmızı) hat" : "alttaki − (mavi) hat"}.`);
-      else if (w.tur === "mod") Z.push(`${k.no}. kablo (${rn}): ${esc(k.p.iy)} ${esc(k.q.u.replace(/\s*\([^)]*\)/g, ""))} → ${k.ray === "+" ? "üstteki + hat" : "alttaki − hat"} (herhangi bir delik).`);
-      else if (w.tur === "modsin") Z.push(`${k.no}. kablo (${rn}): ${esc(k.p.iy)} ${esc(k.q.u.replace(/\s*\([^)]*\)/g, ""))} → ${k.tur === "p" ? esc(hedefMetin(k)) : `Arduino <b>${k.uk}</b>`} (breadboard'a uğramaz).`);
-      else if (w.tur === "dir") Z.push(`${k.no}. ${k.q.r} direnç: <b>${w.r}${w.sut}</b> deliğinden ${k.ray === "+" ? "üstteki + hatta" : "alttaki − hatta"}.`);
-      else if (w.tur === "ray") Z.push(`${k.no}. kablo (${rn}): <b>${w.r}${w.sut}</b> → ${k.ray === "+" ? "üstteki + hat" : "alttaki − hat"}.`);
-      else Z.push(`${k.no}. kablo (${rn}): <b>${w.r}${w.sut}</b> → Arduino <b>${k.uk}</b>.`); });
-    return Z;
+  function tahtaListe(dv) { return tahtaAdim(dv).flatMap((a) => a.html); }
+  // breadboard üzerinde adım adım kurulum slaytları (sesli): bütün devre → her parça → her kablo
+  function tahtaSlaytlar(dv, sl, ust) {
+    if (!bbVar(dv)) return [];
+    const A = tahtaAdim(dv), np = A.filter((a) => a.tur === "parca").length, S = [];
+    S.push(sl("devre", `<div class="etiket">${esc(ust)} · Breadboard'da kurulum</div><h2 class="bbo-b">Breadboard'da adım adım kurulum</h2><div class="dv-sahne">${tahta(dv)}</div><p class="dv-alt">Harfler (a-j) satır, sayılar sütundur: "d4" = d satırı, 4. sütun. Önce ${np} parçayı deliklerine takacağız, sonra ${A.length - np} bağlantıyı numara sırasıyla.</p>`,
+      `Şimdi devreyi breadboard üzerinde adım adım kuralım. Kenardaki harfler satırı, sayılar sütunu gösterir. Mesela d dört, d satırının dördüncü sütunudur. Önce ${np} parçayı deliklerine takacağız, sonra kabloları numara sırasıyla.`));
+    A.forEach((a, i) => S.push(sl("devre", `<div class="dv-ust"><span class="dv-no" style="--k:${a.renk}">${a.tur === "parca" ? "◆" : a.no}<small>${a.tur === "parca" ? "" : "/" + (A.length - np)}</small></span><div><div class="etiket">${esc(ust)} · Breadboard · ${a.tur === "parca" ? `${i + 1}. parça` : esc(a.etk)}</div>
+        <h2 class="dv-baslik">${a.baslik}</h2></div></div>
+      <div class="dv-sahne">${tahta(dv, { adim: i + 1, yakin: true })}</div><p class="dv-alt">${a.html.join(" ")}</p>`, a.anlat)));
+    return S;
   }
 
   // ---------- "Breadboard nasıl çalışır?" öğretici slaytlar (dokunmalı) ----------
@@ -663,6 +719,7 @@ window.DEVRE = (function () {
       A.forEach((a, i) => S.push(sl("devre", `<div class="dv-ust"><span class="dv-no" style="--k:${a.renkKod}">${a.no}<small>/${A.length}</small></span><div><div class="etiket">${esc(ust)} · ${a.no}. kablo · ${esc(a.renkAd)}</div>
           <h2 class="dv-baslik"><span>${esc(a.kaynak)} <b>${esc(a.pin)}</b></span><i>→</i><span><b>${esc(a.hedef)}</b></span></h2></div></div>
         <div class="dv-sahne">${svg(dv, { adim: i + 1, vurgu: true, yakin: true })}</div><p class="dv-alt">${esc(a.metin)}</p>`, a.anlat)));
+      tahtaSlaytlar(dv, sl, ust).forEach((x) => S.push(x));
       const KL = kontrol(dv);
       S.push(sl("liste", `<div class="etiket">${esc(ust)} · USB'yi takmadan önce kontrol et</div><ul class="dv-kontrol">${KL.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`, "USB'yi takmadan önce kontrol et. " + KL.join(" ")));
     });
@@ -703,5 +760,5 @@ window.DEVRE = (function () {
     return `<div class="dv-iki"><table class="dv-tablo kucuk">${bas_}${A.slice(0, y).map(satir).join("")}</table><table class="dv-tablo kucuk">${bas_}${A.slice(y).map(satir).join("")}</table></div>`;
   }
 
-  return { PARCA, H, RENK, unoPin, yerlesim, svg, adimlar, tablo, kontrol, kodPinleri, yerlestirme, tinkerAdimlar, kablolar, nasil, parcaListesi, slaytlar, ders, kagit, tahta, tahtaListe, bbVar, bbOgret, var: (no) => !!H[no] };
+  return { PARCA, H, RENK, unoPin, yerlesim, svg, adimlar, tablo, kontrol, kodPinleri, yerlestirme, tinkerAdimlar, kablolar, nasil, parcaListesi, slaytlar, ders, kagit, tahta, tahtaListe, tahtaSlaytlar, bbVar, bbOgret, var: (no) => !!H[no] };
 })();

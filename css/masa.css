@@ -611,6 +611,9 @@ html.uygulama .dk-alan .ct-tahta, html.uygulama .dk-tahta { width: 520px; width:
 @keyframes dvCiz { to { stroke-dashoffset: 0; } }
 .dv-yeni .dv-uc, .dv-sonra { opacity: 0; animation: dvBelir .4s 1.55s forwards; }
 @keyframes dvBelir { to { opacity: 1; } }
+.bb-yeni { animation: bbGel .7s ease-out both; }
+@keyframes bbGel { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .bb-yeni { animation: none; } }
 .dv-nabiz { transform-box: fill-box; transform-origin: center; animation: dvNabiz 1.3s ease-out infinite; }
 @keyframes dvNabiz { 0% { transform: scale(.55); opacity: 1; } 100% { transform: scale(1.9); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .dv-yeni .dv-c { animation: none; stroke-dashoffset: 0; } .dv-yeni .dv-uc, .dv-sonra { animation: none; opacity: 1; } .dv-nabiz { animation: none; } }
