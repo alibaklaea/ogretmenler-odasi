@@ -972,10 +972,12 @@
       try {
         await monKapat();
         ykDurum("Kod hazırlanıyor…", 0);
-        const r = await fetch(`hex/h${w.no}_${b.dataset.yukle}.hex`, { cache: "no-cache" }); if (!r.ok) throw new Error("Derlenmiş kod dosyası bulunamadı (internet bağlantısını kontrol edin).");
-        const hex = await r.text();
+        const g = (window.HEXLER || {})[`${w.no}_${b.dataset.yukle}`];
+        let hex = "", veri = null;
+        if (g) veri = Uint8Array.from(atob(g), (c) => c.charCodeAt(0));
+        else { const r = await fetch(`hex/h${w.no}_${b.dataset.yukle}.hex`, { cache: "no-cache" }).catch(() => null); if (!r || !r.ok) throw new Error("Derlenmiş kod bulunamadı. Sayfayı internete bağlıyken bir kez yenileyin."); hex = await r.text(); }
         ykDurum("Arduino'yu listeden seçin…", 0);
-        await ARDUINO.yukle(hex, { baud: +$("#ykBaud").value, durum: (t, y) => ykDurum(t, y) });
+        await ARDUINO.yukle(hex, { veri, baud: +$("#ykBaud").value, durum: (t, y) => ykDurum(t, y) });
         ykDurum(`✓ Yükleme tamamlandı: ${(V[L[+b.dataset.yukle].v] || {}).ad || "program"} Arduino'da çalışıyor.`, 100);
       } catch (e) {
         const m = /No port selected|NotFoundError/.test(e.name + e.message) ? "Arduino seçilmedi. Tekrar basıp listeden seçin." : /Failed to open|InvalidStateError|NetworkError/.test(e.name + e.message) ? "Port açılamadı: Arduino IDE ya da başka bir sekme Arduino'yu kullanıyor olabilir. Kapatıp kabloyu çıkarıp takın." : e.message;

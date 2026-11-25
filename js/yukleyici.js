@@ -44,7 +44,7 @@ window.ARDUINO = (function () {
   // hexMetin: .hex içeriği; o.baud: 115200 (Uno) / 57600 (eski Nano); o.durum(metin, yüzde)
   async function yukle(hexMetin, o = {}) {
     const durum = o.durum || (() => {}), baud = o.baud || 115200;
-    const veri = hexCoz(hexMetin);
+    const veri = o.veri || hexCoz(hexMetin);
     const port = o.port || await portSec();
     await port.open({ baudRate: baud });
     const w = port.writable.getWriter(), R = okuyucu(port);

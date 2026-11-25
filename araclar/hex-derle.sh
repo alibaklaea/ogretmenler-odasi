@@ -7,3 +7,4 @@ cd "$T" && rm -rf derle && node "$K/araclar/hex-cikar.js" "$K"
 for d in $(cat derle/liste.txt); do
   "$CLI" compile -b arduino:avr:uno --output-dir derle/$d/out derle/$d >/dev/null && cp derle/$d/out/$d.ino.hex "$K/hex/$d.hex" && echo "$d tamam"
 done
+node "$K/araclar/hex-gom.js"
