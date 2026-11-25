@@ -651,3 +651,19 @@ html.uygulama .dk-alan .ct-tahta, html.uygulama .dk-tahta { width: 520px; width:
 @keyframes bbYan { from { opacity: .15; } to { opacity: .6; } }
 .slayt h2.bbo-b { margin: 0 0 1vh; } .slayt h2.bbo-b b { color: var(--vurgu); }
 .yk-kayit { margin-top: 8px; font-weight: 400; color: #212529; } .yk-kayit pre { max-height: 260px; overflow: auto; background: #fff; padding: 8px; font: 12px/1.35 Consolas, monospace; border-radius: 6px; }
+/* breadboard kurulum: üstten + yandan görünüm, ekranı doldurur */
+.slayt .bbk-ikili { display: grid; grid-template-columns: 1.15fr 1fr; gap: 1.2vw; align-items: stretch; margin-top: .6vh; }
+.bbk-ikili figure { margin: 0; background: #fff; border: 1px solid #dee2e6; border-radius: 12px; padding: .6vh .6vw; display: flex; flex-direction: column; min-width: 0; }
+.bbk-ikili figcaption { font-weight: 800; font-size: clamp(14px, 1.35vw, 24px); color: var(--vurgu, #0b7a55); margin-bottom: .3vh; }
+.bbk-ikili svg { width: 100%; height: auto; max-height: 46vh; display: block; border: 0; }
+.slayt .dv-sahne.bbk-tek svg { max-height: 54vh; }
+.bt-kopru { animation: btKopru 2.4s infinite; }
+.bt-kapak { animation: btKapak 2.4s infinite; }
+.bt-el { animation: btKapak 2.4s infinite; }
+@keyframes btKapak { 0%, 30% { transform: none; } 45%, 75% { transform: translateY(18px); } 90%, 100% { transform: none; } }
+@keyframes btKopru { 0%, 40% { opacity: 0; } 48%, 75% { opacity: 1; } 85%, 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .bt-kopru, .bt-kapak, .bt-el { animation: none; } }
+.dv-bt-kutu { border: 1pt solid #e67700; background: #fff4e6; padding: 1.2mm 2mm; margin: 1.5mm 0; font-size: 8.5pt; border-radius: 2mm; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.sayfa .dv-ne td:nth-child(4) { font-size: 7pt; color: #495057; }
+.dv-harf { display: inline-block; width: 5mm; height: 5mm; line-height: 5mm; text-align: center; border-radius: 50%; background: #212529; color: #fff; font-weight: 800; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.dv-rozet { display: inline-block; width: 5mm; height: 5mm; line-height: 4.2mm; text-align: center; border-radius: 50%; border: 2.4pt solid; font-weight: 800; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }

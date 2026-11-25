@@ -394,7 +394,7 @@ window.DEVRE = (function () {
       not: "LED'in uzun bacağı (+) direncin olduğu sütunda, kısa bacağı (−) yanındaki sütunda. 220Ω direnç aynı yarıda yatay durur.",
       ciz: (X, Y, c, q) => { const col = (RENK[(q && q.led) || "kirmizi"] || RENK.kirmizi)[0], mx = (X(c + 2) + X(c + 3)) / 2;
         return `<circle cx="${mx}" cy="${Y("f") - 20}" r="17" fill="${col}" fill-opacity=".9" stroke="rgba(0,0,0,.45)" stroke-width="2"/><circle cx="${mx - 5}" cy="${Y("f") - 26}" r="5" fill="#fff" opacity=".7"/>`
-          + `<text x="${X(c + 2)}" y="${Y("f") + 26}" text-anchor="middle" font-size="10" font-weight="800" fill="#c92a2a">uzun+</text>`; } },
+          + `<text x="${X(c + 2) - 9}" y="${Y("f") - 6}" text-anchor="end" font-size="10" font-weight="800" fill="#c92a2a">uzun+</text>`; } },
     ldr: { w: 1, bacak: [["L1", "e", 0], ["L2", "f", 0]], uc: { L1: [0, "u"], L2: [0, "a"], R: [0, "a"] },
       not: "LDR'nin bir bacağı oluğun üst yanında, öbürü alt yanında (aynı sütun, oluk ikisini ayırır). Yönü fark etmez.",
       ciz: (X, Y, c) => `<ellipse cx="${X(c)}" cy="${(Y("e") + Y("f")) / 2}" rx="15" ry="13" fill="#f4d58d" stroke="#8a6d3b" stroke-width="2"/><path d="M${X(c) - 9} ${(Y("e") + Y("f")) / 2 - 5} h6 v10 h6 v-10 h6" stroke="#c0392b" stroke-width="2" fill="none"/>` },
@@ -456,7 +456,7 @@ window.DEVRE = (function () {
       const b = F.bacak.map(([, r, d]) => r + (c + d)).join(", ");
       html.push(`<b>${esc(q.ad)}</b>: bacaklar <b>${b}</b> deliklerine. ${esc(F.not)}`);
       (F.seri || []).forEach(([r, a, bb, deg]) => html.push(`${deg} direnç: <b>${r}${c + a}</b> ile <b>${r}${c + bb}</b> arasına (yatay).`));
-      A.push({ tur: "parca", svg: s, pts, uc, html, renk: "#495057", baslik: `<span>${esc(q.ad)}</span><i>→</i><span><b>${b}</b></span>`,
+      A.push({ tur: "parca", pe: { q, F, c }, lbl: [mx, 30], svg: s, pts, uc, html, renk: "#495057", baslik: `<span>${esc(q.ad)}</span><i>→</i><span><b>${b}</b></span>`,
         anlat: sesle(`${q.ad}. Bacaklarını ${b.replace(/, (?=[^,]*$)/, " ve ")} deliklerine tak. ${F.not}${(F.seri || []).map(([r, a, bb, deg]) => ` ${deg} direnci ${r}${c + a} ile ${r}${c + bb} arasına yatay olarak tak.`).join("")}`) });
     });
     const kablo = (d, renk) => { const c = RENK[renk][0]; return `<path d="${d}" fill="none" stroke="#1b1b1b" stroke-width="8" stroke-linecap="round"/><path d="${d}" fill="none" stroke="${c}" stroke-width="5" stroke-linecap="round"/>`; };
@@ -514,24 +514,25 @@ window.DEVRE = (function () {
           anlat = bas + `Bir ucunu ${del} deliğine, öbür ucunu Arduino'nun ${pinSoz(k.uk)} pinine tak.`;
         }
       }
-      A.push({ tur: "kablo", no: k.no, renk: rk, renkAd: rn, etk: w.tur === "dir" ? `${k.no}. adım · ${k.q.r} direnç` : `${k.no}. kablo · ${rn}`, svg: s, pts, uc, html: [html], baslik, anlat: sesle(anlat) });
+      A.push({ tur: "kablo", w, no: k.no, renk: rk, renkAd: rn, etk: w.tur === "dir" ? `${k.no}. adım · ${k.q.r} direnç` : `${k.no}. kablo · ${rn}`, svg: s, pts, uc, html: [html], baslik, anlat: sesle(anlat) });
     });
     return (T.adim = A);
   }
-  // o: { adim: kaç adım görünsün (yoksa hepsi), yakin: kamera son adıma yaklaşır }
+  // o: { adim: kaç adım görünsün (yoksa hepsi), yakin: kamera son adıma yaklaşır, oran: kamera en/boy, genis: kameranın en az genişliği (tahtanın oranı) }
   function tahta(dv, o = {}) {
     const T = tahtaYerlesim(dv), A = tahtaAdim(dv), { N, X } = T, n = o.adim == null ? A.length : o.adim, yeni = o.adim != null && n ? A[n - 1] : null;
     let vb = [0, 0, T.Wd, T.H];
-    if (o.yakin && yeni && yeni.tur === "kablo" && yeni.pts.length) { // kamera: yeni adımın bölgesi, en az tahtanın yarısı kadar
-      const xs = yeni.pts.map((p) => p[0]), ys = yeni.pts.map((p) => p[1]), oran = 16 / 8.2;
+    if (o.yakin && yeni && yeni.pts.length) { // kamera: yeni adımın bölgesi
+      const xs = yeni.pts.map((p) => p[0]), ys = yeni.pts.map((p) => p[1]), oran = o.oran || 16 / 8.2, gn = o.genis || 0.64;
       let x0 = Math.min(...xs) - 60, x1 = Math.max(...xs) + 60, y0 = Math.min(...ys) - 70, y1 = Math.max(...ys) + 50;
-      if (x1 - x0 < T.Wd * 0.64) { const m = (x0 + x1) / 2; x0 = m - T.Wd * 0.32; x1 = m + T.Wd * 0.32; }
+      if (yeni.tur === "parca") { y0 = Math.min(y0, 20); y1 = Math.max(y1, 450); }
+      if (x1 - x0 < T.Wd * gn) { const m = (x0 + x1) / 2; x0 = m - T.Wd * gn / 2; x1 = m + T.Wd * gn / 2; }
       if ((x1 - x0) / (y1 - y0) < oran) { const g = (y1 - y0) * oran, m = (x0 + x1) / 2; x0 = m - g / 2; x1 = m + g / 2; } else { const g = (x1 - x0) / oran, m = (y0 + y1) / 2; y0 = m - g / 2; y1 = m + g / 2; }
       if (x1 - x0 > T.Wd) { x0 = 0; x1 = T.Wd; } if (x0 < 0) { x1 -= x0; x0 = 0; } if (x1 > T.Wd) { x0 -= x1 - T.Wd; x1 = T.Wd; }
       if (y1 - y0 > T.H) { y0 = 0; y1 = T.H; } if (y0 < 0) { y1 -= y0; y0 = 0; } if (y1 > T.H) { y0 -= y1 - T.H; y1 = T.H; }
       vb = [x0, y0, x1 - x0, y1 - y0].map((v) => Math.round(v));
     }
-    let s = `<svg class="dv dv-tahta" viewBox="${vb.join(" ")}" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif" role="img" aria-label="Breadboard yerleşimi"><rect width="${T.Wd}" height="${T.H}" fill="#fbfcfd"/>`;
+    let s = `<svg class="dv dv-tahta" viewBox="${vb.join(" ")}" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif" role="img" aria-label="Breadboard üstten görünüm"><rect x="-500" y="-500" width="${T.Wd + 1000}" height="${T.H + 1000}" fill="#fbfcfd"/>`;
     s += `<rect x="${BX - 34}" y="40" width="${X(N) - BX + 68}" height="410" rx="12" fill="#f8f9fa" stroke="#ced4da" stroke-width="2.5"/>`;
     s += `<rect x="${BX - 34}" y="${SATIR.e + 14}" width="${X(N) - BX + 68}" height="20" fill="#e9ecef"/><text x="${X(N) + 26}" y="${SATIR.e + 29}" font-size="11" font-weight="700" fill="#868e96">oluk</text>`;
     const rayCizgi = (y, renk, isaret, kul) => `<rect x="${BX - 12}" y="${y - 10}" width="${X(N) - BX + 24}" height="20" rx="4" fill="${renk}" opacity="${kul ? .16 : .05}"/><line x1="${BX - 12}" y1="${y + (y < 200 ? -11 : 11)}" x2="${X(N) + 12}" y2="${y + (y < 200 ? -11 : 11)}" stroke="${renk}" stroke-width="2.5" opacity="${kul ? 1 : .3}"/>`
@@ -546,21 +547,177 @@ window.DEVRE = (function () {
     Object.entries(SATIR).forEach(([r, y]) => { s += `<text x="${BX - 22}" y="${y + 4}" text-anchor="middle" font-size="12" font-weight="700" fill="#495057">${r}</text><text x="${X(N) + 22}" y="${y + 4}" text-anchor="middle" font-size="12" font-weight="700" fill="#495057">${r}</text>`; });
     s += `<text x="12" y="${RAY.ustArti - 26}" font-size="13" font-weight="800" fill="#e03131">üstteki + hat = 5V</text><text x="12" y="${RAY.altEksi + 38}" font-size="13" font-weight="800" fill="#1c7ed6">alttaki − hat = GND</text>`;
     A.slice(0, n).forEach((a) => { s += a === yeni ? `<g class="bb-yeni">${a.svg}</g>` : yeni ? `<g opacity=".5">${a.svg}</g>` : a.svg; });
-    if (yeni) s += yeni.uc.map(([x, y]) => `<circle class="dv-nabiz" cx="${x}" cy="${y}" r="13" fill="none" stroke="#f08c00" stroke-width="4"/>`).join("");
+    if (yeni) s += yeni.uc.map(([x, y]) => `<circle class="dv-nabiz" cx="${x}" cy="${y}" r="13" fill="none" stroke="#f08c00" stroke-width="4"/>`).join("")
+      + yeni.uc.map(([x, y]) => { const ad = deliAd(T, x, y); return ad ? `<g class="dv-sonra"><rect x="${x + 9}" y="${y - 27}" width="${10 + ad.length * 9}" height="20" rx="6" fill="#f08c00"/><text x="${x + 14}" y="${y - 12}" font-size="14" font-weight="800" fill="#fff">${ad}</text></g>` : ""; }).join("");
+    if (o.etiket) { let h = 0; const gor = new Set();
+      A.forEach((a) => { if (a.tur === "parca") { const L = String.fromCharCode(65 + h++); s += `<circle cx="${a.lbl[0] - 30 - a.pe.q.kisa.length * 3.5}" cy="${a.lbl[1] - 5}" r="10" fill="#212529"/><text x="${a.lbl[0] - 30 - a.pe.q.kisa.length * 3.5}" y="${a.lbl[1]}" text-anchor="middle" font-size="13" font-weight="800" fill="#fff">${L}</text>`; }
+        a.uc.forEach(([x, y]) => { const ad = deliAd(T, x, y); if (!ad || ad.includes("hat") || gor.has(ad)) return; gor.add(ad);
+          s += `<rect x="${x + 5}" y="${y - 19}" width="${6 + ad.length * 7}" height="13" rx="3" fill="#fff" stroke="#e67700" stroke-width="1"/><text x="${x + 8}" y="${y - 9}" font-size="10" font-weight="800" fill="#c2410c">${ad}</text>`; }); }); }
     if (!yeni) s += `<text x="${BX - 34}" y="${T.H - 24}" font-size="13" fill="#495057">Aynı sütundaki 5 delik (a-e ya da f-j) içeriden birbirine bağlıdır; oluk iki yarıyı ayırır.</text><text x="${BX - 34}" y="${T.H - 6}" font-size="13" fill="#495057">Kenardaki uzun + ve − hatlar boydan boya bağlıdır. Kablo numaraları yukarıdaki şemayla aynıdır.</text>`;
     return s + "</svg>";
   }
+  function deliAd(T, x, y) { // ekrandaki noktanın delik adı (d4 gibi); hatlar için "+ hat" / "− hat"
+    const k = Math.round((x - BX) / BS) + 1, r = Object.keys(SATIR).find((z) => SATIR[z] === y);
+    if (r) return r + k; if (y === RAY.ustArti || y === RAY.altArti) return "+ hat"; if (y === RAY.ustEksi || y === RAY.altEksi) return "− hat"; return "";
+  }
   function tahtaListe(dv) { return tahtaAdim(dv).flatMap((a) => a.html); }
-  // breadboard üzerinde adım adım kurulum slaytları (sesli): bütün devre → her parça → her kablo
+
+  // ---------- yandan görünüm (kesit): bacaklar deliğe nasıl girer, hangi metal şerit bağlar ----------
+  // "sol": breadboard'a soldan bakış (satırlar yan yana: − + a..e oluk f..j − +); "on": önden bakış (bir satırın sütunları yan yana)
+  const YW = 560, YH = 330, YUZ = 182;
+  const yxSol = (r) => Math.round(40 + ((SATIR[r] || RAY[r]) - 40) * 1.22);
+  const RAY_AD = { ustEksi: "−", ustArti: "+", altEksi: "−", altArti: "+" };
+  function yanCiz(T, a, i) {
+    const A = tahtaAdim(T.dv), sp = yanSpec(T, a); if (!sp) return "";
+    let s = `<svg class="dv dv-yan" viewBox="0 0 ${YW} ${YH}" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif" role="img" aria-label="Yandan görünüm"><rect width="${YW}" height="${YH}" fill="#fbfcfd"/>`;
+    const yuva = [], serit = [];
+    if (sp.tip === "sol") {
+      ["ustEksi", "ustArti", ..."abcde", ..."fghij", "altEksi", "altArti"].forEach((r) => yuva.push({ r, x: yxSol(r), ad: RAY_AD[r] || r, renk: r.includes("Arti") ? "#e03131" : r.includes("Eksi") ? "#1c7ed6" : "#495057" }));
+      serit.push({ g: ["ustEksi"] }, { g: ["ustArti"] }, { g: [..."abcde"] }, { g: [..."fghij"] }, { g: ["altEksi"] }, { g: ["altArti"] });
+    } else {
+      const ks = sp.uclar.map((u) => u.k), c0 = Math.min(...ks) - 2, c1 = Math.max(...ks) + 2, ad = (YW - 90) / (c1 - c0);
+      for (let k = c0; k <= c1; k++) { yuva.push({ r: k, x: Math.round(45 + (k - c0) * ad), ad: sp.satir + k, renk: "#495057" }); serit.push({ g: [k] }); }
+    }
+    const X = (r) => (yuva.find((y) => y.r === r) || {}).x;
+    // plastik gövde, delikler, metal şeritler
+    s += `<rect x="18" y="${YUZ}" width="${YW - 36}" height="86" rx="10" fill="#f1f3f5" stroke="#adb5bd" stroke-width="2.5"/>`;
+    if (sp.tip === "sol") { const xo = (yxSol("e") + yxSol("f")) / 2; s += `<rect x="${xo - 14}" y="${YUZ}" width="28" height="30" fill="#dee2e6"/><text x="${xo}" y="${YUZ + 78}" text-anchor="middle" font-size="12" font-weight="700" fill="#868e96">oluk</text>`; }
+    const dolu = new Set(sp.uclar.map((u) => u.r ?? u.k)), eski = new Set((sp.eski || []).map((u) => u.r ?? u.k));
+    serit.forEach((g) => { const xs = g.g.map(X), on = g.g.some((r) => dolu.has(r)), bag = on && g.g.some((r) => eski.has(r) || (dolu.has(r) && g.g.filter((z) => dolu.has(z)).length > 1));
+      g.on = on; g.bag = bag;
+      s += `<rect x="${Math.min(...xs) - 11}" y="${YUZ + 30}" width="${Math.max(...xs) - Math.min(...xs) + 22}" height="15" rx="4" fill="${on ? "#f59f00" : "#ced4da"}" stroke="${on ? "#e67700" : "#adb5bd"}" stroke-width="2"/>`;
+      if (bag && g.g.length > 1) s += `<text x="${(Math.min(...xs) + Math.max(...xs)) / 2}" y="${YUZ + 64}" text-anchor="middle" font-size="13" font-weight="800" fill="#e67700">↔ içeriden bağlı</text>`; });
+    yuva.forEach((y) => { s += `<rect x="${y.x - 5}" y="${YUZ - 1}" width="10" height="33" fill="#495057"/><text x="${y.x}" y="${YUZ + 104}" text-anchor="middle" font-size="${sp.tip === "sol" ? 15 : 13}" font-weight="800" fill="${y.renk}">${y.ad}</text>`; });
+    s += `<text x="${YW / 2}" y="${YH - 6}" text-anchor="middle" font-size="12" fill="#868e96">${sp.tip === "sol" ? "Breadboard'a soldan bakış · altta turuncu: metal şerit" : "Breadboard'a önden bakış · her sütunun kendi metal şeridi var"}</text>`;
+    const bacak = (x, y0, renk = "#adb5bd", w = 4) => `<path d="M${x} ${y0} V${YUZ + 38}" stroke="${renk}" stroke-width="${w}" stroke-linecap="round"/>`;
+    // önceden takılı parça bacakları (soluk)
+    (sp.eski || []).forEach((u) => { const x = X(u.r ?? u.k); if (x == null) return;
+      s += `<g opacity=".55">${bacak(x, YUZ - 40)}<text x="${x}" y="${YUZ - 46}" text-anchor="middle" font-size="12" font-weight="700" fill="#495057">${esc(u.ad)}</text></g>`; });
+    // bu adımın gövdesi
+    s += `<g class="bb-yeni">${sp.ciz(X, bacak)}</g>`;
+    s += sp.uclar.map((u) => { const x = X(u.r ?? u.k); return `<circle class="dv-nabiz" cx="${x}" cy="${YUZ + 2}" r="12" fill="none" stroke="#f08c00" stroke-width="4"/>`; }).join("");
+    return s + "</svg>";
+  }
+  function yanSpec(T, a) {
+    const metal = "#adb5bd";
+    if (a.tur === "parca") {
+      const { q, F, c } = a.pe, B = F.bacak.map(([p, r, d]) => ({ p, r, k: c + d })), tekSatir = B.every((b) => b.r === B[0].r);
+      if (q.tip === "buton") { const k = c;
+        return { tip: "sol", uclar: [{ r: "d" }, { r: "g" }], ciz: (X, bacak) => { const x0 = X("d") - 22, x1 = X("g") + 22, m = (x0 + x1) / 2;
+          return bacak(X("d"), YUZ - 34, metal, 5) + bacak(X("g"), YUZ - 34, metal, 5)
+            + `<rect x="${x0}" y="${YUZ - 62}" width="${x1 - x0}" height="30" rx="4" fill="#343a40" stroke="#111" stroke-width="2"/><rect x="${m - 26}" y="${YUZ - 84}" width="52" height="22" rx="7" fill="#212529"/>`
+            + `<text x="${m}" y="${YUZ - 96}" text-anchor="middle" font-size="14" font-weight="800" fill="#212529">buton (yandan)</text>`
+            + `<text x="${x1 + 8}" y="${YUZ - 40}" font-size="12" fill="#495057">öbür 2 bacak</text><text x="${x1 + 8}" y="${YUZ - 26}" font-size="12" fill="#495057">tam arkasında (${k + 2}. sütun)</text>`
+            + `<text x="${X("d")}" y="${YUZ - 8}" text-anchor="end" dx="-8" font-size="13" font-weight="800" fill="#e67700">d${k}</text><text x="${X("g")}" y="${YUZ - 8}" dx="8" font-size="13" font-weight="800" fill="#e67700">g${k}</text>`; } };
+      }
+      if (!tekSatir) { // LDR gibi oluğun iki yanına
+        return { tip: "sol", uclar: B.map((b) => ({ r: b.r })), ciz: (X, bacak) => { const xs = B.map((b) => X(b.r)), m = (Math.min(...xs) + Math.max(...xs)) / 2;
+          return B.map((b) => bacak(X(b.r), YUZ - 48, metal)).join("") + `<ellipse cx="${m}" cy="${YUZ - 60}" rx="34" ry="14" fill="#f4d58d" stroke="#8a6d3b" stroke-width="2"/><text x="${m}" y="${YUZ - 84}" text-anchor="middle" font-size="14" font-weight="800">${esc(buyukHarf(q.kisa))}</text>`; } };
+      }
+      const satir = B[0].r, ust = YUZ - 50;
+      return { tip: "on", satir, uclar: B.map((b) => ({ k: b.k })), ciz: (X, bacak) => {
+        const xs = B.map((b) => X(b.k)), x0 = Math.min(...xs), x1 = Math.max(...xs), m = (x0 + x1) / 2; let g = "";
+        if (q.tip === "led") { const col = (RENK[q.led || "kirmizi"] || RENK.kirmizi)[0], xa = X(B[0].k), xk = X(B[1].k);
+          g = bacak(xa, ust, metal, 4) + bacak(xk, ust, metal, 4)
+            + `<path d="M${m - 26} ${ust} V${ust - 34} a26 26 0 0 1 52 0 V${ust} Z" fill="${col}" fill-opacity=".85" stroke="rgba(0,0,0,.4)" stroke-width="2"/><rect x="${m - 31}" y="${ust - 4}" width="62" height="8" rx="2" fill="${col}" stroke="rgba(0,0,0,.4)"/>`
+            + `<text x="${xa}" y="${YUZ - 12}" text-anchor="end" dx="-8" font-size="13" font-weight="800" fill="#c92a2a">uzun (+)</text><text x="${xk}" y="${YUZ - 12}" dx="8" font-size="13" font-weight="800" fill="#1c7ed6">kısa (−)</text>`
+            + `<text x="${m}" y="${ust - 72}" text-anchor="middle" font-size="14" font-weight="800">LED (önden)</text>`;
+        } else {
+          const renk = q.tip === "pot" ? "#1c63b7" : "#343a40";
+          g = xs.map((x) => bacak(x, ust, metal)).join("") + `<rect x="${x0 - 22}" y="${ust - 40}" width="${x1 - x0 + 44}" height="40" rx="${q.tip === "tmp36" ? 18 : 6}" fill="${renk}"/>`
+            + (q.tip === "pot" ? `<rect x="${m - 8}" y="${ust - 66}" width="16" height="26" fill="#adb5bd"/>` : "")
+            + `<text x="${m}" y="${ust - (q.tip === "pot" ? 74 : 50)}" text-anchor="middle" font-size="14" font-weight="800">${esc(buyukHarf(q.kisa))} (önden)</text>`
+            + B.map((b) => b.p ? `<text x="${X(b.k)}" y="${YUZ - 10}" text-anchor="middle" font-size="12" font-weight="800" fill="#e67700">${esc(b.p)}</text>` : "").join("");
+        }
+        return g; } };
+    }
+    const w = a.w, k = w.k; if (!w || w.tur === "modsin") return null;
+    const ray = k.ray === "+" ? (w.tur === "ur" || w.tur === "mod" ? "ustArti" : "ustArti") : "altEksi";
+    const c = RENK[k.renk][0], tel = (x, y0, et) => `<path d="M${x} ${y0} V${YUZ + 36}" stroke="#1b1b1b" stroke-width="11" stroke-linecap="round"/><path d="M${x} ${y0} V${YUZ + 36}" stroke="${c}" stroke-width="7" stroke-linecap="round"/><rect x="${x - 4}" y="${YUZ - 6}" width="8" height="44" fill="#adb5bd"/>`
+      + (et ? `<text x="${x}" y="${y0 - 10}" text-anchor="middle" font-size="15" font-weight="800" fill="#212529">↑ ${esc(et)}</text>` : "");
+    const eski = (sut) => { const E = []; T.P.forEach(({ q, F, c: c0 }) => { F.bacak.forEach(([p, r, d]) => { if (c0 + d === sut) E.push({ r, ad: `${buyukHarf(q.kisa)}${p === "A" ? " +" : p === "K" ? " −" : ""}` }); });
+      (F.seri || []).forEach(([r, x1, x2, deg]) => { if (c0 + x1 === sut || c0 + x2 === sut) E.push({ r, ad: deg }); }); }); return E; };
+    if (w.tur === "ur" || w.tur === "mod") return { tip: "sol", uclar: [{ r: ray }], ciz: (X) => tel(X(ray), 40, w.tur === "ur" ? `Arduino ${k.uk}` : `${k.p.kisa} ${k.q.e}`) };
+    const E = eski(w.sut).filter((u) => u.r !== w.r);
+    if (w.tur === "ard") return { tip: "sol", uclar: [{ r: w.r }], eski: E, ciz: (X) => tel(X(w.r), 40, `Arduino ${k.uk}`) };
+    if (w.tur === "ray") return { tip: "sol", uclar: [{ r: w.r }, { r: ray }], eski: E, ciz: (X) => { const x1 = X(w.r), x2 = X(ray), y = 70;
+      return `<path d="M${x1} ${YUZ + 36} V${YUZ - 10} C ${x1} ${y}, ${x2} ${y}, ${x2} ${YUZ - 10} V${YUZ + 36}" fill="none" stroke="#1b1b1b" stroke-width="11" stroke-linecap="round"/><path d="M${x1} ${YUZ + 36} V${YUZ - 10} C ${x1} ${y}, ${x2} ${y}, ${x2} ${YUZ - 10} V${YUZ + 36}" fill="none" stroke="${c}" stroke-width="7" stroke-linecap="round"/>`; } };
+    if (w.tur === "dir") return { tip: "sol", uclar: [{ r: w.r }, { r: ray }], eski: E, ciz: (X) => { const x1 = X(w.r), x2 = X(ray), m = (x1 + x2) / 2, y = YUZ - 50, bant = R_BANT[k.q.r] || R_BANT["10kΩ"];
+      return `<path d="M${x1} ${YUZ + 36} V${y} H${x2} V${YUZ + 36}" fill="none" stroke="#adb5bd" stroke-width="4"/><rect x="${m - 30}" y="${y - 12}" width="60" height="24" rx="10" fill="#e9d8a6" stroke="#8a6d3b" stroke-width="2"/>`
+        + bant.map((cl, i) => `<rect x="${m - 20 + i * 13}" y="${y - 12}" width="7" height="24" fill="${cl}"/>`).join("") + `<text x="${m}" y="${y - 20}" text-anchor="middle" font-size="14" font-weight="800">${k.q.r} direnç</text>`; } };
+    return null;
+  }
+
+  // 4 bacaklı 12 mm buton: içi nasıl bağlı? (animasyonlu: kapak iner, iki taraf birleşir)
+  function butonTanit(sl, A) {
+    const B = A.find((a) => a.tur === "parca" && a.pe.q.tip === "buton"); if (!B) return null;
+    const c = B.pe.c, ust = A.find((a) => a.tur === "kablo" && a.w.sut === c), alt = A.find((a) => a.tur === "kablo" && a.w.sut === c + 2 && a.w.tur === "ard");
+    const L = 120, R = 300, U = 90, D = 330; // bacak konumları (üstten)
+    let s = `<svg class="dv bt-tanit" viewBox="0 0 900 430" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif"><rect width="900" height="430" fill="#fbfcfd"/>`;
+    s += `<text x="210" y="30" text-anchor="middle" font-size="18" font-weight="800" fill="#212529">Üstten (içini görüyormuş gibi)</text>`;
+    [[L, U, "1"], [R, U, "2"], [L, D, "3"], [R, D, "4"]].forEach(([x, y, n]) => { s += `<rect x="${x - 7}" y="${y < 200 ? y - 30 : y}" width="14" height="30" rx="3" fill="#adb5bd" stroke="#495057" stroke-width="1.5"/><circle cx="${x}" cy="${y < 200 ? y - 44 : y + 44}" r="13" fill="#212529"/><text x="${x}" y="${y < 200 ? y - 39 : y + 49}" text-anchor="middle" font-size="14" font-weight="800" fill="#fff">${n}</text>`; });
+    s += `<rect x="${L - 30}" y="${U}" width="${R - L + 60}" height="${D - U}" rx="10" fill="#495057" opacity=".25" stroke="#212529" stroke-width="3"/>`;
+    s += `<line x1="${L}" y1="${U}" x2="${L}" y2="${D}" stroke="#f59f00" stroke-width="9" stroke-linecap="round"/><line x1="${R}" y1="${U}" x2="${R}" y2="${D}" stroke="#f59f00" stroke-width="9" stroke-linecap="round"/>`;
+    s += `<text x="${L - 40}" y="${(U + D) / 2 - 8}" text-anchor="end" font-size="14" font-weight="800" fill="#e67700">1-3</text><text x="${L - 40}" y="${(U + D) / 2 + 10}" text-anchor="end" font-size="13" fill="#e67700">hep bağlı</text>`;
+    s += `<text x="${R + 40}" y="${(U + D) / 2 - 8}" font-size="14" font-weight="800" fill="#e67700">2-4</text><text x="${R + 40}" y="${(U + D) / 2 + 10}" font-size="13" fill="#e67700">hep bağlı</text>`;
+    s += `<circle cx="${(L + R) / 2}" cy="${(U + D) / 2}" r="52" fill="#212529" opacity=".18"/>`;
+    s += `<line class="bt-kopru" x1="${L + 6}" y1="${(U + D) / 2}" x2="${R - 6}" y2="${(U + D) / 2}" stroke="#2f9e44" stroke-width="12" stroke-linecap="round"/><text class="bt-kopru" x="${(L + R) / 2}" y="${(U + D) / 2 - 16}" text-anchor="middle" font-size="16" font-weight="800" fill="#2f9e44">basınca bağlanır</text>`;
+    // yandan: basılan buton
+    const X0 = 560, X1 = 820, Y = 300;
+    s += `<text x="690" y="30" text-anchor="middle" font-size="18" font-weight="800" fill="#212529">Yandan: basınca ne olur?</text>`;
+    s += `<rect x="${X0 - 20}" y="${Y}" width="${X1 - X0 + 40}" height="40" rx="6" fill="#f1f3f5" stroke="#adb5bd" stroke-width="2"/><text x="690" y="${Y + 26}" text-anchor="middle" font-size="13" fill="#868e96">breadboard</text>`;
+    s += `<path d="M${X0 + 30} ${Y - 70} V${Y + 30} M${X1 - 30} ${Y - 70} V${Y + 30}" stroke="#adb5bd" stroke-width="7"/>`;
+    s += `<rect x="${X0}" y="${Y - 120}" width="${X1 - X0}" height="60" rx="6" fill="#343a40"/><rect x="${X0 + 30}" y="${Y - 96}" width="70" height="8" fill="#f59f00"/><rect x="${X1 - 100}" y="${Y - 96}" width="70" height="8" fill="#f59f00"/>`;
+    s += `<g class="bt-kapak"><rect x="${(X0 + X1) / 2 - 45}" y="${Y - 175}" width="90" height="50" rx="12" fill="#212529"/><rect x="${X0 + 85}" y="${Y - 118}" width="${X1 - X0 - 170}" height="9" fill="#2f9e44"/></g>`;
+    s += `<text class="bt-el" x="${(X0 + X1) / 2}" y="${Y - 190}" text-anchor="middle" font-size="30">👇</text>`;
+    s += `<text x="690" y="${Y + 80}" text-anchor="middle" font-size="15" font-weight="700" fill="#2f9e44">Kapak inince yeşil plaka iki tarafı birleştirir</text>`;
+    s += `</svg>`;
+    return sl("devre", `<div class="etiket">Bizim düğme · 4 bacaklı 12 mm buton</div><h2 class="bbo-b">4 bacaklı buton içeriden nasıl bağlı?</h2><div class="dv-sahne bbk-tek">${s}</div>
+      <p class="dv-alt">Karşılıklı bacaklar (1-3 ve 2-4) içeriden <b>hep bağlı</b>. Basınca sol taraf sağ tarafa bağlanır. Breadboard'da 1-3 bacakları <b>d${c}–g${c}</b>, 2-4 bacakları <b>d${c + 2}–g${c + 2}</b> deliklerine girer. Kabloları <b>çapraz</b> bacaklara bağlarız${ust && alt ? ` (${ust.w.r}${c} ve ${alt.w.r}${c + 2})` : ""}: emin değilsen çapraz bacaklar her zaman doğrudur.</p>`,
+      `Bizim düğmemiz dört bacaklı, on iki milimetrelik bir buton. Karşılıklı bacaklar, yani bir ile üç, iki ile dört, içeriden hep bağlıdır. Butona basınca içerideki plaka sol tarafı sağ tarafa bağlar. Breadboard'da bir ve üç numaralı bacaklar d ${c} ile g ${c} deliklerine, iki ve dört numaralı bacaklar d ${c + 2} ile g ${c + 2} deliklerine girer. Kabloları her zaman çapraz bacaklara bağlarız; emin değilsen çapraz bacaklar her zaman doğrudur.`);
+  }
+
+  // breadboard üzerinde adım adım kurulum slaytları (sesli): bütün devre → (buton tanıtımı) → her parça → her kablo; her adımda üstten + yandan görünüm
   function tahtaSlaytlar(dv, sl, ust) {
     if (!bbVar(dv)) return [];
-    const A = tahtaAdim(dv), np = A.filter((a) => a.tur === "parca").length, S = [];
-    S.push(sl("devre", `<div class="etiket">${esc(ust)} · Breadboard'da kurulum</div><h2 class="bbo-b">Breadboard'da adım adım kurulum</h2><div class="dv-sahne">${tahta(dv)}</div><p class="dv-alt">Harfler (a-j) satır, sayılar sütundur: "d4" = d satırı, 4. sütun. Önce ${np} parçayı deliklerine takacağız, sonra ${A.length - np} bağlantıyı numara sırasıyla.</p>`,
-      `Şimdi devreyi breadboard üzerinde adım adım kuralım. Kenardaki harfler satırı, sayılar sütunu gösterir. Mesela d dört, d satırının dördüncü sütunudur. Önce ${np} parçayı deliklerine takacağız, sonra kabloları numara sırasıyla.`));
-    A.forEach((a, i) => S.push(sl("devre", `<div class="dv-ust"><span class="dv-no" style="--k:${a.renk}">${a.tur === "parca" ? "◆" : a.no}<small>${a.tur === "parca" ? "" : "/" + (A.length - np)}</small></span><div><div class="etiket">${esc(ust)} · Breadboard · ${a.tur === "parca" ? `${i + 1}. parça` : esc(a.etk)}</div>
+    const T = tahtaYerlesim(dv); T.dv = dv;
+    const A = tahtaAdim(dv), np = A.filter((a) => a.tur === "parca").length, nk = A.length - np, S = [];
+    S.push(sl("devre", `<div class="etiket">${esc(ust)} · Breadboard'da kurulum</div><h2 class="bbo-b">Breadboard'da adım adım kurulum</h2><div class="dv-sahne bbk-tek">${tahta(dv)}</div><p class="dv-alt">Harfler (a-j) satır, sayılar sütundur: "d4" = d satırı, 4. sütun. Önce ${np} parçayı deliklerine takacağız, sonra ${nk} bağlantıyı numara sırasıyla.</p>`,
+      `Şimdi devreyi breadboard üzerinde adım adım kuralım. Kenardaki harfler satırı, sayılar sütunu gösterir. Mesela d dört, d satırının dördüncü sütunudur. Önce ${np} parçayı deliklerine takacağız, sonra kabloları numara sırasıyla. Her adımda solda üstten, sağda yandan görünüm var.`));
+    A.forEach((a, i) => {
+      if (a.tur === "parca" && a.pe.q.tip === "buton") { const t = butonTanit(sl, A); if (t) S.push(t); }
+      const yan = yanCiz(T, a, i);
+      const ust_ = tahta(dv, { adim: i + 1, yakin: true, oran: yan ? 1.25 : 16 / 8.2, genis: yan ? 0.42 : 0.64 });
+      S.push(sl("devre", `<div class="dv-ust"><span class="dv-no" style="--k:${a.renk}">${a.tur === "parca" ? "◆" : a.no}<small>${a.tur === "parca" ? "" : "/" + nk}</small></span><div><div class="etiket">${esc(ust)} · Breadboard · ${a.tur === "parca" ? `${i + 1}. parça` : esc(a.etk)}</div>
         <h2 class="dv-baslik">${a.baslik}</h2></div></div>
-      <div class="dv-sahne">${tahta(dv, { adim: i + 1, yakin: true })}</div><p class="dv-alt">${a.html.join(" ")}</p>`, a.anlat)));
+      ${yan ? `<div class="bbk-ikili"><figure><figcaption>Üstten görünüm</figcaption>${ust_}</figure><figure><figcaption>Yandan görünüm</figcaption>${yan}</figure></div>` : `<div class="dv-sahne bbk-tek">${ust_}</div>`}
+      <p class="dv-alt">${a.html.join(" ")}</p>`, a.anlat));
+    });
     return S;
+  }
+
+  // ---------- A4 kâğıt: breadboard'da tam olarak ne nereye? ----------
+  function tahtaKagit(no) {
+    const V = H[no]; if (!V) return [];
+    return V.filter(bbVar).map((dv) => {
+      const A = tahtaAdim(dv), duz = (h) => h.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim(), R = [];
+      let h = 0;
+      A.forEach((a) => {
+        if (a.tur === "parca") { const { q, F, c } = a.pe, L = String.fromCharCode(65 + h++);
+          R.push([`<span class="dv-harf">${L}</span>`, `<b>${esc(q.ad)}</b>`, `<b>${F.bacak.map(([, r, d]) => r + (c + d)).join(", ")}</b>`, esc(F.not)]);
+          (F.seri || []).forEach(([r, x1, x2, deg]) => R.push([`<span class="dv-harf">${L}</span>`, `<b>${deg} direnç</b>`, `<b>${r}${c + x1}</b> ile <b>${r}${c + x2}</b>`, "Yatay durur; yönü fark etmez."]));
+        } else {
+          const w = a.w, k = w.k, t = duz(a.baslik).replace(/^.*?direnç\s*/, "");
+          R.push([`<span class="dv-rozet" style="border-color:${a.renk}">${k.no}</span>`, w.tur === "dir" ? `<b>${k.q.r} direnç</b>` : `<span class="dv-renk" style="background:${a.renk}"></span><b>${k.no}. kablo</b> ${esc(a.renkAd)}`, `<b>${esc(t).replace(/\s*→\s*/g, " → ")}</b>`,
+            w.tur === "modsin" ? "Breadboard'a uğramaz." : w.tur === "ur" || w.tur === "mod" ? "Hattın herhangi bir deliği olur." : w.tur === "dir" ? "Bir bacak deliğe, öbürü hatta." : ""]);
+        }
+      });
+      const bt = A.find((a) => a.tur === "parca" && a.pe.q.tip === "buton"), bc = bt && bt.pe.c;
+      const btKutu = bt ? `<div class="dv-bt-kutu"><b>4 bacaklı buton:</b> karşılıklı bacaklar (d${bc}–g${bc} ve d${bc + 2}–g${bc + 2}) içeriden hep bağlı; basınca ${bc}. sütun ile ${bc + 2}. sütun birleşir. Buton oluğun ÜSTÜNE oturur. Kablolar çapraz bacaklara gider.</div>` : "";
+      return { baslik: `${dv.ad.toLocaleUpperCase("tr")} · BREADBOARD: NE NEREYE?`,
+        yonerge: "■ Harfler (a-j) satır, sayılar sütundur: \"d4\" = d satırı, 4. sütun. Turuncu etiketler deliğin adıdır. Önce parçaları (A, B…), sonra kabloları numara sırasıyla tak; taktığın satırın kutusunu işaretle. USB en son takılır.",
+        bloklar: [{ t: "html", x: `<div class="dv-kagit">${tahta(dv, { etiket: true })}</div>${btKutu}<table class="dv-tablo kucuk dv-ne"><tr><th>Çizimde</th><th>Ne?</th><th>Nereye? (delik)</th><th>Dikkat</th><th>✓</th></tr>${R.map((r) => `<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td class="dv-kutu">☐</td></tr>`).join("")}</table>` }] };
+    });
   }
 
   // ---------- "Breadboard nasıl çalışır?" öğretici slaytlar (dokunmalı) ----------
@@ -760,5 +917,5 @@ window.DEVRE = (function () {
     return `<div class="dv-iki"><table class="dv-tablo kucuk">${bas_}${A.slice(0, y).map(satir).join("")}</table><table class="dv-tablo kucuk">${bas_}${A.slice(y).map(satir).join("")}</table></div>`;
   }
 
-  return { PARCA, H, RENK, unoPin, yerlesim, svg, adimlar, tablo, kontrol, kodPinleri, yerlestirme, tinkerAdimlar, kablolar, nasil, parcaListesi, slaytlar, ders, kagit, tahta, tahtaListe, tahtaSlaytlar, bbVar, bbOgret, var: (no) => !!H[no] };
+  return { PARCA, H, RENK, unoPin, yerlesim, svg, adimlar, tablo, kontrol, kodPinleri, yerlestirme, tinkerAdimlar, kablolar, nasil, parcaListesi, slaytlar, ders, kagit, tahta, tahtaListe, tahtaSlaytlar, tahtaKagit, bbVar, bbOgret, var: (no) => !!H[no] };
 })();

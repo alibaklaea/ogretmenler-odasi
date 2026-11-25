@@ -906,7 +906,7 @@
       ${V.map((dv, i) => `<details class="dv-ac" ${i === 0 ? "open" : ""}><summary><b>${esc(dv.ad)}</b> · ${DEVRE.yerlesim(dv).K.length} kablo</summary>
         <div class="dv-sahne">${DEVRE.svg(dv)}</div>${DEVRE.tablo(dv)}
         ${DEVRE.bbVar(dv) ? `<h4 style="margin:16px 0 4px">🔌 Breadboard'a takılış: hangi bacak hangi deliğe?</h4><p class="not">Breadboard'un kenarındaki harfler (a-j) satır, sayılar sütundur. "d4" = d satırı, 4. sütun.</p><div class="dv-sahne">${DEVRE.tahta(dv)}</div><ul class="dv-liste">${DEVRE.tahtaListe(dv).map((x) => `<li>${x}</li>`).join("")}</ul>` : ""}
-        <div class="dugmeler" style="margin:10px 0"><button class="dugme kucuk ana" data-dv-video="${k.no}/${i}">▶ Kabloları tek tek göster (sesli video)</button><button class="dugme kucuk" data-dv-sun="${k.no}/${i}">Tahtada adım adım</button>${DEVRE.bbVar(dv) ? `<button class="dugme kucuk ana" data-bb-kur="${k.no}/${i}">🔌 Breadboard'da adım adım kur (sesli)</button>` : ""}<button class="dugme kucuk" data-dv-bas="${k.no}/${i}">Şemayı yazdır</button></div>
+        <div class="dugmeler" style="margin:10px 0"><button class="dugme kucuk ana" data-dv-video="${k.no}/${i}">▶ Kabloları tek tek göster (sesli video)</button><button class="dugme kucuk" data-dv-sun="${k.no}/${i}">Tahtada adım adım</button>${DEVRE.bbVar(dv) ? `<button class="dugme kucuk ana" data-bb-kur="${k.no}/${i}">🔌 Breadboard'da adım adım kur (sesli)</button>` : ""}<button class="dugme kucuk" data-dv-bas="${k.no}/${i}">Şemayı yazdır</button>${DEVRE.bbVar(dv) ? `<button class="dugme kucuk" data-dv-bb="${k.no}/${i}">🖨 Breadboard kâğıdı (A4): ne nereye?</button>` : ""}</div>
         <p><b>USB'yi takmadan önce kontrol:</b></p><ul class="dv-liste">${DEVRE.kontrol(dv).map((x) => `<li>${esc(x)}</li>`).join("")}</ul></details>`).join("")}
       ${window.KODLAR && KODLAR[k.no] ? `<p><a class="dugme kucuk ana" href="#hafta/${k.no}/kod">💾 Bu devrenin hazır Arduino kodu</a></p>` : ""}
       <p><b>Ders öncesi kablo hazırlığı (bir grup için):</b> ${esc(DEVRE.kablolar(V[0]))}.</p></div>`;
@@ -924,9 +924,10 @@
     if (e.target.closest("[data-bb-ogret]")) { sunumAc(DEVRE.bbOgret(sl), 0, "Breadboard nasıl çalışır?", false, true); return; }
     const bk = e.target.closest("[data-bb-kur]");
     if (bk) { const [no, i] = bk.dataset.bbKur.split("/").map(Number), dv = DEVRE.H[no][i]; sunumAc(DEVRE.tahtaSlaytlar(dv, sl, DEVRE.H[no].length > 1 ? dv.ad : "Bağlantı"), 0, `${no}. hafta · ${dv.ad} · Breadboard`, true, true); return; }
-    const b = e.target.closest("[data-dv-video],[data-dv-sun],[data-dv-bas]"); if (!b) return;
-    const [no, i] = (b.dataset.dvVideo || b.dataset.dvSun || b.dataset.dvBas).split("/").map(Number), dv = DEVRE.H[no][i];
-    if (b.dataset.dvBas) { bas(kagitHTML(DEVRE.kagit(no)[i], null, `${no}. hafta · ${KD.ad}`)); return; }
+    const b = e.target.closest("[data-dv-video],[data-dv-sun],[data-dv-bas],[data-dv-bb]"); if (!b) return;
+    const [no, i] = (b.dataset.dvVideo || b.dataset.dvSun || b.dataset.dvBas || b.dataset.dvBb).split("/").map(Number), dv = DEVRE.H[no][i];
+    if (b.dataset.dvBas) { const tk = DEVRE.tahtaKagit(no).find((x, j) => DEVRE.H[no].filter(DEVRE.bbVar)[j] === dv); bas(kagitHTML(DEVRE.kagit(no)[i], null, `${no}. hafta · ${KD.ad}`) + (tk ? kagitHTML(tk, null, `${no}. hafta · ${KD.ad}`) : "")); return; }
+    if (b.dataset.dvBb) { const tk = DEVRE.tahtaKagit(no).find((x, j) => DEVRE.H[no].filter(DEVRE.bbVar)[j] === dv); if (tk) bas(kagitHTML(tk, null, `${no}. hafta · ${KD.ad}`)); return; }
     sunumAc(DEVRE.slaytlar(no, sl, "baglanti", i), 0, `${no}. hafta · ${dv.ad}`, !!b.dataset.dvVideo, !!b.dataset.dvVideo);
   });
 
@@ -1881,7 +1882,8 @@
         { t: "lines", label: "Karşılaştığım hata ve çözümüm:", n: 2 },
         { t: "lines", label: `Geliştir: ${k.gelistir}`, n: 2 },
         { t: "ticket" }] },
-      ...(window.DEVRE ? DEVRE.kagit(k.no) : [])
+      ...(window.DEVRE ? DEVRE.kagit(k.no) : []),
+      ...(window.DEVRE ? DEVRE.tahtaKagit(k.no) : [])
     ];
   }
 
