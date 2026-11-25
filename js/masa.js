@@ -87,15 +87,16 @@
     if (plan === "KOD") {
       const k = w.kod;
       if (k.yok) return [{ kaynak: "Ders programı", ad: k.ad, soru: "", giris: k.not, dersler: [], ekler: [] }];
-      if (k.tamam) return [{ kaynak: "Kodlama Atölyesi (tamamlandı)", ad: k.ad, soru: "", giris: `Tamamlandı: ${k.proje}. Kavramlar: ${k.kavram}. Pinler: ${k.pinler.map((x) => x.join(" → ")).join(", ")}.${k.not ? " " + k.not : ""} Materyaller: ${KD.klasor}`, dersler: [], ekler: [] }];
+      if (k.tamam) return [{ kaynak: "Kodlama Atölyesi (tamamlandı)", kod: k, ad: k.ad, soru: "", giris: `Tamamlandı: ${k.proje}. Kavramlar: ${k.kavram}. Pinler: ${k.pinler.map((x) => x.join(" → ")).join(", ")}.${k.not ? " " + k.not : ""} Materyaller: ${KD.klasor}`, dersler: [], ekler: [] }];
+      const DV = window.DEVRE && DEVRE.ders(k);
       return [{ kaynak: "Kodlama Atölyesi planı (kâğıt → Tinkercad → gerçek Arduino)", ad: k.ad, saat: String(KD.saat), soru: k.soru,
         giris: `Proje: ${k.proje}. Kavramlar: ${k.kavram}.${k.ozel ? " Bu hafta: " + k.ozel + "." : ""}`,
-        dersler: [{ baslik: "1. ders · Kâğıt aşaması", metin: k.kagit }, { baslik: "1. ders · Tinkercad", metin: k.tinker },
+        dersler: DV || [{ baslik: "1. ders · Kâğıt aşaması", metin: k.kagit }, { baslik: "1. ders · Tinkercad", metin: k.tinker },
           { baslik: "2. ders · Yapay zekâ ile kod", metin: k.prompt === "—" ? "Bu hafta prompt yazımı yok; sunum ve paylaşım yapılır." : "Örnek prompt: “" + k.prompt + "” Öğrenciler kendi prompt'unu yazar, üretilen kodu okuyup satır satır açıklar." },
           { baslik: "2. ders · Gerçek Arduino ve test", metin: k.gercek }],
         olcme: "Test tablosu, çalışan devre, prompt değerlendirmesi ve çıkış bileti.", zengin: k.gelistir,
         destek: "Hazır devre fotoğrafı ve pin tablosu verilir; prompt cümle başlatıcılarla yazılır; eşli çalışma yapılır.",
-        ozgun: true, urun: k.proje, ekler: kodKagitlari(k) }];
+        ozgun: true, urun: k.proje, kod: k, ekler: kodKagitlari(k) }];
     }
     if (plan === "D3") {
       const k = w.kitap;
@@ -878,6 +879,7 @@
       if (p.olcme) sol += `<p><b>Ölçme ve değerlendirme:</b> ${esc(p.olcme)}</p>`;
       if (p.zengin) sol += `<p><b>Zenginleştirme:</b> ${esc(p.zengin)}</p>`;
       if (p.destek) sol += `<p><b>Destekleme:</b> ${esc(p.destek)}</p>`;
+      if (p.kod && window.DEVRE && DEVRE.var(p.kod.no)) sol += devreKarti(p.kod);
       sol += `<div class="kaynak-not">Kaynak: ${esc(p.kaynak)}${p.sayfalar ? ` · PDF s. ${p.sayfalar[0]}-${p.sayfalar[1]}` : ""}${p.pdf ? ` · <a href="${p.pdf}" target="_blank">Etkinliği PDF olarak aç</a>` : ""}</div></div>`;
     });
     const sag = `<div class="kart" style="margin-bottom:16px"><h3>Öğrenme çıktıları</h3>${kaz}
@@ -894,6 +896,24 @@
     return `<div class="iki-sutun"><div>${sol}</div><div>${sag}</div></div>`;
   }
 
+  // ---------- kodlama: bağlantı şeması kartı (her devre için şema, kablo tablosu, kontrol listesi) ----------
+  function devreKarti(k) {
+    const V = DEVRE.H[k.no];
+    return `<div class="dv-kart"><h3>Bağlantı şeması: hangi kablo nereye?</h3>
+      <p class="not">Her kablonun iki ucunda aynı numara var. Kablolar USB çıkarken, numara sırasıyla takılır. Arduino'nun üstündeki renkli etiketler kablonun girdiği pini gösterir.</p>
+      ${V.map((dv, i) => `<details class="dv-ac" ${i === 0 ? "open" : ""}><summary><b>${esc(dv.ad)}</b> · ${DEVRE.yerlesim(dv).K.length} kablo</summary>
+        <div class="dv-sahne">${DEVRE.svg(dv)}</div>${DEVRE.tablo(dv)}
+        <div class="dugmeler" style="margin:10px 0"><button class="dugme kucuk ana" data-dv-video="${k.no}/${i}">▶ Kabloları tek tek göster (sesli video)</button><button class="dugme kucuk" data-dv-sun="${k.no}/${i}">Tahtada adım adım</button><button class="dugme kucuk" data-dv-bas="${k.no}/${i}">Şemayı yazdır</button></div>
+        <p><b>USB'yi takmadan önce kontrol:</b></p><ul class="dv-liste">${DEVRE.kontrol(dv).map((x) => `<li>${esc(x)}</li>`).join("")}</ul></details>`).join("")}
+      <p><b>Ders öncesi kablo hazırlığı (bir grup için):</b> ${esc(DEVRE.kablolar(V[0]))}.</p></div>`;
+  }
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-dv-video],[data-dv-sun],[data-dv-bas]"); if (!b) return;
+    const [no, i] = (b.dataset.dvVideo || b.dataset.dvSun || b.dataset.dvBas).split("/").map(Number), dv = DEVRE.H[no][i];
+    if (b.dataset.dvBas) { bas(kagitHTML(DEVRE.kagit(no)[i], null, `${no}. hafta · ${KD.ad}`)); return; }
+    sunumAc(DEVRE.slaytlar(no, sl, "baglanti", i), 0, `${no}. hafta · ${dv.ad}`, !!b.dataset.dvVideo, !!b.dataset.dvVideo);
+  });
+
   // ---------- ders öncesi hazırlık: ihtiyaç listesi, öğretmen evrakı, videolar ----------
   const hzVeri = (w) => HZ[plan + "-" + w.no] || { liste: [], icerik: [], video: [] };
   function hzListe(w, P) {
@@ -901,6 +921,9 @@
     const ekler = P.flatMap((p) => p.ekler.map((e) => `${e.ad || "Ek"}: ${e.baslik}`));
     if (ekler.length) L.push(`Çalışma kâğıtları, öğrenci sayısı kadar fotokopi (Çalışma Kâğıtları sekmesinden yazdır): ${ekler.join(" • ")}`);
     if (P.some((p) => p.pdf)) L.push("Etkinliğin PDF'ini derse girmeden aç; varsa ek sayfalarını yazdır (Kazanım ve Etkinlik sekmesindeki bağlantı).");
+    P.filter((p) => p.kod && window.DEVRE && DEVRE.var(p.kod.no)).forEach((p) => { const dv = DEVRE.H[p.kod.no][0];
+      L.push(`Her grup için kablo: ${DEVRE.kablolar(dv)}. Parçalar: ${DEVRE.parcaListesi(dv).join(", ")}, breadboard, Arduino Uno ve USB kablosu.`);
+      L.push("Devreyi derse girmeden bir kez kendin kur ve çalıştır. Bağlantı Şeması kâğıdını grup sayısı kadar renkli yazdır (Çalışma Kâğıtları sekmesi)."); });
     const var_ = L.join(" ").toLocaleLowerCase("tr");
     [...new Set((w.materyal || "").split(/\s*[,/]\s*/).map((m) => m.trim()).filter(Boolean))]
       .filter((m) => !var_.includes(m.toLocaleLowerCase("tr").slice(0, 8)))
@@ -1046,7 +1069,7 @@
       A.push({ baslik: "Paylaş ve değerlendir", metin: "Ürününü sınıfa kısaca sun; arkadaşlarından iki güçlü yön ve bir öneri al.", sure: "10 dk" });
       return A;
     }
-    return p.dersler.map((d) => ({ baslik: d.baslik.replace(/^\d+\. ders · /, ""), metin: p.ozgun ? d.metin : ogrenciCumleleri(d.metin, 2), sure: "" }));
+    return p.dersler.map((d) => ({ baslik: d.baslik.replace(/^\d+\. ders · /, "").replace(/\s*\((\d+ dk)\)$/, ""), metin: p.ozgun ? (d.kisa || d.metin) : ogrenciCumleleri(d.metin, 2), sure: (d.baslik.match(/\((\d+ dk)\)$/) || [])[1] || "" }));
   }
 
   function yolHaritasi(baslik, A) {
@@ -1074,7 +1097,9 @@
     if (hedef.length) S.push(sl("liste", `<div class="etiket">Bu hafta neler öğreneceğiz?</div><ul>${hedef.map((k) => `<li>${esc(k)}</li>`).join("")}</ul>`, "Bu hafta şunları öğreneceğiz. " + hedef.join(" ")));
     P.forEach((p) => {
       const A = adimlarOlustur(p);
-      if (A.length) { S.push(yolHaritasi(p.ad, A)); A.forEach((_, i) => S.push(adimSlayti(p.ad, A, i))); }
+      if (A.length) { S.push(yolHaritasi(p.ad, A));
+        A.forEach((a, i) => { S.push(adimSlayti(p.ad, A, i));
+          if (p.kod && window.DEVRE && DEVRE.var(p.kod.no)) { if (i === 0) S.push(...DEVRE.slaytlar(p.kod.no, sl, "nasil")); if (/^Tinkercad/.test(a.baslik)) S.push(...DEVRE.slaytlar(p.kod.no, sl, "baglanti")); } }); }
       if (!p.sorular) p.ekler.forEach((e) => S.push(sl("kagit", `<div class="etiket">Çalışma kâğıdı</div><h2>${esc((e.ad || "Ek") + " · " + e.baslik)}</h2><div class="gorev-kutu"><p>${esc(e.yonerge || "Kâğıdı al, yönergeyi oku ve grubunla başla.")}</p></div>`,
         `Çalışma kâğıdı: ${e.baslik}. ${e.yonerge || "Kâğıdı al, yönergeyi oku ve grubunla başla."}`)));
       if (p.urun) S.push(sl("urun", `<div class="etiket">Ürünümüz</div><h1>${esc(p.urun)}</h1>`, `Bu hafta ortaya çıkaracağımız ürün: ${p.urun}.`));
@@ -1091,7 +1116,7 @@
   function ilkCumleler(t, n) { const c = t.match(/[^.!?]+[.!?]+/g) || [t]; return c.slice(0, n).join(" ").trim(); }
 
   function sunumOnizleme(S) {
-    return `<div class="haftalar">${S.map((s, i) => `<button class="hafta-kart onizleme tur-${s.tur}" data-i="${i}"><div class="hk-ust"><span class="hk-no">${i + 1}</span><span>${{ kapak: "Kapak", soru: "Soru", yol: "Yol haritası", adim: "Adım", kagit: "Kâğıt", urun: "Ürün", bilet: "Çıkış bileti", liste: "Hedefler", bilgi: "Bilgi" }[s.tur] || ""}</span></div><div class="onizleme-slayt">${s.html.replace(/<h[12]/g, "<h3").replace(/<\/h[12]>/g, "</h3>")}</div></button>`).join("")}</div>`;
+    return `<div class="haftalar">${S.map((s, i) => `<button class="hafta-kart onizleme tur-${s.tur}" data-i="${i}"><div class="hk-ust"><span class="hk-no">${i + 1}</span><span>${{ kapak: "Kapak", soru: "Soru", yol: "Yol haritası", adim: "Adım", devre: "Devre", kagit: "Kâğıt", urun: "Ürün", bilet: "Çıkış bileti", liste: "Hedefler", bilgi: "Bilgi" }[s.tur] || ""}</span></div><div class="onizleme-slayt">${s.html.replace(/<h[12]/g, "<h3").replace(/<\/h[12]>/g, "</h3>")}</div></button>`).join("")}</div>`;
   }
   function sunumSekme(ic, w, P, gunler) {
     const S = slaytlar(w, P, gunler), bas_ = `${w.no}. Hafta · ${w.etkinlik}`;
@@ -1762,7 +1787,8 @@
         { t: "table", cols: k.test.cols, rows: k.test.rows },
         { t: "lines", label: "Karşılaştığım hata ve çözümüm:", n: 2 },
         { t: "lines", label: `Geliştir: ${k.gelistir}`, n: 2 },
-        { t: "ticket" }] }
+        { t: "ticket" }] },
+      ...(window.DEVRE ? DEVRE.kagit(k.no) : [])
     ];
   }
 
@@ -1871,7 +1897,8 @@
     return S1 + S2;
   }
 
-  function devre(k) { // basit bağlantı şeması: Arduino pinleri → parçalar
+  function devre(k) { // bağlantı şeması: gerçek Uno görünümü (yoksa basit şema)
+    if (window.DEVRE && DEVRE.var(k.no)) return DEVRE.svg(DEVRE.H[k.no][0], { cls: "baski" });
     const L = k.pinler || [], h = Math.max(150, 40 + L.length * 44);
     let s = `<svg class="pn-devre" viewBox="0 0 460 ${h}"><rect x="10" y="10" width="140" height="${h - 20}" rx="10" fill="#0b7285"/><text x="80" y="38" text-anchor="middle" fill="#fff" font-size="16" font-weight="700">ARDUINO</text>`;
     L.forEach(([a, pin], j) => { const y = 66 + j * 44;

@@ -579,3 +579,44 @@ html.uygulama .dk-alan .ct-tahta, html.uygulama .dk-tahta { width: 520px; width:
 .pf-tablo th, .pf-tablo td { border: 1px solid var(--cizgi, #ccc); padding: 6px 8px; text-align: left; vertical-align: top; }
 .pf-tablo th { width: 34%; background: rgba(47,111,159,.08); }
 .sayfa.pf-sayfa .pf-tablo { font-size: 11pt; } .sayfa.pf-sayfa .pf-tablo th, .sayfa.pf-sayfa .pf-tablo td { border-color: #000; padding: 6pt; }
+
+/* ---------- kodlama: bağlantı şemaları ---------- */
+.dv-kart { margin-top: 14px; border-top: 2px dashed var(--vurgu-acik, #dcf1e9); padding-top: 12px; }
+.dv-kart h3 { margin: 0 0 4px; }
+.dv-ac { margin: 8px 0; }
+.dv-ac summary { cursor: pointer; padding: 6px 0; }
+.dv-sahne { display: flex; justify-content: center; min-height: 0; }
+.dv-sahne svg { width: 100%; height: auto; border-radius: 10px; border: 1px solid #dee2e6; }
+.slayt .dv-sahne svg { max-height: 60vh; width: auto; max-width: 100%; }
+.dv-tablo { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 14px; }
+.dv-tablo th, .dv-tablo td { border: 1px solid #ced4da; padding: 4px 6px; text-align: left; vertical-align: middle; }
+.dv-tablo th { background: #f1f3f5; }
+.dv-tablo.kucuk { font-size: 8.5pt; margin: 2mm 0; }
+.dv-tablo.kucuk th, .dv-tablo.kucuk td { padding: 1mm 1.5mm; }
+.dv-renk { display: inline-block; width: 24px; height: 10px; border-radius: 5px; border: 1px solid #333; margin-right: 6px; vertical-align: middle; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.dv-kutu { text-align: center !important; font-size: 1.2em; }
+.dv-iki { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; }
+.dv-liste li { margin-bottom: 4px; }
+.dv-kagit svg { width: 100%; height: auto; max-height: 118mm; display: block; margin: 0 auto; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.dv-ust { display: flex; gap: 1.4vw; align-items: center; margin-bottom: 1vh; }
+.dv-no { display: grid; place-items: center; width: 2.3em; height: 2.3em; border-radius: 50%; background: #fff; border: .22em solid var(--k); color: #212529; font-size: clamp(24px, 2.6vw, 46px); font-weight: 800; flex: none; line-height: 1; }
+.dv-no small { font-size: .42em; color: #868e96; }
+.slayt .dv-ust .etiket { margin-bottom: .4vh; }
+.slayt h2.dv-baslik { display: flex; gap: .4em; align-items: center; flex-wrap: wrap; font-size: clamp(22px, 2.7vw, 48px); }
+.dv-baslik i { color: var(--vurgu); font-style: normal; }
+.dv-baslik b { background: #fff3bf; padding: 0 .25em; border-radius: .2em; }
+.slayt p.dv-alt { font-size: clamp(16px, 1.55vw, 28px); margin-top: 1vh; }
+.slayt .dv-kontrol li { font-size: clamp(16px, 1.6vw, 28px); }
+.dv-yeni .dv-c { stroke-dasharray: 1; stroke-dashoffset: 1; animation: dvCiz 1.7s ease-in-out forwards; }
+@keyframes dvCiz { to { stroke-dashoffset: 0; } }
+.dv-yeni .dv-uc, .dv-sonra { opacity: 0; animation: dvBelir .4s 1.55s forwards; }
+@keyframes dvBelir { to { opacity: 1; } }
+.dv-nabiz { transform-box: fill-box; transform-origin: center; animation: dvNabiz 1.3s ease-out infinite; }
+@keyframes dvNabiz { 0% { transform: scale(.55); opacity: 1; } 100% { transform: scale(1.9); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .dv-yeni .dv-c { animation: none; stroke-dashoffset: 0; } .dv-yeni .dv-uc, .dv-sonra { animation: none; opacity: 1; } .dv-nabiz { animation: none; } }
+.sayfa .dv-tablo.kucuk { font-size: 8pt; line-height: 1.2; }
+.sayfa .dv-tablo.kucuk th, .sayfa .dv-tablo.kucuk td { padding: .5mm 1.2mm; height: auto; }
+.dv-kk-b { font-size: 9pt; display: block; margin-top: 1.5mm; }
+.dv-kk { columns: 2; column-gap: 5mm; font-size: 8pt; line-height: 1.25; margin: 1mm 0 0; padding: 0; list-style: none; }
+.dv-kk li { break-inside: avoid; margin-bottom: 1mm; padding-left: 4.2mm; position: relative; }
+.dv-kk li::before { content: "☐"; position: absolute; left: 0; }
