@@ -932,17 +932,51 @@
   const dosyaAdi = (t) => t.toLocaleLowerCase("tr").replace(/[çğıöşü]/g, (c) => ({ ç: "c", ğ: "g", ı: "i", ö: "o", ş: "s", ü: "u" }[c])).replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
   function kodSekme(ic, w) {
     const L = KODLAR[w.no] || [], V = (window.DEVRE && DEVRE.H[w.no]) || [];
-    ic.innerHTML = `<div class="kart kod-yol"><b>Arduino'ya yükleme:</b> <ol><li>Arduino IDE'yi aç → Dosya → Yeni.</li><li>Aşağıdaki kodu <b>Kopyala</b> düğmesiyle al, IDE'deki her şeyi silip yapıştır (ya da <b>.ino indir</b> ile dosyayı aç).</li><li>Gerekiyorsa kütüphaneyi kur: Araçlar → Kütüphaneleri Yönet → adını ara → Yükle.</li><li>Araçlar → Kart: <b>Arduino Uno</b>; Araçlar → Port: Arduino'nun takılı olduğu COM portu.</li><li><b>Yükle (→)</b> düğmesine bas. Sonra Seri Monitörü aç, hızı <b>9600</b> yap.</li></ol>
-      <p class="not">Kodlardaki pinler bu haftanın bağlantı şemasıyla birebir aynı. Öğrencilerin yapay zekâyla yazdığı kod çalışmazsa bu kodla karşılaştırın. Tinkercad'de: Kod → Metin → hepsini silip yapıştır.</p></div>
+    const WS = window.ARDUINO && ARDUINO.destek();
+    ic.innerHTML = `<div class="kart yk-panel"><h2 style="margin:0 0 6px">⚡ Arduino'ya uygulamadan yükle</h2>
+      ${WS ? `<p>Öğrencinin Arduino'sunu USB ile bu bilgisayara tak, aşağıdaki kodun <b>Arduino'ya yükle</b> düğmesine bas, açılan listeden Arduino'yu (COM / USB-SERIAL / CH340) seç. Program kurmaya gerek yok.</p>
+        <div class="dugmeler"><label class="yk-kart">Kart: <select id="ykBaud"><option value="115200">Arduino Uno (orijinal ya da klon)</option><option value="57600">Nano (eski önyükleyici / Old Bootloader)</option><option value="115200">Nano (yeni önyükleyici)</option></select></label>
+        <button class="dugme kucuk" id="ykMon">📟 Seri Monitör (9600)</button></div>
+        <div class="yk-durum" id="ykDurum" hidden><div class="yk-cubuk"><i id="ykYuzde"></i></div><span id="ykMetin"></span></div>
+        <pre class="yk-monitor" id="ykMonitor" hidden></pre>`
+      : `<div class="uyari">Bu tarayıcı Arduino'ya doğrudan yükleme yapamıyor. Sayfayı bilgisayarda <b>Google Chrome</b> ya da <b>Microsoft Edge</b> ile açın (telefon ve tablette çalışmaz). Ya da aşağıdaki Arduino IDE yolunu kullanın.</div>`}
+      <p class="not">Bilgisayar Arduino'yu görmüyorsa: klon kartlarda <b>CH340 sürücüsü</b> kurulmalı; kablo yalnız şarj kablosu olabilir, başka kablo deneyin. Yükleme sırasında Arduino IDE ve Seri Monitör kapalı olmalı.</p></div>
+      <details class="kart kod-yol"><summary><b>Ya da Arduino IDE ile yükleme</b></summary> <ol><li>Arduino IDE'yi aç → Dosya → Yeni.</li><li>Aşağıdaki kodu <b>Kopyala</b> düğmesiyle al, IDE'deki her şeyi silip yapıştır (ya da <b>.ino indir</b> ile dosyayı aç).</li><li>Gerekiyorsa kütüphaneyi kur: Araçlar → Kütüphaneleri Yönet → adını ara → Yükle.</li><li>Araçlar → Kart: <b>Arduino Uno</b>; Araçlar → Port: Arduino'nun takılı olduğu COM portu.</li><li><b>Yükle (→)</b> düğmesine bas. Sonra Seri Monitörü aç, hızı <b>9600</b> yap.</li></ol>
+      <p class="not">Kodlardaki pinler bu haftanın bağlantı şemasıyla birebir aynı. Öğrencilerin yapay zekâyla yazdığı kod çalışmazsa bu kodla karşılaştırın. Tinkercad'de: Kod → Metin → hepsini silip yapıştır.</p></details>
       ${L.map((c, i) => { const dv = V[c.v] || { ad: w.etkinlik }, ad = `hafta${w.no}_${dosyaAdi(dv.ad)}`;
         return `<div class="kart kod-kart"><div class="parca-baslik"><h2 style="margin:0">${esc(dv.ad)}</h2>${dv.tinker ? '<span class="rozet">Tinkercad</span>' : '<span class="rozet">Gerçek Arduino</span>'}</div>
         ${c.lib ? `<p><b>Kurulacak kütüphane:</b> ${c.lib.map(esc).join(", ")}</p>` : ""}${c.ayar ? `<p><b>Değiştirebileceğin sayılar:</b> ${esc(c.ayar)}</p>` : ""}
-        <div class="dugmeler"><button class="dugme kucuk ana" data-kod-kopya="${i}">📋 Kopyala</button><button class="dugme kucuk" data-kod-indir="${i}" data-ad="${ad}">⬇ ${ad}.ino indir</button><button class="dugme kucuk" data-kod-tahta="${i}">Tahtada büyük göster</button></div>
+        <div class="dugmeler">${WS ? `<button class="dugme kucuk ana yk-dugme" data-yukle="${i}">⚡ Arduino'ya yükle</button>` : ""}<button class="dugme kucuk${WS ? "" : " ana"}" data-kod-kopya="${i}">📋 Kopyala</button><button class="dugme kucuk" data-kod-indir="${i}" data-ad="${ad}">⬇ ${ad}.ino indir</button><button class="dugme kucuk" data-kod-tahta="${i}">Tahtada büyük göster</button></div>
         <pre class="kod-blok"><code>${kodRenkle(c.kod)}</code></pre></div>`; }).join("")}`;
     ic.querySelectorAll("[data-kod-kopya]").forEach((b) => b.onclick = async () => {
       const t = L[+b.dataset.kodKopya].kod;
       try { await navigator.clipboard.writeText(t); } catch (e) { const x = document.createElement("textarea"); x.value = t; document.body.append(x); x.select(); document.execCommand("copy"); x.remove(); }
       b.textContent = "✓ Kopyalandı"; setTimeout(() => { b.textContent = "📋 Kopyala"; }, 1800); });
+    let monDur = null, mesgul = false;
+    const ykDurum = (t, y, hata) => { $("#ykDurum").hidden = false; $("#ykMetin").textContent = t; $("#ykYuzde").style.width = (y || 0) + "%"; $("#ykDurum").classList.toggle("hata", !!hata); $("#ykDurum").classList.toggle("tamam", y === 100 && !hata); };
+    const monKapat = async () => { if (monDur) { const d = monDur; monDur = null; await d(); $("#ykMon").textContent = "📟 Seri Monitör (9600)"; } };
+    ic.querySelectorAll("[data-yukle]").forEach((b) => b.onclick = async () => {
+      if (mesgul) return; mesgul = true; ic.querySelectorAll("[data-yukle]").forEach((x) => { x.disabled = true; });
+      try {
+        await monKapat();
+        ykDurum("Kod hazırlanıyor…", 0);
+        const r = await fetch(`hex/h${w.no}_${b.dataset.yukle}.hex`, { cache: "no-cache" }); if (!r.ok) throw new Error("Derlenmiş kod dosyası bulunamadı (internet bağlantısını kontrol edin).");
+        const hex = await r.text();
+        ykDurum("Arduino'yu listeden seçin…", 0);
+        await ARDUINO.yukle(hex, { baud: +$("#ykBaud").value, durum: (t, y) => ykDurum(t, y) });
+        ykDurum(`✓ Yükleme tamamlandı: ${(V[L[+b.dataset.yukle].v] || {}).ad || "program"} Arduino'da çalışıyor.`, 100);
+      } catch (e) {
+        const m = /No port selected|NotFoundError/.test(e.name + e.message) ? "Arduino seçilmedi. Tekrar basıp listeden seçin." : /Failed to open|InvalidStateError|NetworkError/.test(e.name + e.message) ? "Port açılamadı: Arduino IDE ya da başka bir sekme Arduino'yu kullanıyor olabilir. Kapatıp kabloyu çıkarıp takın." : e.message;
+        ykDurum("✗ " + m, 0, true);
+      } finally { mesgul = false; ic.querySelectorAll("[data-yukle]").forEach((x) => { x.disabled = false; }); }
+    });
+    if ($("#ykMon")) $("#ykMon").onclick = async () => {
+      if (monDur) return monKapat();
+      const M = $("#ykMonitor"); M.hidden = false; M.textContent = "";
+      try { monDur = await ARDUINO.monitor(null, (s) => { M.textContent += s + "\n"; if (M.textContent.length > 20000) M.textContent = M.textContent.slice(-15000); M.scrollTop = M.scrollHeight; }); $("#ykMon").textContent = "⏹ Seri Monitörü kapat"; }
+      catch (e) { M.textContent = "Seri Monitör açılamadı: " + (/NotFound/.test(e.name) ? "Arduino seçilmedi." : e.message); }
+    };
+    window.addEventListener("hashchange", monKapat, { once: true });
     ic.querySelectorAll("[data-kod-indir]").forEach((b) => b.onclick = () => kodIndir(b.dataset.ad, L[+b.dataset.kodIndir].kod));
     ic.querySelectorAll("[data-kod-tahta]").forEach((b) => b.onclick = () => { const c = L[+b.dataset.kodTahta];
       sunumAc([sl("kod", `<div class="etiket">${w.no}. hafta · Arduino kodu</div><pre class="kod-blok tahta"><code>${kodRenkle(c.kod)}</code></pre>`, "")], 0, `${w.no}. hafta · Arduino kodu`); });

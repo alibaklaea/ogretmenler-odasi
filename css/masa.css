@@ -627,3 +627,13 @@ html.uygulama .dk-alan .ct-tahta, html.uygulama .dk-tahta { width: 520px; width:
 .kod-blok { background: #1e2329; color: #e9ecef; border-radius: 10px; padding: 14px 16px; overflow: auto; font: 14px/1.5 Consolas, "Cascadia Mono", monospace; tab-size: 2; margin-top: 10px; max-height: 70vh; }
 .kod-blok .kw { color: #74c0fc; font-weight: 700; } .kod-blok .st { color: #ffd43b; } .kod-blok .yo { color: #8ce99a; font-style: italic; }
 .slayt .kod-blok.tahta { font-size: clamp(14px, 1.45vw, 26px); max-height: 78vh; margin: 0; }
+
+/* ---------- kodlama: uygulamadan Arduino'ya yükleme ---------- */
+.yk-panel { border: 2px solid var(--vurgu); }
+.yk-kart select { width: auto; margin-left: 4px; }
+.yk-durum { margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: #f1f3f5; font-weight: 600; }
+.yk-durum.tamam { background: #d3f9d8; color: #2b8a3e; } .yk-durum.hata { background: #ffe3e3; color: #c92a2a; }
+.yk-cubuk { height: 8px; background: #dee2e6; border-radius: 4px; overflow: hidden; margin-bottom: 6px; }
+.yk-cubuk i { display: block; height: 100%; width: 0; background: var(--vurgu); transition: width .2s; }
+.yk-monitor { background: #111; color: #69db7c; font: 14px/1.4 Consolas, monospace; height: 220px; overflow: auto; padding: 10px; border-radius: 10px; margin-top: 10px; white-space: pre-wrap; }
+.yk-dugme:disabled { opacity: .5; }
