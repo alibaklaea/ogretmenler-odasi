@@ -507,6 +507,68 @@ window.DEVRE = (function () {
     return Z;
   }
 
+  // ---------- "Breadboard nasıl çalışır?" öğretici slaytlar (dokunmalı) ----------
+  // Grup kimlikleri: RuE/RuA (üst − / +), RaE/RaA (alt − / +), U<k> (üst yarı k. sütun a-e), A<k> (alt yarı k. sütun f-j)
+  const BO_N = 20;
+  function bbGrup(r, k) { return r === "ustEksi" ? "RuE" : r === "ustArti" ? "RuA" : r === "altEksi" ? "RaE" : r === "altArti" ? "RaA" : ("abcde".includes(r) ? "U" : "A") + k; }
+  function bbTemel(o = {}) {
+    const N = BO_N, X = (k) => BX + (k - 1) * BS, Y = (r) => SATIR[r] || RAY[r], yan = o.yan || [], W = X(N) + 70, Hh = 500;
+    let s = `<svg class="dv bbo" viewBox="0 0 ${W} ${Hh}" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif"><rect width="${W}" height="${Hh}" fill="#fbfcfd"/>`;
+    s += `<rect x="${BX - 34}" y="40" width="${X(N) - BX + 68}" height="410" rx="12" fill="#f8f9fa" stroke="#ced4da" stroke-width="2.5"/><rect x="${BX - 34}" y="${SATIR.e + 14}" width="${X(N) - BX + 68}" height="20" fill="#dee2e6"/>`;
+    [["ustEksi", "#1c7ed6", "−"], ["ustArti", "#e03131", "+"], ["altEksi", "#1c7ed6", "−"], ["altArti", "#e03131", "+"]].forEach(([r, c, i]) => {
+      const y = RAY[r]; s += `<line x1="${BX - 12}" y1="${y + (y < 200 ? -11 : 11)}" x2="${X(N) + 12}" y2="${y + (y < 200 ? -11 : 11)}" stroke="${c}" stroke-width="2.5"/><text x="${BX - 22}" y="${y + 6}" text-anchor="middle" font-size="18" font-weight="800" fill="${c}">${i}</text>`; });
+    // gizli bantlar (vurgu): her grup için bir şerit
+    const bant = (g, x, y, w, h) => { const i = yan.indexOf(g); return `<rect class="bant${i >= 0 ? " on" : ""}" data-b="${g}" x="${x}" y="${y}" width="${w}" height="${h}" rx="9" style="${i >= 0 ? `animation-delay:${i * 0.5}s` : ""}"/>`; };
+    ["ustEksi", "ustArti", "altEksi", "altArti"].forEach((r) => { s += bant(bbGrup(r), X(1) - 12, RAY[r] - 12, X(N) - X(1) + 24, 24); });
+    for (let k = 1; k <= N; k++) { s += bant("U" + k, X(k) - 12, SATIR.a - 12, 24, SATIR.e - SATIR.a + 24) + bant("A" + k, X(k) - 12, SATIR.f - 12, 24, SATIR.j - SATIR.f + 24); }
+    for (let k = 1; k <= N; k++) {
+      const x = X(k);
+      ["ustEksi", "ustArti", "altEksi", "altArti"].forEach((r) => { s += `<rect class="dlk" data-g="${bbGrup(r)}" x="${x - 5}" y="${RAY[r] - 5}" width="10" height="10" rx="2"/>`; });
+      Object.keys(SATIR).forEach((r) => { s += `<rect class="dlk" data-g="${bbGrup(r, k)}" x="${x - 5}" y="${SATIR[r] - 5}" width="10" height="10" rx="2"/>`; });
+      if (k === 1 || k % 5 === 0) s += `<text x="${x}" y="${SATIR.a - 16}" text-anchor="middle" font-size="12" font-weight="700" fill="#495057">${k}</text>`;
+    }
+    Object.entries(SATIR).forEach(([r, y]) => { s += `<text x="${BX - 22}" y="${y + 4}" text-anchor="middle" font-size="13" font-weight="700" fill="#495057">${r}</text>`; });
+    s += `<text x="${X(N) + 26}" y="${SATIR.e + 29}" font-size="11" font-weight="700" fill="#868e96">oluk</text>`;
+    return s + (o.ek ? o.ek(X, Y) : "") + "</svg>";
+  }
+  const bbIsaret = (X, Y, a, b, ok) => { const [ra, ka] = a, [rb, kb] = b, x1 = X(ka), y1 = Y(ra), x2 = X(kb), y2 = Y(rb), c = ok ? "#2f9e44" : "#e03131";
+    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="4" stroke-dasharray="${ok ? "0" : "7 6"}"/><circle cx="${x1}" cy="${y1}" r="9" fill="none" stroke="${c}" stroke-width="3.5"/><circle cx="${x2}" cy="${y2}" r="9" fill="none" stroke="${c}" stroke-width="3.5"/>`
+      + `<circle cx="${(x1 + x2) / 2 + (ka === kb ? 34 : 0)}" cy="${(y1 + y2) / 2 - (ka === kb ? 0 : 30)}" r="17" fill="${c}"/><text x="${(x1 + x2) / 2 + (ka === kb ? 34 : 0)}" y="${(y1 + y2) / 2 - (ka === kb ? 0 : 30) + 7}" text-anchor="middle" font-size="20" font-weight="900" fill="#fff">${ok ? "✓" : "✗"}</text>`; };
+  function bbOgret(sl) {
+    const S = [], sahne = (et, baslik, svgS, alt, anlat) => S.push(sl("devre", `<div class="etiket">Breadboard nasıl çalışır? · ${et}</div><h2 class="bbo-b">${baslik}</h2><div class="dv-sahne">${svgS}</div><p class="dv-alt">${alt}</p>`, anlat));
+    sahne("1/7", "Lehimsiz devre tahtası", bbTemel(),
+      "Her deliğin altında metal bir yay var. Bazı delikler içeriden birbirine bağlı. Hangi deliklerin bağlı olduğunu bilirsek kablo, parça ve Arduino'yu lehimsiz birleştiririz.",
+      "Bu bir breadboard, yani lehimsiz devre tahtası. Her deliğin altında metal bir yay var. Bazı delikler içeriden birbirine bağlı. Hangi deliklerin bağlı olduğunu öğrenirsek devreyi lehim yapmadan kurabiliriz.");
+    sahne("2/7", "Kenardaki uzun hatlar: <b>yatay</b> boyunca bağlı", bbTemel({ yan: ["RuA", "RuE", "RaE", "RaA"] }),
+      "Kırmızı çizgili + hattın bütün delikleri birbirine bağlı; mavi çizgili − hat da öyle. Arduino 5V'u + hatta, GND'yi − hatta takarız; böylece her parça 5V ve GND'yi buradan alır. Dikkat: bazı uzun breadboard'larda çizgi ortada kesik; o zaman iki yarı ayrıdır.",
+      "Kenardaki uzun hatlara bakalım. Kırmızı çizginin yanındaki deliklerin hepsi boydan boya birbirine bağlı. Mavi çizgili hat da öyle. Arduino'nun beş voltunu artı hatta, GND'yi eksi hatta takarız. Böylece bütün parçalar elektriği buradan alır. Dikkat: bazı uzun breadboardlarda çizgi ortada kesiktir, o zaman iki yarı birbirinden ayrıdır.");
+    sahne("3/7", "Ortadaki delikler: <b>dikey</b> 5'li gruplar", bbTemel({ yan: ["U3", "U4", "U5", "A12", "A13", "A14"] }),
+      "Aynı sütundaki a-b-c-d-e delikleri birbirine bağlı (örneğin a4, b4, c4, d4, e4 aynı nokta). f-g-h-i-j delikleri de kendi aralarında bağlı. Yan yana duran delikler bağlı DEĞİL.",
+      "Ortadaki deliklere geçelim. Burada bağlantı dikey. Aynı sütundaki a, b, c, d ve e delikleri birbirine bağlı. Mesela a dört ile d dört aynı noktadır. Alttaki f, g, h, i, j delikleri de kendi aralarında bağlı. Ama yan yana duran delikler bağlı değil.");
+    sahne("4/7", "Ortadaki oluk iki yarıyı <b>ayırır</b>", bbTemel({ yan: ["U6", "A6"], ek: (X, Y) => bbIsaret(X, Y, ["e", 6], ["f", 6], false) + bbIsaret(X, Y, ["d", 12], ["d", 13], false) + bbIsaret(X, Y, ["a", 16], ["e", 16], true) }),
+      "e6 ile f6 aynı sütunda ama oluğun iki yanında: bağlı değil ✗. d12 ile d13 yan yana: bağlı değil ✗. a16 ile e16 aynı sütunda, aynı yarıda: bağlı ✓.",
+      "Ortadaki oluk iki yarıyı birbirinden ayırır. E altı ile f altı aynı sütunda ama oluğun iki yanında oldukları için bağlı değil. D on iki ile d on üç yan yana, onlar da bağlı değil. A on altı ile e on altı ise aynı sütunda ve aynı yarıda, bunlar bağlı.");
+    sahne("5/7", "LED'i doğru tak: iki bacak <b>farklı sütunlara</b>", bbTemel({ yan: ["A5", "A11", "A12"], ek: (X, Y) => {
+      const led = (x, y) => `<circle cx="${x}" cy="${y - 26}" r="16" fill="#e03131" fill-opacity=".9" stroke="rgba(0,0,0,.45)" stroke-width="2"/>`;
+      return led(X(5) + 14, Y("f")) + `<circle cx="${X(5)}" cy="${Y("f")}" r="6" fill="#ced4da" stroke="#212529" stroke-width="2"/><circle cx="${X(5)}" cy="${Y("g")}" r="6" fill="#ced4da" stroke="#212529" stroke-width="2"/>`
+        + `<text x="${X(5)}" y="488" text-anchor="middle" font-size="16" font-weight="800" fill="#e03131">✗ f5 + g5</text>`
+        + led((X(11) + X(12)) / 2, Y("f")) + `<circle cx="${X(11)}" cy="${Y("f")}" r="6" fill="#ced4da" stroke="#212529" stroke-width="2"/><circle cx="${X(12)}" cy="${Y("f")}" r="6" fill="#ced4da" stroke="#212529" stroke-width="2"/>`
+        + `<text x="${(X(11) + X(12)) / 2}" y="488" text-anchor="middle" font-size="16" font-weight="800" fill="#2f9e44">✓ f11 + f12</text>`; } }),
+      "Solda LED'in iki bacağı aynı sütunda (f5, g5): bacaklar içeriden birleşir, elektrik LED'e uğramaz, LED yanmaz. Sağda bacaklar farklı sütunlarda (f11, f12): doğru.",
+      "Bu bilgi neden önemli? Soldaki LED'in iki bacağı aynı sütunda. Bacaklar içeriden birleştiği için elektrik LED'e hiç uğramaz ve LED yanmaz. Sağdaki LED'in bacakları farklı sütunlarda. Bu doğru takılış.");
+    sahne("6/7", "Buton neden oluğun <b>üstüne</b> takılır?", bbTemel({ yan: ["U4", "A6"], ek: (X, Y) => {
+      const x0 = X(4) - 15, x1 = X(6) + 15, y0 = Y("d") - 15, y1 = Y("g") + 15;
+      return `<rect x="${x0}" y="${y0}" width="${x1 - x0}" height="${y1 - y0}" rx="6" fill="#343a40" opacity=".9"/><circle cx="${(x0 + x1) / 2}" cy="${(y0 + y1) / 2}" r="22" fill="#212529"/>`
+        + [["d", 4], ["d", 6], ["g", 4], ["g", 6]].map(([r, k]) => `<circle cx="${X(k)}" cy="${Y(r)}" r="6" fill="#ced4da" stroke="#212529" stroke-width="2"/>`).join("")
+        + `<text x="${X(9)}" y="${Y("b")}" font-size="16" font-weight="800" fill="#e67700">sarı sütun: 5V gelir (a4)</text><text x="${X(9)}" y="${Y("i")}" font-size="16" font-weight="800" fill="#e67700">yeşil sütun: Arduino D2'ye gider (i6)</text>`; } }),
+      "Buton oluğun üstüne oturunca bacakları d4, d6, g4, g6 deliklerine girer. Basılmadığında 4. sütun ile 6. sütun ayrıdır; basınca buton ikisini birleştirir ve 5V, D2'ye ulaşır. Kabloları hep butonun çapraz bacaklarına bağlarız.",
+      "Buton neden oluğun üstüne takılır? Butonun dört bacağı d dört, d altı, g dört ve g altı deliklerine girer. Butona basılmadığında dördüncü sütun ile altıncı sütun ayrıdır. Basınca buton ikisini birleştirir ve beş volt, Arduino'nun D iki pinine ulaşır. Kabloları hep butonun çapraz bacaklarına bağlarız.");
+    sahne("7/7", "Sen dene: bir deliğe dokun!", bbTemel({ yan: [] }).replace('class="dv bbo"', 'class="dv bbo bbo-dene"'),
+      "Herhangi bir deliğe dokun: o delikle içeriden bağlı olan bütün delikler yanar. Arkadaşına sor: “c7 ile h7 bağlı mı?” “+ hattın iki ucu bağlı mı?”",
+      "Şimdi sıra sende. Tahtada herhangi bir deliğe dokun. O delikle içeriden bağlı olan bütün delikler yanacak. Arkadaşına sor: c yedi ile h yedi bağlı mı?");
+    return S;
+  }
+
   // ---------- metinler ----------
   const SIRA1 = ["", "birinci", "ikinci", "üçüncü", "dördüncü", "beşinci", "altıncı", "yedinci", "sekizinci", "dokuzuncu"];
   const sira = (n) => { const t = Math.floor(n / 10), b = n % 10; const s = n === 10 ? "onuncu" : n === 20 ? "yirminci" : n === 30 ? "otuzuncu" : [["", "on ", "yirmi "][t] || ""] + SIRA1[b]; return s.charAt(0).toLocaleUpperCase("tr") + s.slice(1); };
@@ -588,6 +650,7 @@ window.DEVRE = (function () {
   function slaytlar(no, sl, bolum, vi_) {
     const V = H[no]; if (!V) return [];
     const S = [];
+    if (bolum !== "baglanti" && +no === Math.min(...Object.keys(H).map(Number))) bbOgret(sl).forEach((x) => S.push(x));
     if (bolum !== "baglanti") nasil(V[0]).forEach((x) => S.push(sl("bilgi", `<div class="etiket">Parçayı tanı · Nasıl çalışır?</div><h2>${esc(x.ad)}</h2><p>${esc(x.metin)}</p>`, `${x.ad}. ${x.metin}`)));
     if (bolum === "nasil") return S;
     V.forEach((dv, vi) => {
@@ -640,5 +703,5 @@ window.DEVRE = (function () {
     return `<div class="dv-iki"><table class="dv-tablo kucuk">${bas_}${A.slice(0, y).map(satir).join("")}</table><table class="dv-tablo kucuk">${bas_}${A.slice(y).map(satir).join("")}</table></div>`;
   }
 
-  return { PARCA, H, RENK, unoPin, yerlesim, svg, adimlar, tablo, kontrol, kodPinleri, yerlestirme, tinkerAdimlar, kablolar, nasil, parcaListesi, slaytlar, ders, kagit, tahta, tahtaListe, bbVar, var: (no) => !!H[no] };
+  return { PARCA, H, RENK, unoPin, yerlesim, svg, adimlar, tablo, kontrol, kodPinleri, yerlestirme, tinkerAdimlar, kablolar, nasil, parcaListesi, slaytlar, ders, kagit, tahta, tahtaListe, bbVar, bbOgret, var: (no) => !!H[no] };
 })();

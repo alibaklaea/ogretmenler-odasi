@@ -637,3 +637,13 @@ html.uygulama .dk-alan .ct-tahta, html.uygulama .dk-tahta { width: 520px; width:
 .yk-cubuk i { display: block; height: 100%; width: 0; background: var(--vurgu); transition: width .2s; }
 .yk-monitor { background: #111; color: #69db7c; font: 14px/1.4 Consolas, monospace; height: 220px; overflow: auto; padding: 10px; border-radius: 10px; margin-top: 10px; white-space: pre-wrap; }
 .yk-dugme:disabled { opacity: .5; }
+
+/* ---------- kodlama: breadboard öğretici ---------- */
+.bbo .dlk { fill: #868e96; transition: fill .2s; }
+.bbo .bant { fill: #fab005; opacity: 0; }
+.bbo .bant.on { animation: bbYan 1.4s ease-in-out infinite alternate both; }
+.bbo .dlk.sec { fill: #e67700; }
+.bbo-dene .dlk { cursor: pointer; }
+.bbo-dene .dlk:hover { fill: #1c7ed6; }
+@keyframes bbYan { from { opacity: .15; } to { opacity: .6; } }
+.slayt h2.bbo-b { margin: 0 0 1vh; } .slayt h2.bbo-b b { color: var(--vurgu); }

@@ -902,6 +902,7 @@
     const V = DEVRE.H[k.no];
     return `<div class="dv-kart"><h3>Bağlantı şeması: hangi kablo nereye?</h3>
       <p class="not">Her kablonun iki ucunda aynı numara var. Kablolar USB çıkarken, numara sırasıyla takılır. Arduino'nun üstündeki renkli etiketler kablonun girdiği pini gösterir.</p>
+      <p><button class="dugme kucuk" data-bb-ogret>🧩 Breadboard nasıl çalışır? (sesli, 7 slayt, dokunmalı)</button></p>
       ${V.map((dv, i) => `<details class="dv-ac" ${i === 0 ? "open" : ""}><summary><b>${esc(dv.ad)}</b> · ${DEVRE.yerlesim(dv).K.length} kablo</summary>
         <div class="dv-sahne">${DEVRE.svg(dv)}</div>${DEVRE.tablo(dv)}
         ${DEVRE.bbVar(dv) ? `<h4 style="margin:16px 0 4px">🔌 Breadboard'a takılış: hangi bacak hangi deliğe?</h4><p class="not">Breadboard'un kenarındaki harfler (a-j) satır, sayılar sütundur. "d4" = d satırı, 4. sütun.</p><div class="dv-sahne">${DEVRE.tahta(dv)}</div><ul class="dv-liste">${DEVRE.tahtaListe(dv).map((x) => `<li>${x}</li>`).join("")}</ul>` : ""}
@@ -910,7 +911,17 @@
       ${window.KODLAR && KODLAR[k.no] ? `<p><a class="dugme kucuk ana" href="#hafta/${k.no}/kod">💾 Bu devrenin hazır Arduino kodu</a></p>` : ""}
       <p><b>Ders öncesi kablo hazırlığı (bir grup için):</b> ${esc(DEVRE.kablolar(V[0]))}.</p></div>`;
   }
+  document.addEventListener("click", (e) => { // breadboard öğretici: deliğe dokununca bağlı delikler yanar
+    const d = e.target.closest(".bbo-dene .dlk"); if (!d) return;
+    e.stopPropagation(); e.preventDefault();
+    const svg = d.closest("svg"), g = d.dataset.g;
+    svg.querySelectorAll(".bant.on").forEach((x) => x.classList.remove("on"));
+    svg.querySelectorAll(".dlk.sec").forEach((x) => x.classList.remove("sec"));
+    svg.querySelectorAll(`.bant[data-b="${g}"]`).forEach((x) => { void x.getBoundingClientRect(); x.classList.add("on"); });
+    svg.querySelectorAll(`.dlk[data-g="${g}"]`).forEach((x) => x.classList.add("sec"));
+  }, true);
   document.addEventListener("click", (e) => {
+    if (e.target.closest("[data-bb-ogret]")) { sunumAc(DEVRE.bbOgret(sl), 0, "Breadboard nasıl çalışır?", false, true); return; }
     const b = e.target.closest("[data-dv-video],[data-dv-sun],[data-dv-bas]"); if (!b) return;
     const [no, i] = (b.dataset.dvVideo || b.dataset.dvSun || b.dataset.dvBas).split("/").map(Number), dv = DEVRE.H[no][i];
     if (b.dataset.dvBas) { bas(kagitHTML(DEVRE.kagit(no)[i], null, `${no}. hafta · ${KD.ad}`)); return; }
@@ -941,7 +952,7 @@
         <div class="yk-durum" id="ykDurum" hidden><div class="yk-cubuk"><i id="ykYuzde"></i></div><span id="ykMetin"></span></div>
         <pre class="yk-monitor" id="ykMonitor" hidden></pre>`
       : `<div class="uyari">Bu tarayıcı Arduino'ya doğrudan yükleme yapamıyor. Sayfayı bilgisayarda <b>Google Chrome</b> ya da <b>Microsoft Edge</b> ile açın (telefon ve tablette çalışmaz). Ya da aşağıdaki Arduino IDE yolunu kullanın.</div>`}
-      <p class="not">Bilgisayar Arduino'yu görmüyorsa: klon kartlarda <b>CH340 sürücüsü</b> kurulmalı; kablo yalnız şarj kablosu olabilir, başka kablo deneyin. Yükleme sırasında Arduino IDE ve Seri Monitör kapalı olmalı.</p></div>
+      <details class="not"><summary>Sorun çıkarsa ne yapmalı? (Bu bir hata mesajı değil, yardım notu)</summary>Bilgisayar Arduino'yu görmüyorsa: klon kartlarda <b>CH340 sürücüsü</b> kurulmalı; kablo yalnız şarj kablosu olabilir, başka kablo deneyin. Yükleme sırasında Arduino IDE ve Seri Monitör kapalı olmalı.</details></div>
       <details class="kart kod-yol"><summary><b>Ya da Arduino IDE ile yükleme</b></summary> <ol><li>Arduino IDE'yi aç → Dosya → Yeni.</li><li>Aşağıdaki kodu <b>Kopyala</b> düğmesiyle al, IDE'deki her şeyi silip yapıştır (ya da <b>.ino indir</b> ile dosyayı aç).</li><li>Gerekiyorsa kütüphaneyi kur: Araçlar → Kütüphaneleri Yönet → adını ara → Yükle.</li><li>Araçlar → Kart: <b>Arduino Uno</b>; Araçlar → Port: Arduino'nun takılı olduğu COM portu.</li><li><b>Yükle (→)</b> düğmesine bas. Sonra Seri Monitörü aç, hızı <b>9600</b> yap.</li></ol>
       <p class="not">Kodlardaki pinler bu haftanın bağlantı şemasıyla birebir aynı. Öğrencilerin yapay zekâyla yazdığı kod çalışmazsa bu kodla karşılaştırın. Tinkercad'de: Kod → Metin → hepsini silip yapıştır.</p></details>
       ${L.map((c, i) => { const dv = V[c.v] || { ad: w.etkinlik }, ad = `hafta${w.no}_${dosyaAdi(dv.ad)}`;
