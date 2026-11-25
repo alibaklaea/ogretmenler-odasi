@@ -977,7 +977,11 @@
         if (g) veri = Uint8Array.from(atob(g), (c) => c.charCodeAt(0));
         else { const r = await fetch(`hex/h${w.no}_${b.dataset.yukle}.hex`, { cache: "no-cache" }).catch(() => null); if (!r || !r.ok) throw new Error("Derlenmiş kod bulunamadı. Sayfayı internete bağlıyken bir kez yenileyin."); hex = await r.text(); }
         ykDurum("Arduino'yu listeden seçin…", 0);
-        await ARDUINO.yukle(hex, { veri, baud: +$("#ykBaud").value, durum: (t, y) => ykDurum(t, y) });
+        const port = await ARDUINO.portSec(), hiz = +$("#ykBaud").value;
+        try { await ARDUINO.yukle(hex, { veri, port, baud: hiz, durum: (t, y) => ykDurum(t, y) }); }
+        catch (e) { if (!/bağlanılamadı/.test(e.message)) throw e; // kart türü yanlış seçilmiş olabilir: öbür hızı dene
+          const oteki = hiz === 115200 ? 57600 : 115200;
+          await ARDUINO.yukle(hex, { veri, port, baud: oteki, durum: (t, y) => ykDurum(`${t} (${oteki === 57600 ? "eski Nano" : "Uno"} ayarıyla)`, y) }); }
         ykDurum(`✓ Yükleme tamamlandı: ${(V[L[+b.dataset.yukle].v] || {}).ad || "program"} Arduino'da çalışıyor.`, 100);
       } catch (e) {
         const m = /No port selected|NotFoundError/.test(e.name + e.message) ? "Arduino seçilmedi. Tekrar basıp listeden seçin." : /Failed to open|InvalidStateError|NetworkError/.test(e.name + e.message) ? "Port açılamadı: Arduino IDE ya da başka bir sekme Arduino'yu kullanıyor olabilir. Kapatıp kabloyu çıkarıp takın." : e.message;

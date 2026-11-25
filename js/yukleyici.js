@@ -49,39 +49,55 @@ window.ARDUINO = (function () {
     await port.open({ baudRate: baud });
     const w = port.writable.getWriter(), R = okuyucu(port);
     const yaz = (b) => w.write(new Uint8Array(b));
-    const komut = async (b, cevap = 0, ms = 600) => { await yaz([...b, 0x20]); const x = await R.al(cevap + 2, ms); if (x[0] !== 0x14 || x[x.length - 1] !== 0x10) throw new Error("Arduino beklenmeyen cevap verdi."); return x.slice(1, 1 + cevap); };
-    try {
-      durum("Arduino yeniden başlatılıyor…", 0);
+    let adim = "";
+    const komut = async (b, cevap = 0, ms = 1000) => { await yaz([...b, 0x20]); let x;
+      try { x = await R.al(cevap + 2, ms); } catch (e) { throw new Error(`Arduino cevap vermedi (${adim}).`); }
+      if (x[0] !== 0x14 || x[x.length - 1] !== 0x10) throw new Error(`Arduino beklenmeyen cevap verdi (${adim}).`); return x.slice(1, 1 + cevap); };
+    async function bagla() {
       let senkron = false;
-      for (let deneme = 0; deneme < 4 && !senkron; deneme++) {
-        await port.setSignals({ dataTerminalReady: false, requestToSend: false }); await bekle(120);
-        await port.setSignals({ dataTerminalReady: true, requestToSend: true }); await bekle(deneme ? 60 : 30);
+      for (let deneme = 0; deneme < 5 && !senkron; deneme++) {
+        await port.setSignals({ dataTerminalReady: false, requestToSend: false }); await bekle(150);
+        await port.setSignals({ dataTerminalReady: true, requestToSend: true }); await bekle(deneme ? 80 + deneme * 40 : 50);
         R.temizle();
-        for (let i = 0; i < 8 && !senkron; i++) { try { await yaz([0x30, 0x20]); const x = await R.al(2, 200); if (x[0] === 0x14 && x[1] === 0x10) senkron = true; } catch (e) { R.temizle(); } }
+        for (let i = 0; i < 10 && !senkron; i++) { try { await yaz([0x30, 0x20]); const x = await R.al(2, 150); if (x[0] === 0x14 && x[1] === 0x10) senkron = true; } catch (e) { R.temizle(); } }
       }
       if (!senkron) throw new Error("Arduino'ya bağlanılamadı. Kart türü (Uno / eski Nano) doğru mu? Seri Monitör ya da Arduino IDE açıksa kapatın.");
-      const imza = await komut([0x75], 3);
-      if (imza[0] !== 0x1e || imza[1] !== 0x95 || imza[2] !== 0x0f) throw new Error(`Kart ATmega328P değil (imza ${imza.map((x) => x.toString(16)).join(" ")}).`);
-      await komut([0x50]);
-      const SAYFA = 128, n = Math.ceil(veri.length / SAYFA);
-      for (let s = 0; s < n; s++) {
-        const adr = (s * SAYFA) >> 1, parca = Array.from(veri.slice(s * SAYFA, (s + 1) * SAYFA));
-        while (parca.length < SAYFA) parca.push(0xff);
-        await komut([0x55, adr & 0xff, adr >> 8]);
-        await komut([0x64, 0, SAYFA, 0x46, ...parca], 0, 1500);
-        durum(`Yükleniyor… ${s + 1}/${n} sayfa`, Math.round((s + 1) / n * 80));
+      await bekle(60); R.temizle(); // geç gelen eski cevapları at
+      adim = "eşleşme"; await komut([0x30]);
+    }
+    try {
+      let son = null;
+      for (let tur = 1; tur <= 3; tur++) {
+        try {
+          durum(tur === 1 ? "Arduino yeniden başlatılıyor…" : `Tekrar deneniyor (${tur}/3)…`, 0);
+          await bagla();
+          adim = "kart kimliği okuma";
+          const imza = await komut([0x75], 3);
+          if (imza[0] !== 0x1e || imza[1] !== 0x95 || imza[2] !== 0x0f) throw Object.assign(new Error(`Kart ATmega328P değil (imza ${imza.map((x) => x.toString(16)).join(" ")}).`), { kesin: true });
+          adim = "programlama modu"; await komut([0x50]);
+          const SAYFA = 128, n = Math.ceil(veri.length / SAYFA);
+          for (let s = 0; s < n; s++) {
+            const adr = (s * SAYFA) >> 1, parca = Array.from(veri.slice(s * SAYFA, (s + 1) * SAYFA));
+            while (parca.length < SAYFA) parca.push(0xff);
+            adim = `yazma, sayfa ${s + 1}/${n}`;
+            await komut([0x55, adr & 0xff, adr >> 8]);
+            await komut([0x64, 0, SAYFA, 0x46, ...parca], 0, 2000);
+            durum(`Yükleniyor… ${s + 1}/${n} sayfa`, Math.round((s + 1) / n * 80));
+          }
+          for (let s = 0; s < n; s++) { // doğrulama: yazılanı geri oku
+            const adr = (s * SAYFA) >> 1; adim = `doğrulama, sayfa ${s + 1}/${n}`;
+            await komut([0x55, adr & 0xff, adr >> 8]);
+            const oku = await komut([0x74, 0, SAYFA, 0x46], SAYFA, 2000);
+            const bek = veri.slice(s * SAYFA, (s + 1) * SAYFA);
+            for (let i = 0; i < bek.length; i++) if (oku[i] !== bek[i]) throw new Error(`Doğrulama hatası (sayfa ${s + 1}).`);
+            durum(`Doğrulanıyor… ${s + 1}/${n}`, 80 + Math.round((s + 1) / n * 20));
+          }
+          adim = "bitiş"; await komut([0x51]).catch(() => {});
+          durum(`Yükleme tamamlandı ✓ (${veri.length} bayt). Program çalışıyor.`, 100);
+          return port;
+        } catch (e) { son = e; if (e.kesin || /bağlanılamadı/.test(e.message)) throw e; }
       }
-      for (let s = 0; s < n; s++) { // doğrulama: yazılanı geri oku
-        const adr = (s * SAYFA) >> 1;
-        await komut([0x55, adr & 0xff, adr >> 8]);
-        const oku = await komut([0x74, 0, SAYFA, 0x46], SAYFA, 1500);
-        const bek = veri.slice(s * SAYFA, (s + 1) * SAYFA);
-        for (let i = 0; i < bek.length; i++) if (oku[i] !== bek[i]) throw new Error(`Doğrulama hatası (sayfa ${s + 1}). Yeniden deneyin.`);
-        durum(`Doğrulanıyor… ${s + 1}/${n}`, 80 + Math.round((s + 1) / n * 20));
-      }
-      await komut([0x51]);
-      durum(`Yükleme tamamlandı ✓ (${veri.length} bayt). Program çalışıyor.`, 100);
-      return port;
+      throw son;
     } finally {
       try { w.releaseLock(); } catch (e) { }
       await R.kapat();
