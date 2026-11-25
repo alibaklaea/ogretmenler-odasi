@@ -379,6 +379,134 @@ window.DEVRE = (function () {
     return s + "</svg>";
   }
 
+  // ---------- gerçek breadboard görünümü (delik delik) ----------
+  // Parçalar breadboard'a takılı çizilir; üst + hat = 5V, alt − hat = GND. Modüller (servo, sensör kartları) breadboard'a takılmaz.
+  const BS = 24, BX = 170, SATIR = { a: 124, b: 148, c: 172, d: 196, e: 220, f: 268, g: 292, h: 316, i: 340, j: 364 };
+  const RAY = { ustEksi: 58, ustArti: 82, altEksi: 406, altArti: 430 };
+  const BB_UST = ["a", "b", "c", "d", "e"], BB_ALT = ["f", "g", "h", "i", "j"];
+  // bacak: [pin, satır, sütun farkı]; uc: pin → [sütun farkı, "u"(üst yarı) | "a"(alt yarı)]; seri: [satır, sütun1, sütun2, değer]
+  const BB = {
+    buton: { w: 3, bacak: [["B1", "d", 0], ["", "d", 2], ["", "g", 0], ["B2", "g", 2]], uc: { B1: [0, "u"], B2: [2, "a"], R: [2, "a"] },
+      not: "Buton breadboard'un ortasındaki oluğun ÜSTÜNE oturur: 2 bacak oluğun üst yanında, 2 bacak alt yanında. Bacaklar kıvrıksa pense ile düzelt. Tek doğru yönde rahatça oturur; zorlanıyorsa 90° çevir.",
+      ciz: (X, Y, c) => { const x0 = X(c) - 15, x1 = X(c + 2) + 15, y0 = Y("d") - 15, y1 = Y("g") + 15, mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
+        return `<rect x="${x0}" y="${y0}" width="${x1 - x0}" height="${y1 - y0}" rx="6" fill="#343a40" stroke="#111" stroke-width="2" opacity=".93"/><circle cx="${mx}" cy="${my}" r="24" fill="#212529" stroke="#000" stroke-width="2"/><circle cx="${mx - 6}" cy="${my - 6}" r="8" fill="#495057"/>`; } },
+    led: { w: 4, bacak: [["A", "f", 2], ["K", "f", 3]], uc: { A: [0, "a"], K: [3, "a"] }, seri: [["h", 0, 2, "220Ω"]],
+      not: "LED'in uzun bacağı (+) direncin olduğu sütunda, kısa bacağı (−) yanındaki sütunda. 220Ω direnç aynı yarıda yatay durur.",
+      ciz: (X, Y, c, q) => { const col = (RENK[(q && q.led) || "kirmizi"] || RENK.kirmizi)[0], mx = (X(c + 2) + X(c + 3)) / 2;
+        return `<circle cx="${mx}" cy="${Y("f") - 20}" r="17" fill="${col}" fill-opacity=".9" stroke="rgba(0,0,0,.45)" stroke-width="2"/><circle cx="${mx - 5}" cy="${Y("f") - 26}" r="5" fill="#fff" opacity=".7"/>`
+          + `<text x="${X(c + 2)}" y="${Y("f") + 26}" text-anchor="middle" font-size="10" font-weight="800" fill="#c92a2a">uzun+</text>`; } },
+    ldr: { w: 1, bacak: [["L1", "e", 0], ["L2", "f", 0]], uc: { L1: [0, "u"], L2: [0, "a"], R: [0, "a"] },
+      not: "LDR'nin bir bacağı oluğun üst yanında, öbürü alt yanında (aynı sütun, oluk ikisini ayırır). Yönü fark etmez.",
+      ciz: (X, Y, c) => `<ellipse cx="${X(c)}" cy="${(Y("e") + Y("f")) / 2}" rx="15" ry="13" fill="#f4d58d" stroke="#8a6d3b" stroke-width="2"/><path d="M${X(c) - 9} ${(Y("e") + Y("f")) / 2 - 5} h6 v10 h6 v-10 h6" stroke="#c0392b" stroke-width="2" fill="none"/>` },
+    pot: { w: 5, bacak: [["L", "f", 0], ["W", "f", 2], ["R", "f", 4]], uc: { L: [0, "a"], W: [2, "a"], R: [4, "a"] },
+      not: "Potansiyometrenin 3 bacağı aynı satırda, aralarında birer delik boşluk.",
+      ciz: (X, Y, c) => `<rect x="${X(c) - 12}" y="${Y("e") - 22}" width="${X(c + 4) - X(c) + 24}" height="44" rx="6" fill="#1c63b7" stroke="#0b3d78" stroke-width="2"/><circle cx="${X(c + 2)}" cy="${Y("e")}" r="17" fill="#dee2e6" stroke="#495057" stroke-width="2"/><rect x="${X(c + 2) - 2}" y="${Y("e") - 15}" width="4" height="14" fill="#495057"/>` },
+    buzzer: { w: 4, bacak: [["P", "f", 0], ["N", "f", 3]], uc: { P: [0, "a"], N: [3, "a"] },
+      not: "Buzzer'ın uzun bacağı (+) solda, kısa bacağı (−) sağda; aynı satırda.",
+      ciz: (X, Y, c) => { const mx = (X(c) + X(c + 3)) / 2; return `<circle cx="${mx}" cy="${Y("e") + 6}" r="30" fill="#212529" stroke="#000" stroke-width="2"/><circle cx="${mx}" cy="${Y("e") + 6}" r="5" fill="#495057"/><text x="${X(c)}" y="${Y("e") - 14}" text-anchor="middle" font-size="14" font-weight="800" fill="#fff">+</text>`; } },
+    tmp36: { w: 3, bacak: [["V", "f", 0], ["O", "f", 1], ["G", "f", 2]], uc: { V: [0, "a"], O: [1, "a"], G: [2, "a"] },
+      not: "TMP36'nın düz yüzü sana bakarken: sol bacak +Vs, orta Vout, sağ GND.",
+      ciz: (X, Y, c) => `<path d="M${X(c) - 12} ${Y("f") - 8} V${Y("e") - 6} H${X(c + 2) + 12} V${Y("f") - 8} Z" fill="#343a40"/><text x="${X(c + 1)}" y="${Y("e") + 4}" text-anchor="middle" font-size="9" font-weight="700" fill="#fff">TMP36</text>` }
+  };
+  const bbVar = (dv) => dv.parcalar.some((q) => BB[q.tip]);
+  function tahtaYerlesim(dv) {
+    const L = yerlesim(dv); if (L.bb) return L.bb;
+    let c = 4; const P = [], dolu = new Set(), uclar = {};
+    L.P.forEach((q) => { const F = BB[q.tip]; if (!F) return; P.push({ q, F, c }); F.bacak.forEach(([, r, d]) => dolu.add(r + (c + d)));
+      (F.seri || []).forEach(([r, a, b]) => { dolu.add(r + (c + a)); dolu.add(r + (c + b)); }); c += F.w + 3; });
+    const N = Math.max(18, c), X = (k) => BX + (k - 1) * BS, Y = (r) => SATIR[r];
+    const delik = (sut, yari, yukari) => { const s = yari === "u" ? BB_UST : BB_ALT, sira = yukari ? s : s.slice().reverse();
+      const r = sira.find((x) => !dolu.has(x + sut)) || sira[0]; dolu.add(r + sut); return r; };
+    const W = [], sag = { "+": 0, "-": 0 };
+    // önce dirençler (alt deliklere), sonra kablolar
+    const sirali = L.K.slice().sort((a, b) => (b.q && b.q.kol ? 1 : 0) - (a.q && a.q.kol ? 1 : 0));
+    sirali.forEach((k) => {
+      if (k.tur === "ur") { W.push({ k, tur: "ur" }); return; }
+      const B = P.find((b) => b.q === k.p);
+      if (!B) { if (k.tur === "r") W.push({ k, tur: "mod", ray: k.ray, s: sag[k.ray]++ }); else W.push({ k, tur: "modsin" }); return; }
+      const u = B.F.uc[k.q.k]; if (!u) return;
+      const sut = B.c + u[0], yari = u[1], yukari = k.tur === "r" && k.ray === "+";
+      const r = delik(sut, yari, k.q.kol ? false : yukari);
+      W.push({ k, tur: k.q.kol ? "dir" : k.tur === "r" ? "ray" : "ard", sut, r, yari });
+    });
+    W.sort((a, b) => a.k.no - b.k.no);
+    const ard = W.filter((w) => w.tur === "ard").sort((a, b) => a.sut - b.sut); ard.forEach((w, i) => { w.kat = i % 2; });
+    return (L.bb = { P, W, N, X, Y, Wd: X(N) + 300, H: 590 });
+  }
+  function tahta(dv) {
+    const T = tahtaYerlesim(dv), { P, W, N, X, Y } = T, xR = X(N) + 16;
+    let s = `<svg class="dv dv-tahta" viewBox="0 0 ${T.Wd} ${T.H}" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif" role="img" aria-label="Breadboard yerleşimi"><rect width="${T.Wd}" height="${T.H}" fill="#fbfcfd"/>`;
+    s += `<rect x="${BX - 34}" y="40" width="${X(N) - BX + 68}" height="410" rx="12" fill="#f8f9fa" stroke="#ced4da" stroke-width="2.5"/>`;
+    s += `<rect x="${BX - 34}" y="${SATIR.e + 14}" width="${X(N) - BX + 68}" height="20" fill="#e9ecef"/><text x="${X(N) + 26}" y="${SATIR.e + 29}" font-size="11" font-weight="700" fill="#868e96">oluk</text>`;
+    const rayCizgi = (y, renk, isaret, kul) => `<rect x="${BX - 12}" y="${y - 10}" width="${X(N) - BX + 24}" height="20" rx="4" fill="${renk}" opacity="${kul ? .16 : .05}"/><line x1="${BX - 12}" y1="${y + (y < 200 ? -11 : 11)}" x2="${X(N) + 12}" y2="${y + (y < 200 ? -11 : 11)}" stroke="${renk}" stroke-width="2.5" opacity="${kul ? 1 : .3}"/>`
+      + `<text x="${BX - 22}" y="${y + 6}" text-anchor="middle" font-size="18" font-weight="800" fill="${renk}" opacity="${kul ? 1 : .35}">${isaret}</text>`;
+    s += rayCizgi(RAY.ustEksi, "#1c7ed6", "−", false) + rayCizgi(RAY.ustArti, "#e03131", "+", true) + rayCizgi(RAY.altEksi, "#1c7ed6", "−", true) + rayCizgi(RAY.altArti, "#e03131", "+", false);
+    for (let k = 1; k <= N; k++) {
+      const x = X(k);
+      [RAY.ustEksi, RAY.ustArti, RAY.altEksi, RAY.altArti].forEach((y) => { s += `<rect x="${x - 3.5}" y="${y - 3.5}" width="7" height="7" rx="1.5" fill="#adb5bd"/>`; });
+      Object.values(SATIR).forEach((y) => { s += `<rect x="${x - 3.5}" y="${y - 3.5}" width="7" height="7" rx="1.5" fill="#868e96"/>`; });
+      if (k === 1 || k % 5 === 0) s += `<text x="${x}" y="${SATIR.a - 14}" text-anchor="middle" font-size="11" font-weight="700" fill="#495057">${k}</text><text x="${x}" y="${SATIR.j + 22}" text-anchor="middle" font-size="11" font-weight="700" fill="#495057">${k}</text>`;
+    }
+    Object.entries(SATIR).forEach(([r, y]) => { s += `<text x="${BX - 22}" y="${y + 4}" text-anchor="middle" font-size="12" font-weight="700" fill="#495057">${r}</text><text x="${X(N) + 22}" y="${y + 4}" text-anchor="middle" font-size="12" font-weight="700" fill="#495057">${r}</text>`; });
+    s += `<text x="12" y="${RAY.ustArti - 26}" font-size="13" font-weight="800" fill="#e03131">üstteki + hat = 5V</text><text x="12" y="${RAY.altEksi + 38}" font-size="13" font-weight="800" fill="#1c7ed6">alttaki − hat = GND</text>`;
+    // parçalar
+    P.forEach(({ q, F, c }) => {
+      (F.seri || []).forEach(([r, a, b, deg]) => { const y = Y(r), x1 = X(c + a), x2 = X(c + b), m = (x1 + x2) / 2, bant = R_BANT[deg] || R_BANT["220Ω"];
+        s += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="#9aa1a8" stroke-width="3"/><rect x="${m - 16}" y="${y - 7}" width="32" height="14" rx="6" fill="#e9d8a6" stroke="#8a6d3b" stroke-width="1.5"/>`
+          + bant.map((cl, i) => `<rect x="${m - 11 + i * 7}" y="${y - 7}" width="4" height="14" fill="${cl}"/>`).join("") + `<circle cx="${x1}" cy="${y}" r="4" fill="#495057"/><circle cx="${x2}" cy="${y}" r="4" fill="#495057"/>`
+          + `<text x="${m}" y="${y + 20}" text-anchor="middle" font-size="10" font-weight="700" fill="#5c3d0c">${deg}</text>`; });
+      s += F.ciz(X, Y, c, q);
+      F.bacak.forEach(([, r, d]) => { s += `<circle cx="${X(c + d)}" cy="${Y(r)}" r="5.5" fill="#ced4da" stroke="#212529" stroke-width="2"/>`; });
+      const xs = F.bacak.map(([, , d]) => X(c + d)), mx = (Math.min(...xs) + Math.max(...xs)) / 2;
+      s += `<text x="${mx}" y="30" text-anchor="middle" font-size="14" font-weight="800" fill="#212529">${esc(q.kisa.charAt(0).toLocaleUpperCase("tr") + q.kisa.slice(1))}</text>`;
+    });
+    // kablolar
+    const kablo = (d, renk) => { const c = RENK[renk][0]; return `<path d="${d}" fill="none" stroke="#1b1b1b" stroke-width="8" stroke-linecap="round"/><path d="${d}" fill="none" stroke="${c}" stroke-width="5" stroke-linecap="round"/>`; };
+    const uc = (x, y, renk) => `<circle cx="${x}" cy="${y}" r="5" fill="${RENK[renk][0]}" stroke="#1b1b1b" stroke-width="2"/>`;
+    const etiket = (x, y, t, renk, no) => { const c = RENK[renk][0], w = 34 + t.length * 8.2, koyu = ACIK.has(renk);
+      return `<rect x="${x - w / 2}" y="${y - 12}" width="${w}" height="24" rx="12" fill="${c}" stroke="#1b1b1b" stroke-width="1.5"/><circle cx="${x - w / 2 + 12}" cy="${y}" r="9" fill="#fff"/><text x="${x - w / 2 + 12}" y="${y + 4}" text-anchor="middle" font-size="11" font-weight="800" fill="#212529">${no}</text><text x="${x - w / 2 + 25}" y="${y + 5}" font-size="13" font-weight="800" fill="${koyu ? "#212529" : "#fff"}">${esc(t)}</text>`; };
+    W.forEach((w) => {
+      const k = w.k; if (w.tur === "modsin") return;
+      if (w.tur === "ur") { const y = k.ray === "+" ? RAY.ustArti : RAY.altEksi, x = X(1);
+        s += kablo(`M${x} ${y} H${BX - 40} L${BX - 60} ${y}`, k.renk) + uc(x, y, k.renk) + etiket(BX - 112, y, `Arduino ${k.uk}`, k.renk, k.no); return; }
+      if (w.tur === "mod") { const y0 = w.ray === "+" ? RAY.ustArti : RAY.altEksi, x = X(N - w.s), et = `${k.p.kisa} ${k.q.e}`;
+        const ex = X(N) + 206, ey = w.ray === "+" ? 130 + w.s * 30 : y0 - 70 - w.s * 30, xs = ex - (34 + et.length * 8.2) / 2;
+        const d = w.ray === "+" ? `M${x} ${y0} C ${x} ${y0 - 34}, ${xs - 20} ${y0 - 30}, ${xs} ${ey}` : `M${x} ${y0} C ${x} ${y0 + 40}, ${xs - 20} ${y0 + 30}, ${xs} ${ey}`;
+        s += kablo(d, k.renk) + uc(x, y0, k.renk) + etiket(ex, ey, et, k.renk, k.no); return; }
+      const x = X(w.sut), y = Y(w.r);
+      if (w.tur === "dir") { const yr = k.ray === "+" ? RAY.ustArti : RAY.altEksi, x2 = X(w.sut + 1), bant = R_BANT[k.q.r] || R_BANT["10kΩ"], mx = (x + x2) / 2, my = (y + yr) / 2;
+        const ang = Math.atan2(yr - y, x2 - x) * 180 / Math.PI;
+        s += `<line x1="${x}" y1="${y}" x2="${x2}" y2="${yr}" stroke="#9aa1a8" stroke-width="3"/><g transform="translate(${mx},${my}) rotate(${ang})"><rect x="-16" y="-7" width="32" height="14" rx="6" fill="#e9d8a6" stroke="#8a6d3b" stroke-width="1.5"/>${bant.map((cl, i) => `<rect x="${-11 + i * 7}" y="-7" width="4" height="14" fill="${cl}"/>`).join("")}</g>`
+          + `<circle cx="${x}" cy="${y}" r="4" fill="#495057"/><circle cx="${x2}" cy="${yr}" r="4" fill="#495057"/><text x="${x2 + 10}" y="${my + 4}" font-size="10" font-weight="700" fill="#5c3d0c">${k.q.r}</text>`
+          + rozet(x2 + 14, yr + 18, k.no, k.renk); return; }
+      if (w.tur === "ray") { const yr = k.ray === "+" ? RAY.ustArti : RAY.altEksi, karsi = (k.ray === "+") !== (w.yari === "u");
+        const d = karsi ? `M${x} ${yr} C ${x - 34} ${yr + (k.ray === "+" ? 60 : -60)}, ${x - 34} ${y + (k.ray === "+" ? -40 : 40)}, ${x} ${y}` : `M${x} ${yr} L${x} ${y}`;
+        s += kablo(d, k.renk) + uc(x, yr, k.renk) + uc(x, y, k.renk) + rozet(x + 15, (yr + y) / 2, k.no, k.renk); return; }
+      // Arduino pinine giden kablo: üst yarıdan yukarı, alt yarıdan aşağı çıkar
+      const asagi = w.yari === "a", ye = asagi ? 482 + w.kat * 34 : 14, xe = x - 16;
+      const d = asagi ? `M${x} ${y} C ${x - 18} ${y + 20}, ${xe} ${y + 30}, ${xe} ${RAY.altArti + 20} L${xe} ${ye - 12}` : `M${x} ${y} L${x} ${ye + 12}`;
+      s += kablo(d, k.renk) + uc(x, y, k.renk) + etiket(xe, ye, `Arduino ${k.uk}`, k.renk, k.no);
+    });
+    s += `<text x="${BX - 34}" y="${T.H - 24}" font-size="13" fill="#495057">Aynı sütundaki 5 delik (a-e ya da f-j) içeriden birbirine bağlıdır; oluk iki yarıyı ayırır.</text><text x="${BX - 34}" y="${T.H - 6}" font-size="13" fill="#495057">Kenardaki uzun + ve − hatlar boydan boya bağlıdır. Kablo numaraları yukarıdaki şemayla aynıdır.</text>`;
+    return s + "</svg>";
+  }
+  function tahtaListe(dv) {
+    const T = tahtaYerlesim(dv), Z = [];
+    T.P.forEach(({ q, F, c }) => {
+      const b = F.bacak.map(([, r, d]) => r + (c + d)).join(", ");
+      Z.push(`<b>${esc(q.ad)}</b>: bacaklar <b>${b}</b> deliklerine. ${esc(F.not)}`);
+      (F.seri || []).forEach(([r, a, bb, deg]) => Z.push(`${deg} direnç: <b>${r}${c + a}</b> ile <b>${r}${c + bb}</b> arasına (yatay).`));
+    });
+    T.W.forEach((w) => { const k = w.k, rn = RENK[k.renk][1];
+      if (w.tur === "ur") Z.push(`${k.no}. kablo (${rn}): Arduino <b>${k.uk}</b> → ${k.ray === "+" ? "üstteki + (kırmızı) hat" : "alttaki − (mavi) hat"}.`);
+      else if (w.tur === "mod") Z.push(`${k.no}. kablo (${rn}): ${esc(k.p.iy)} ${esc(k.q.u.replace(/\s*\([^)]*\)/g, ""))} → ${k.ray === "+" ? "üstteki + hat" : "alttaki − hat"} (herhangi bir delik).`);
+      else if (w.tur === "modsin") Z.push(`${k.no}. kablo (${rn}): ${esc(k.p.iy)} ${esc(k.q.u.replace(/\s*\([^)]*\)/g, ""))} → ${k.tur === "p" ? esc(hedefMetin(k)) : `Arduino <b>${k.uk}</b>`} (breadboard'a uğramaz).`);
+      else if (w.tur === "dir") Z.push(`${k.no}. ${k.q.r} direnç: <b>${w.r}${w.sut}</b> deliğinden ${k.ray === "+" ? "üstteki + hatta" : "alttaki − hatta"}.`);
+      else if (w.tur === "ray") Z.push(`${k.no}. kablo (${rn}): <b>${w.r}${w.sut}</b> → ${k.ray === "+" ? "üstteki + hat" : "alttaki − hat"}.`);
+      else Z.push(`${k.no}. kablo (${rn}): <b>${w.r}${w.sut}</b> → Arduino <b>${k.uk}</b>.`); });
+    return Z;
+  }
+
   // ---------- metinler ----------
   const SIRA1 = ["", "birinci", "ikinci", "üçüncü", "dördüncü", "beşinci", "altıncı", "yedinci", "sekizinci", "dokuzuncu"];
   const sira = (n) => { const t = Math.floor(n / 10), b = n % 10; const s = n === 10 ? "onuncu" : n === 20 ? "yirminci" : n === 30 ? "otuzuncu" : [["", "on ", "yirmi "][t] || ""] + SIRA1[b]; return s.charAt(0).toLocaleUpperCase("tr") + s.slice(1); };
@@ -512,5 +640,5 @@ window.DEVRE = (function () {
     return `<div class="dv-iki"><table class="dv-tablo kucuk">${bas_}${A.slice(0, y).map(satir).join("")}</table><table class="dv-tablo kucuk">${bas_}${A.slice(y).map(satir).join("")}</table></div>`;
   }
 
-  return { PARCA, H, RENK, unoPin, yerlesim, svg, adimlar, tablo, kontrol, kodPinleri, yerlestirme, tinkerAdimlar, kablolar, nasil, parcaListesi, slaytlar, ders, kagit, var: (no) => !!H[no] };
+  return { PARCA, H, RENK, unoPin, yerlesim, svg, adimlar, tablo, kontrol, kodPinleri, yerlestirme, tinkerAdimlar, kablolar, nasil, parcaListesi, slaytlar, ders, kagit, tahta, tahtaListe, bbVar, var: (no) => !!H[no] };
 })();
