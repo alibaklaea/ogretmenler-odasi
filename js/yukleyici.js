@@ -58,17 +58,18 @@ window.ARDUINO = (function () {
     const komut = async (b, cevap = 0, ms = 1000) => { await yaz([...b, 0x20]); let x;
       try { x = await R.al(cevap + 2, ms); } catch (e) { throw new Error(`Arduino cevap vermedi (${adim}).`); }
       if (x[0] !== 0x14 || x[x.length - 1] !== 0x10) throw new Error(`Arduino beklenmeyen cevap verdi (${adim}).`); return x.slice(1, 1 + cevap); };
-    async function bagla() { // avrdude (Arduino IDE) ile aynı sıra: reset, iki atma senkronu, sonra uzun beklemeli denemeler
-      for (let deneme = 0; deneme < 2; deneme++) {
+    // Gerçek CH340 Uno klonuyla ölçüldü: resetten sonra ~300 ms dolmadan bayt gönderilirse önyükleyici şaşırıp
+    // eski programa geçiyor. Bu yüzden önce bekle, sonra tek tek (cevabı bekleyerek) senkron gönder.
+    async function bagla() {
+      for (const bek of [300, 450, 200, 650]) {
         await sinyal(false); await bekle(250);
-        await sinyal(true); await bekle(50);
+        await sinyal(true); await bekle(bek);
         R.temizle();
-        for (let i = 0; i < 2; i++) { await yaz([0x30, 0x20]); await bekle(60); R.temizle(); }
-        for (let i = 0; i < 6; i++) {
+        for (let i = 0; i < 3; i++) {
           await yaz([0x30, 0x20]);
-          let x = []; try { x = await R.al(2, 400); } catch (e) { R.temizle(); continue; }
-          if (x[0] === 0x14 && x[1] === 0x10) { await bekle(30); R.temizle(); kaydet("eşleşti"); return; }
-          await bekle(50); R.temizle();
+          let x = []; try { x = await R.al(2, 300); } catch (e) { R.temizle(); continue; }
+          if (x[0] === 0x14 && x[1] === 0x10) { kaydet(`eşleşti (bekleme ${bek} ms)`); return; }
+          R.temizle(); break; // çöp geldi: önyükleyici çıktı, yeniden başlat
         }
       }
       throw new Error("Arduino'ya bağlanılamadı. Kart türü (Uno / eski Nano) doğru mu? Seri Monitör ya da Arduino IDE açıksa kapatın.");
