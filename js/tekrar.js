@@ -298,14 +298,19 @@
   function girisSayfa() {
     if (SUNUCU) {
       $("#kok").innerHTML = `<div class="giris kart"><h2>${HD ? `${HN}. hafta · ${esc(HD.ad)}` : "Ders Tekrarı"}</h2><p>Devreyi sanal breadboard'a kendin kuracaksın. Kod hazır; kurunca <b>Kodu yükle</b>'ye basıp deneyeceksin.</p>
-        <label>Öğrenci kodun (öğretmeninin verdiği 4 rakam)<input id="gKod" inputmode="numeric" maxlength="4" autocomplete="off" style="font-size:28px;letter-spacing:8px;text-align:center"></label>
-        <button class="ana" id="gBasla">Başla</button><p id="gSon"></p></div>`;
-      const git = () => { const k = $("#gKod").value.replace(/\D/g, ""); if (k.length !== 4) return toast("4 rakamlı kodunu yaz.");
-        $("#gSon").textContent = "Kontrol ediliyor…";
-        sunucu("ogrenciBul", k).then((o) => { if (!o) return ($("#gSon").textContent = "Bu kod bulunamadı. Öğretmeninin verdiği kodu yaz.");
-          yazK("tekrar.ogrenci", { ad: o.ad, grup: o.sinif, kod: k }); sunucu("kayit", { kod: k, hafta: HN, olay: "Başladı", deneme: 0, ipucu: 0 }).finally(() => location.reload()); },
-          () => ($("#gSon").textContent = "İnternet bağlantısı yok gibi. Biraz sonra tekrar dene.")); };
-      $("#gBasla").onclick = git; $("#gKod").addEventListener("keydown", (e) => { if (e.key === "Enter") git(); });
+        <p><b>Adına dokun:</b></p><div id="gAdlar" class="adlar">Liste yükleniyor…</div><div id="gSoy"></div><p id="gSon"></p></div>`;
+      const gir = (o) => { yazK("tekrar.ogrenci", { ad: o.ad, grup: o.sinif, kod: o.kod }); $("#gSon").textContent = "Açılıyor…";
+        sunucu("kayit", { kod: o.kod, hafta: HN, olay: "Başladı", deneme: 0, ipucu: 0 }).finally(() => location.reload()); };
+      sunucu("ogrenciListesi").then((L) => {
+        $("#gAdlar").innerHTML = L.length ? L.map((o, i) => `<button data-i="${i}">${esc(o.ad)}</button>`).join("") : "Listede öğrenci yok. Öğretmenine söyle.";
+        $("#gAdlar").onclick = (e) => { const b = e.target.closest("[data-i]"); if (!b) return; const o = L[+b.dataset.i];
+          $("#gAdlar").querySelectorAll("button").forEach((x) => x.classList.toggle("secili", x === b));
+          if (o.soyad) return gir(o);
+          $("#gSoy").innerHTML = `<label>Merhaba ${esc(o.ad)}! Soyadını yaz:<input id="gSoyad" maxlength="30" autocomplete="off"></label><button class="ana" id="gTamam">Başla</button>`;
+          $("#gSoyad").focus();
+          const bitti = () => { const s = $("#gSoyad").value.trim(); if (!s) return toast("Soyadını yaz."); $("#gSon").textContent = "Kaydediliyor…"; sunucu("soyadKaydet", o.kod, s).finally(() => gir(o)); };
+          $("#gTamam").onclick = bitti; $("#gSoyad").addEventListener("keydown", (e) => { if (e.key === "Enter") bitti(); }); };
+      }, () => ($("#gAdlar").textContent = "İnternet bağlantısı yok gibi. Sayfayı yenile."));
       return;
     }
     $("#kok").innerHTML = `<div class="giris kart"><h2>${HD ? `${HN}. hafta · ${esc(HD.ad)}` : "Ders Tekrarı"}</h2><p>Devreyi sanal breadboard'a kendin kuracaksın. Kod hazır; kurunca <b>Kodu yükle</b>'ye basıp deneyeceksin.</p>
