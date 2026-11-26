@@ -49,7 +49,7 @@
   // SUNUCU: sayfa Google Apps Script üzerinden açıldıysa sonuçlar öğretmenin Google tablosuna yazılır
   const SUNUCU = !!(window.google && google.script && google.script.run);
   const sunucu = (fn, ...a) => new Promise((ok, red) => { if (!SUNUCU) return red(new Error("sunucu yok")); google.script.run.withSuccessHandler(ok).withFailureHandler(red)[fn](...a); });
-  const q = new URLSearchParams(location.search), HN = window.TEKRAR_H || +q.get("h") || 0, HD = TEKRAR[HN];
+  const q = new URLSearchParams(location.search), HN = +window.TEKRAR_H || +q.get("h") || 0, HD = TEKRAR[HN];
   const ogr = oku("tekrar.ogrenci", null);
   const KAYIT = "tekrar.devre." + HN + "." + (ogr ? ogr.kod || ogr.ad : "");
   const kayitGonder = (olay, ek = {}) => { if (SUNUCU && ogr && ogr.kod) sunucu("kayit", Object.assign({ kod: ogr.kod, hafta: HN, olay, deneme: S.yuklendi, ipucu: S.ipucu }, ek)).catch(() => {}); };
