@@ -922,7 +922,7 @@
   }, true);
   document.addEventListener("click", (e) => {
     const tk = e.target.closest("[data-tekrar]");
-    if (tk) { const url = `https://script.google.com/macros/s/AKfycbyIOXoJ9-D9NwPi0Z_hQFNKGeIRukhelU4ANTfc0Y8SaQ1NhXwwDFSTRsq-EOltNdr5/exec?h=${tk.dataset.tekrar}`; (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => { tk.textContent = "✓ Link kopyalandı: öğrencilere gönderin"; }, () => prompt("Öğrencilere bu linki gönderin:", url)); window.open(url, "_blank"); return; }
+    if (tk) { const KISA = { 8: "https://tinyurl.com/kodlama-tekrar-8" }, url = KISA[tk.dataset.tekrar] || `https://script.google.com/macros/s/AKfycbyIOXoJ9-D9NwPi0Z_hQFNKGeIRukhelU4ANTfc0Y8SaQ1NhXwwDFSTRsq-EOltNdr5/exec?h=${tk.dataset.tekrar}`; (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => { tk.textContent = "✓ Link kopyalandı: öğrencilere gönderin"; }, () => prompt("Öğrencilere bu linki gönderin:", url)); window.open(url, "_blank"); return; }
     if (e.target.closest("[data-bb-ogret]")) { sunumAc(DEVRE.bbOgret(sl), 0, "Breadboard nasıl çalışır?", false, true); return; }
     const bk = e.target.closest("[data-bb-kur]");
     if (bk) { const [no, i] = bk.dataset.bbKur.split("/").map(Number), dv = DEVRE.H[no][i]; sunumAc(DEVRE.tahtaSlaytlar(dv, sl, DEVRE.H[no].length > 1 ? dv.ad : "Bağlantı"), 0, `${no}. hafta · ${dv.ad} · Breadboard`, true, true); return; }

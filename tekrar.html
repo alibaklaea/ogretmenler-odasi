@@ -13,6 +13,7 @@ body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
 header { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: var(--vurgu); color: #fff; flex-wrap: wrap; }
 header h1 { font-size: 18px; margin: 0; flex: 1; min-width: 200px; }
 header small { opacity: .85; }
+header .imza { display: block; font-size: 13px; font-weight: 600; opacity: .9; margin-top: 2px; }
 .ogr { background: rgba(255,255,255,.16); padding: 4px 10px; border-radius: 99px; font-size: 14px; }
 main { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 12px; padding: 12px; max-width: 1500px; margin: 0 auto; }
 @media (max-width: 1000px) { main { grid-template-columns: 1fr; } }
@@ -50,7 +51,7 @@ details summary { cursor: pointer; font-weight: 700; }
 </style>
 </head>
 <body>
-<header><h1>🔌 Ders Tekrarı · Devreni Kendin Kur <small id="baslikHafta"></small></h1><span class="ogr" id="ogrAd"></span></header>
+<header><h1>🔌 Ders Tekrarı · Devreni Kendin Kur <small id="baslikHafta"></small><span class="imza">Öğretmenler Odası · Ali Bakla</span></h1><span class="ogr" id="ogrAd"></span></header>
 <div id="kok"></div>
 <script src="js/devre.js"></script>
 <script src="js/kodlar.js"></script>
