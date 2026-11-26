@@ -46,11 +46,15 @@
   };
 
   // ---------- durum ----------
-  const q = new URLSearchParams(location.search), HN = +q.get("h") || 0, HD = TEKRAR[HN];
-  const KAYIT = "tekrar.devre." + HN;
+  // SUNUCU: sayfa Google Apps Script üzerinden açıldıysa sonuçlar öğretmenin Google tablosuna yazılır
+  const SUNUCU = !!(window.google && google.script && google.script.run);
+  const sunucu = (fn, ...a) => new Promise((ok, red) => { if (!SUNUCU) return red(new Error("sunucu yok")); google.script.run.withSuccessHandler(ok).withFailureHandler(red)[fn](...a); });
+  const q = new URLSearchParams(location.search), HN = window.TEKRAR_H || +q.get("h") || 0, HD = TEKRAR[HN];
+  const ogr = oku("tekrar.ogrenci", null);
+  const KAYIT = "tekrar.devre." + HN + "." + (ogr ? ogr.kod || ogr.ad : "");
+  const kayitGonder = (olay, ek = {}) => { if (SUNUCU && ogr && ogr.kod) sunucu("kayit", Object.assign({ kod: ogr.kod, hafta: HN, olay, deneme: S.yuklendi, ipucu: S.ipucu }, ek)).catch(() => {}); };
   let S = { el: oku(KAYIT, []), mod: "kablo", renk: "kirmizi", bekle: null, sec: null, basili: false, calisiyor: false, yuklendi: 0, ipucu: 0, vurgu: [], led: {}, bitti: false };
   const RENKLER = { kirmizi: "#e03131", siyah: "#2b2b2b", turuncu: "#fd7e14", sari: "#fcc419", yesil: "#2f9e44", mavi: "#1c7ed6", mor: "#7048e8", beyaz: "#f1f3f5" };
-  const ogr = oku("tekrar.ogrenci", null);
   const kaydet = () => yazK(KAYIT, S.el);
 
   // ---------- elektrik: noktaları birleştir (union-find) ----------
@@ -262,7 +266,7 @@
   // ---------- kodu yükle / çalıştır ----------
   function yukle() {
     if (S.calisiyor) return durdur();
-    S.yuklendi++; yazK("tekrar.deneme." + HN, S.yuklendi);
+    S.yuklendi++; yazK("tekrar.deneme." + HN + "." + (ogr.kod || ogr.ad), S.yuklendi);
     const b = $("#btnYukle"); b.disabled = true; const il = $("#yukIl"); let y = 0; $("#seri").textContent = "";
     const t = setInterval(() => { y += 9; il.style.width = Math.min(100, y) + "%"; if (y >= 100) { clearInterval(t); b.disabled = false; basla(); } }, 70);
     $("#sonuc").innerHTML = `<div>Kod Arduino'ya yükleniyor…</div>`;
@@ -270,6 +274,7 @@
   function basla() {
     const H_ = HD.kontrol(); S.hatasiz = !H_.length; S.gordu = false;
     S.vurgu = H_.flatMap((h) => h.v);
+    kayitGonder("Yükleme", { hata: H_.length, ilk: H_.length ? H_[0].m : "" });
     if (H_.length) $("#sonuc").innerHTML = `<div class="hata"><b>❌ Devre henüz doğru değil.</b> Kod yüklendi ama devrede ${H_.length} sorun var. Yanıp sönen yerlere bak:</div>` + H_.slice(0, 3).map((h, i) => `<div class="hata">${i + 1}) ${esc(h.m)}</div>`).join("") + `<div>Düzeltmek için ⏹ Durdur'a bas.</div>`;
     else $("#sonuc").innerHTML = `<div class="iyi"><b>✓ Kod yüklendi, bağlantılar doğru görünüyor!</b> Şimdi butona (BAS) basılı tut: LED yanıyor mu? Bırakınca sönüyor mu?</div>`;
     S.calisiyor = true; $("#btnYukle").textContent = "⏹ Durdur ve düzenle"; ciz();
@@ -284,12 +289,25 @@
   function tamamKod(ad, h, tarih, deneme, ipucu) { return `H${h}-${tarih.replace(/-/g, "").slice(2)}-${deneme}${ipucu ? "i" + ipucu : ""}-${ozet(["BLSM", normal(ad), h, tarih, deneme, ipucu].join("|"))}`; }
   function bitir() {
     const tarih = new Date().toISOString().slice(0, 10), kod = tamamKod(ogr.ad, HN, tarih, S.yuklendi, S.ipucu);
-    yazK("tekrar.bitti." + HN, { kod, tarih });
+    yazK("tekrar.bitti." + HN + "." + (ogr.kod || ogr.ad), { kod, tarih });
+    kayitGonder("TAMAMLADI", { tamamKod: kod });
     $("#sonuc").innerHTML = `<div class="iyi"><b>🎉 Çalıştı! Butona basınca LED yandı, bırakınca söndü.</b></div><div class="belge"><div>Ders tekrarı tamamlandı</div><b>${esc(ogr.ad)} · ${esc(ogr.grup || "")} · ${HN}. hafta: ${esc(HD.ad)}</b><div class="kodu">${kod}</div><div>${S.yuklendi}. yüklemede çalıştı${S.ipucu ? ` · ${S.ipucu} kez şemaya baktı` : ""}</div><small>Bu kodu öğretmenine gönder (ekran görüntüsü de olur).</small></div>`;
   }
 
   // ---------- sayfalar ----------
   function girisSayfa() {
+    if (SUNUCU) {
+      $("#kok").innerHTML = `<div class="giris kart"><h2>${HD ? `${HN}. hafta · ${esc(HD.ad)}` : "Ders Tekrarı"}</h2><p>Devreyi sanal breadboard'a kendin kuracaksın. Kod hazır; kurunca <b>Kodu yükle</b>'ye basıp deneyeceksin.</p>
+        <label>Öğrenci kodun (öğretmeninin verdiği 4 rakam)<input id="gKod" inputmode="numeric" maxlength="4" autocomplete="off" style="font-size:28px;letter-spacing:8px;text-align:center"></label>
+        <button class="ana" id="gBasla">Başla</button><p id="gSon"></p></div>`;
+      const git = () => { const k = $("#gKod").value.replace(/\D/g, ""); if (k.length !== 4) return toast("4 rakamlı kodunu yaz.");
+        $("#gSon").textContent = "Kontrol ediliyor…";
+        sunucu("ogrenciBul", k).then((o) => { if (!o) return ($("#gSon").textContent = "Bu kod bulunamadı. Öğretmeninin verdiği kodu yaz.");
+          yazK("tekrar.ogrenci", { ad: o.ad, grup: o.sinif, kod: k }); sunucu("kayit", { kod: k, hafta: HN, olay: "Başladı", deneme: 0, ipucu: 0 }).finally(() => location.reload()); },
+          () => ($("#gSon").textContent = "İnternet bağlantısı yok gibi. Biraz sonra tekrar dene.")); };
+      $("#gBasla").onclick = git; $("#gKod").addEventListener("keydown", (e) => { if (e.key === "Enter") git(); });
+      return;
+    }
     $("#kok").innerHTML = `<div class="giris kart"><h2>${HD ? `${HN}. hafta · ${esc(HD.ad)}` : "Ders Tekrarı"}</h2><p>Devreyi sanal breadboard'a kendin kuracaksın. Kod hazır; kurunca <b>Kodu yükle</b>'ye basıp deneyeceksin.</p>
       <label>Adın (yalnız adın)<input id="gAd" maxlength="30" autocomplete="off"></label><label>Grubun / sınıfın<input id="gGrup" maxlength="20" autocomplete="off"></label>
       <button class="ana" id="gBasla">Başla</button><p><small>Adın yalnız bu cihazda durur, hiçbir yere gönderilmez.</small></p></div>`;
@@ -304,9 +322,10 @@
       $("#kSon").innerHTML = dogru ? `✅ Geçerli: ${m[1]}. hafta, ${tarih}, ${m[3]}. yüklemede çalıştı${m[4] ? `, ${m[4]} kez şemaya baktı` : ""}.` : "❌ Kod bu isimle uyuşmuyor (adı öğrencinin yazdığı gibi yazın)."; };
   }
   function anaSayfa() {
-    $("#baslikHafta").textContent = ` · ${HN}. hafta: ${HD.ad}`; $("#ogrAd").textContent = `👤 ${ogr.ad}${ogr.grup ? " · " + ogr.grup : ""}`;
+    $("#baslikHafta").textContent = ` · ${HN}. hafta: ${HD.ad}`; $("#ogrAd").innerHTML = `👤 ${esc(ogr.ad)}${ogr.grup ? " · " + esc(ogr.grup) : ""} <a href="#" id="cikis" style="color:#fff;margin-left:6px">ben değilim</a>`;
+    $("#cikis").onclick = (e) => { e.preventDefault(); try { localStorage.removeItem("tekrar.ogrenci"); } catch (x) { } location.reload(); };
     const kod = (window.KODLAR && KODLAR[HN] && KODLAR[HN][0] && KODLAR[HN][0].kod) || "";
-    S.yuklendi = oku("tekrar.deneme." + HN, 0);
+    S.yuklendi = oku("tekrar.deneme." + HN + "." + (ogr.kod || ogr.ad), 0);
     $("#kok").innerHTML = `<main><section class="kart"><div class="arac" id="araclar"></div><div id="ipucu"></div><svg id="sahne" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif"></svg></section>
       <aside><div class="kart"><h2>🎯 Görev</h2><p><b>${esc(HD.hedef)}</b></p><ol class="gorev">${HD.gorev.map((g) => `<li>${esc(g)}</li>`).join("")}</ol>
         <details id="sema"><summary>📐 Takıldım: bağlantı şemasını göster</summary><div id="semaIc"></div></details></div>
@@ -324,7 +343,7 @@
       if (b.dataset.temiz !== undefined && !S.calisiyor && confirm("Bütün parçalar ve kablolar sökülsün mü?")) { S.el = []; S.vurgu = []; kaydet(); ciz(); sonucTemizle(); } });
     $("#btnYukle").onclick = yukle;
     $("#sema").addEventListener("toggle", () => { if ($("#sema").open) { S.ipucu++; if (window.DEVRE && DEVRE.H[HN]) $("#semaIc").innerHTML = DEVRE.svg(DEVRE.H[HN][0]) + DEVRE.tablo(DEVRE.H[HN][0], true); } });
-    const b = oku("tekrar.bitti." + HN, null); if (b) $("#sonuc").innerHTML = `<div class="iyi">Bu tekrarı daha önce tamamladın. Kodun: <b>${esc(b.kod)}</b></div>`;
+    const b = oku("tekrar.bitti." + HN + "." + (ogr.kod || ogr.ad), null); if (b) $("#sonuc").innerHTML = `<div class="iyi">Bu tekrarı daha önce tamamladın. Kodun: <b>${esc(b.kod)}</b></div>`;
   }
 
   if (!HD) listeSayfa(); else if (!ogr) girisSayfa(); else anaSayfa();
