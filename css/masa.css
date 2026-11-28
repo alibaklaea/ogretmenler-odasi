@@ -194,23 +194,23 @@ dialog menu .ana { background: var(--vurgu); color: #fff; border-color: var(--vu
   body.basiliyor { background: #fff; }
   body.basiliyor .baski { display: block; }
 }
-.sayfa { width: 210mm; min-height: 296mm; padding: 13mm 14mm 12mm; background: #fff; color: #111; font-size: 10.5pt; line-height: 1.38; page-break-after: always; break-after: page; position: relative; font-family: var(--font); }
+.sayfa { width: 210mm; min-height: 296mm; padding: 13mm 14mm 12mm; background: #fff; color: #000; font-size: 10.5pt; line-height: 1.38; page-break-after: always; break-after: page; position: relative; font-family: var(--font); }
 .sayfa:last-child { page-break-after: auto; break-after: auto; }
 .sayfa h1 { font-size: 15pt; margin: 0 0 3mm; }
-.sayfa .s-ust { display: flex; justify-content: space-between; font-size: 8.5pt; color: #555; border-bottom: 1.5pt solid #111; padding-bottom: 2mm; margin-bottom: 4mm; }
+.sayfa .s-ust { display: flex; justify-content: space-between; font-size: 8.5pt; color: #000; border-bottom: 1.8pt solid #000; padding-bottom: 2mm; margin-bottom: 4mm; }
 .sayfa .s-kimlik { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 4mm; font-size: 9.5pt; margin-bottom: 4mm; }
-.sayfa .s-kimlik span { border-bottom: .8pt solid #777; padding-bottom: 1mm; }
-.sayfa .s-yonerge { background: #f2f2f2; border-left: 3pt solid #111; padding: 2.5mm 3.5mm; margin-bottom: 4mm; font-size: 10pt; }
-.sayfa .s-alt { position: absolute; bottom: 7mm; left: 14mm; right: 14mm; display: flex; justify-content: space-between; font-size: 8pt; color: #777; }
+.sayfa .s-kimlik span { border-bottom: 1.2pt solid #000; padding-bottom: 1mm; }
+.sayfa .s-yonerge { background: #ececec; border-left: 3.5pt solid #000; padding: 2.5mm 3.5mm; margin-bottom: 4mm; font-size: 10pt; }
+.sayfa .s-alt { position: absolute; bottom: 7mm; left: 14mm; right: 14mm; display: flex; justify-content: space-between; font-size: 8pt; color: #222; }
 .sayfa table { width: 100%; border-collapse: collapse; margin-bottom: 4mm; }
-.sayfa th, .sayfa td { border: .8pt solid #444; padding: 1.8mm 2.2mm; vertical-align: top; text-align: left; }
-.sayfa th { background: #ececec; font-size: 9.5pt; }
+.sayfa th, .sayfa td { border: 1.1pt solid #000; padding: 1.8mm 2.2mm; vertical-align: top; text-align: left; }
+.sayfa th { background: #e0e0e0; font-size: 9.5pt; }
 .sayfa td { height: 10mm; }
 .s-kutular { display: grid; gap: 3mm; margin-bottom: 4mm; }
-.s-kutular div { border: 1pt solid #444; border-radius: 3mm; padding: 2mm 3mm; font-weight: 600; font-size: 9.5pt; }
+.s-kutular div { border: 1.4pt solid #000; border-radius: 3mm; padding: 2mm 3mm; font-weight: 600; font-size: 9.5pt; }
 .s-cizgi { margin-bottom: 4mm; }
 .s-cizgi b { display: block; font-size: 10pt; margin-bottom: 1mm; }
-.s-cizgi i { display: block; border-bottom: .7pt solid #888; height: 8.5mm; }
+.s-cizgi i { display: block; border-bottom: 1.1pt solid #000; height: 8.5mm; }
 .s-kartlar { display: grid; grid-template-columns: repeat(3, 1fr); margin-bottom: 4mm; }
 .s-kartlar div { border: 1pt dashed #555; min-height: 22mm; padding: 3mm; display: grid; place-items: center; text-align: center; font-weight: 600; font-size: 10pt; }
 .s-kartlar.bos div { place-items: start; text-align: left; font-weight: 400; font-size: 9pt; min-height: 30mm; }
@@ -399,9 +399,9 @@ dialog#ayarlar { width: min(860px, 96vw); max-height: 94vh; }
 .sayfa h3 { font-size: 11pt; margin: 4mm 0 2mm; }
 .kl-iki { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm 6mm; }
 .kl-uc { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; }
-.kl-soru { break-inside: avoid; border: .8pt solid #bbb; border-radius: 3mm; padding: 2.5mm; }
-.kl-soru-m { font-size: 9pt; margin-bottom: 1.5mm; min-height: 8mm; }
-.kl-cizgi { font-size: 9pt; margin-top: 2mm; color: #333; }
+.kl-soru { break-inside: avoid; border: 1.3pt solid #000; border-radius: 3mm; padding: 2.5mm; }
+.kl-soru-m { font-size: 9.5pt; font-weight: 600; color: #000; margin-bottom: 1.5mm; min-height: 8mm; }
+.kl-cizgi { font-size: 9.5pt; margin-top: 2mm; color: #000; }
 .kl-cevap { color: #2b8a3e; }
 .kl-dy { width: 100%; font-size: 9.5pt; }
 .kl-dy td, .kl-dy th { padding: 1.2mm 2mm !important; }

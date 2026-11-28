@@ -1384,20 +1384,20 @@
       for (const ch of satir) {
         if (/\d/.test(ch)) { c += +ch; continue; }
         const x = c * K, y = r * K, beyaz = ch === ch.toUpperCase();
-        h += `<text x="${x + K / 2}" y="${y + K * .8}" text-anchor="middle" font-size="${K * .86}" font-family="'Segoe UI Symbol','DejaVu Sans',serif" fill="#111">${beyaz ? `<tspan fill="#fff" stroke="#fff" stroke-width="3">${FIGUR[ch.toLowerCase()]}&#xFE0E;</tspan>` : ""}</text><text x="${x + K / 2}" y="${y + K * .8}" text-anchor="middle" font-size="${K * .86}" font-family="'Segoe UI Symbol','DejaVu Sans',serif" fill="#111">${FIGUR[ch]}&#xFE0E;</text>`;
+        h += `<text x="${x + K / 2}" y="${y + K * .8}" text-anchor="middle" font-size="${K * .86}" font-family="'Segoe UI Symbol','DejaVu Sans',serif" fill="#111">${beyaz ? `<tspan fill="#fff" stroke="#fff" stroke-width="3">${FIGUR[ch.toLowerCase()]}&#xFE0E;</tspan>` : ""}</text><text x="${x + K / 2}" y="${y + K * .8}" text-anchor="middle" font-size="${K * .86}" font-family="'Segoe UI Symbol','DejaVu Sans',serif" fill="#000" stroke="#000" stroke-width="${beyaz ? .25 : .6}">${FIGUR[ch]}&#xFE0E;</text>`;
         c++;
       } });
     let zemin = "", halka = "";
     for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
       const kare = "abcdefgh"[c] + (8 - r), x = c * K, y = r * K;
-      zemin += `<rect x="${x}" y="${y}" width="${K}" height="${K}" fill="${sb ? (r + c) % 2 && !ust.has(kare) ? "#c4c4c4" : "#fff" : ust.has(kare) ? "#ffe066" : (r + c) % 2 ? "#b9c3cf" : "#f4f6f8"}"/>`;
-      if (sb && ust.has(kare)) zemin += `<rect x="${x + 2.5}" y="${y + 2.5}" width="${K - 5}" height="${K - 5}" fill="none" stroke="#000" stroke-width="2.5" stroke-dasharray="5 3"/>`;
-      if (yil.has(kare)) zemin += `<text x="${x + K / 2}" y="${y + K * .74}" text-anchor="middle" font-size="${K * .72}" fill="${sb ? "#000" : "#e8590c"}">★</text>`;
+      zemin += `<rect x="${x}" y="${y}" width="${K}" height="${K}" fill="${sb ? (r + c) % 2 && !ust.has(kare) ? "#9a9a9a" : "#fff" : ust.has(kare) ? "#ffe066" : (r + c) % 2 ? "#8ea3b9" : "#fff"}" stroke="#000" stroke-width=".5"/>`;
+      if (ust.has(kare)) zemin += `<rect x="${x + 2.5}" y="${y + 2.5}" width="${K - 5}" height="${K - 5}" fill="none" stroke="#000" stroke-width="2.5" stroke-dasharray="5 3"/>`;
+      if (yil.has(kare)) zemin += `<text x="${x + K / 2}" y="${y + K * .74}" text-anchor="middle" font-size="${K * .72}" fill="${sb ? "#000" : "#e8590c"}" stroke="#000" stroke-width=".8">★</text>`;
       if (isa.has(kare)) halka += `${sb ? `<circle cx="${x + K / 2}" cy="${y + K / 2}" r="${K * .36}" fill="none" stroke="#fff" stroke-width="6"/>` : ""}<circle cx="${x + K / 2}" cy="${y + K / 2}" r="${K * .36}" fill="none" stroke="${sb ? "#000" : "#2b8a3e"}" stroke-width="3"/>`;
     }
     let etk = "";
-    for (let i = 0; i < 8; i++) etk += `<text x="${i * K + K / 2}" y="${8 * K + 11}" text-anchor="middle" font-size="9" fill="#555">${"abcdefgh"[i]}</text><text x="-6" y="${i * K + K * .62}" text-anchor="middle" font-size="9" fill="#555">${8 - i}</text>`;
-    return `<svg viewBox="-12 0 ${8 * K + 14} ${8 * K + 14}" style="width:${boy || "100%"};display:block;margin:auto">${zemin}${h}${halka}<rect x="0" y="0" width="${8 * K}" height="${8 * K}" fill="none" stroke="#333" stroke-width="1.2"/>${etk}</svg>`;
+    for (let i = 0; i < 8; i++) etk += `<text x="${i * K + K / 2}" y="${8 * K + 11}" text-anchor="middle" font-size="10" font-weight="700" fill="#000">${"abcdefgh"[i]}</text><text x="-6" y="${i * K + K * .62}" text-anchor="middle" font-size="10" font-weight="700" fill="#000">${8 - i}</text>`;
+    return `<svg viewBox="-12 0 ${8 * K + 14} ${8 * K + 14}" style="width:${boy || "100%"};display:block;margin:auto">${zemin}${h}${halka}<rect x="0" y="0" width="${8 * K}" height="${8 * K}" fill="none" stroke="#000" stroke-width="2.4"/>${etk}</svg>`;
   }
   // Küre (7×7) ve Pentago (6×6) tahtaları: satırlar dizi; M mor, T turuncu, S siyah, B beyaz, * yıldız, x çarpı (cevapta)
   function izgaraTahta(satirlar, tur, boy) {
@@ -1407,7 +1407,7 @@
     let h = `<rect x="0" y="0" width="${G}" height="${G}" rx="6" fill="${tur === "pentago" ? (sb ? "#8c8c8c" : "#c92a2a") : sb ? "#eee" : "#e9ecef"}"/>`;
     satirlar.forEach((s, r) => [...s].forEach((ch, c) => {
       const x = c * K + (c >= n / 2 ? ara : 0) + K / 2, y = r * K + (r >= n / 2 ? ara : 0) + K / 2;
-      h += `<circle cx="${x}" cy="${y}" r="${K * .4}" fill="${tur === "pentago" ? (sb ? "#bdbdbd" : "#e03131") : "#fff"}" stroke="${tur === "pentago" ? (sb ? "#555" : "#a51111") : sb ? "#aaa" : "#adb5bd"}"/>`;
+      h += `<circle cx="${x}" cy="${y}" r="${K * .4}" fill="${tur === "pentago" ? (sb ? "#bdbdbd" : "#e03131") : "#fff"}" stroke="${tur === "pentago" ? (sb ? "#222" : "#a51111") : "#333"}" stroke-width="1.2"/>`;
       if (renk[ch]) h += `<circle cx="${x}" cy="${y}" r="${K * .34}" fill="${renk[ch]}" stroke="#222" stroke-width="1"/>`;
       if (sb && (ch === "M" || ch === "T")) h += `<text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="13" font-weight="700" fill="${ch === "M" ? "#fff" : "#000"}">${ch}</text>`;
       if (ch === "*") h += `<text x="${x}" y="${y + 6}" text-anchor="middle" font-size="17" fill="${isaret("#e8590c")}">★</text>`;
