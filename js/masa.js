@@ -1362,14 +1362,55 @@
   const klPdf = (f) => klSB ? f.replace("pdf/kulup/", "pdf/kulup/sb/") : f;
   function klBas(uret) {
     klCiz = klSB; let h = uret(); klCiz = false;
-    if (klSB) h = h.replace(/Yeşil halka/g, "Halka");
     bas(h, klSB);
+  }
+  // haftanın bütün cevap anahtarları (renkli çizim) ve büyük ekran görünümü
+  const haftaCevapVar = (p, i) => { const w = KL.programlar[p].haftalar[i]; return !!((p === "SAT" && KS[i]) || (w.kagitlar || []).length || (w.etk || []).length || (KH[p] && KH[p][i])); };
+  function haftaCevaplari(p, i) {
+    const w = KL.programlar[p].haftalar[i]; let h = "";
+    if (p === "SAT" && KS[i]) h += satrancKagit(i, true);
+    (w.kagitlar || []).forEach((k) => { h += kulupKagit(k, true); });
+    (w.etk || []).forEach(([o, e]) => { h += etkKagit(o, e, true); });
+    if (KH[p] && KH[p][i]) h += haftaKagitlari(p, i, true);
+    return h;
+  }
+  // G: [{ ad, uret }] gruplar (ör. haftalar); gi: açılacak grup
+  function cevapEkran(G, gi, baslik) {
+    const eski = $("#cevapEkran"); if (eski) eski.remove();
+    const ad = (s) => { const t = ((s.querySelector("h1") || {}).textContent || "").replace(/ · CEVAP ANAHTARI/, ""), m = t.match(/KÂĞIT (\d+)\/\d+ · (.*)/); return m ? `${m[1]}. ${m[2]}` : t; };
+    let i = 0, buyuk = true, S = [];
+    const d = document.createElement("div"); d.id = "cevapEkran";
+    d.innerHTML = `<div class="ce-ust"><b>🔑 ${esc(baslik)} · CEVAP ANAHTARI</b>${G.length > 1 ? `<select class="ce-grup">${G.map((g, j) => `<option value="${j}">${esc(g.ad)}</option>`).join("")}</select>` : ""}<span class="ce-no"></span><button data-ce="-1">‹ Önceki</button><button data-ce="1">Sonraki ›</button><button data-ce="buyut"></button><button data-ce="tam">⛶ Tam ekran</button><button data-ce="kapat">✕ Kapat</button></div>
+      <div class="ce-liste"></div><div class="ce-alan"><div class="ce-sayfa"></div></div>`;
+    document.body.append(d);
+    const alan = d.querySelector(".ce-alan"), kutu = d.querySelector(".ce-sayfa");
+    function grup(j) { gi = j; const tmp = document.createElement("div"); tmp.innerHTML = G[j].uret(); S = [...tmp.children].filter((x) => x.classList.contains("sayfa")); i = 0;
+      d.querySelector(".ce-liste").innerHTML = S.map((s, k) => `<button data-ce-git="${k}">${esc(ad(s).slice(0, 40))}</button>`).join("");
+      const sel = d.querySelector(".ce-grup"); if (sel) sel.value = j; if (S.length) ciz(); else { kutu.innerHTML = ""; d.querySelector(".ce-no").textContent = "Bu haftanın cevap anahtarı yok"; } }
+    function olcek() { const s = kutu.firstChild; if (!s) return; s.style.transform = ""; const w = s.offsetWidth, h = s.offsetHeight, W = alan.clientWidth - 26, H = alan.clientHeight - 26;
+      const k = buyuk ? W / w : Math.min(W / w, H / h); s.style.transformOrigin = "0 0"; s.style.transform = `scale(${k})`; kutu.style.width = w * k + "px"; kutu.style.height = h * k + "px"; }
+    function ciz() { if (!S.length) return; kutu.innerHTML = ""; kutu.append(S[i].cloneNode(true)); olcek(); alan.scrollTop = 0;
+      d.querySelector(".ce-no").textContent = `Sayfa ${i + 1} / ${S.length}`; d.querySelector('[data-ce="-1"]').disabled = !i; d.querySelector('[data-ce="1"]').disabled = i === S.length - 1;
+      d.querySelector('[data-ce="buyut"]').textContent = buyuk ? "🗎 Sayfayı sığdır" : "🔍 Büyüt";
+      d.querySelectorAll("[data-ce-git]").forEach((b) => b.classList.toggle("secili", +b.dataset.ceGit === i)); }
+    const kapat = () => { d.remove(); window.removeEventListener("keydown", tus); window.removeEventListener("resize", olcek); if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); };
+    const tus = (e) => { if (e.key === "Escape" && !document.fullscreenElement) kapat(); else if (e.key === "ArrowRight" || e.key === "PageDown") git(1); else if (e.key === "ArrowLeft" || e.key === "PageUp") git(-1); };
+    const git = (n) => { const y = Math.max(0, Math.min(S.length - 1, i + n)); if (y !== i) { i = y; ciz(); } };
+    d.addEventListener("click", (e) => { const b = e.target.closest("[data-ce],[data-ce-git]"); if (!b) return;
+      if (b.dataset.ceGit !== undefined) { i = +b.dataset.ceGit; return ciz(); }
+      const c = b.dataset.ce; if (c === "kapat") return kapat(); if (c === "buyut") { buyuk = !buyuk; return ciz(); }
+      if (c === "tam") return document.fullscreenElement ? document.exitFullscreen() : d.requestFullscreen().catch(() => {});
+      git(+c); });
+    const sel = d.querySelector(".ce-grup"); if (sel) sel.onchange = () => grup(+sel.value);
+    window.addEventListener("keydown", tus); window.addEventListener("resize", olcek); window.addEventListener("hashchange", kapat, { once: true });
+    grup(gi);
   }
   function klRenkUygula() {
     document.querySelectorAll("[data-kl-renk]").forEach((b) => b.classList.toggle("ana", (b.dataset.klRenk === "sb") === klSB));
     document.querySelectorAll("[data-kl-pdf]").forEach((a) => a.href = klPdf(a.dataset.klPdf));
   }
-  const klKagit = (e, ekAd) => kagitHTML(e, null, ekAd).replace(/(<div class="s-ust"><span>)[^<]*/, "$1" + esc(KL.okul));
+  const klKagit = (e, ekAd) => { const h = kagitHTML(e, null, ekAd).replace(/(<div class="s-ust"><span>)[^<]*/, "$1" + esc(KL.okul));
+    return /CEVAP ANAHTARI/.test(e.baslik || "") ? h.replace('<div class="sayfa', '<div class="sayfa cevap-sayfa') : h; };
   function kulupTarih(i) { return gunEkle(iso(KL.baslangic), 7 * i); }
   function kulupSimdi() { // bugünkü ya da sıradaki Cumartesi
     const n = KL.programlar.SAT.haftalar.length;
@@ -1393,7 +1434,7 @@
       zemin += `<rect x="${x}" y="${y}" width="${K}" height="${K}" fill="${sb ? (r + c) % 2 && !ust.has(kare) ? "#9a9a9a" : "#fff" : ust.has(kare) ? "#ffe066" : (r + c) % 2 ? "#8ea3b9" : "#fff"}" stroke="#000" stroke-width=".5"/>`;
       if (ust.has(kare)) zemin += `<rect x="${x + 2.5}" y="${y + 2.5}" width="${K - 5}" height="${K - 5}" fill="none" stroke="#000" stroke-width="2.5" stroke-dasharray="5 3"/>`;
       if (yil.has(kare)) zemin += `<text x="${x + K / 2}" y="${y + K * .74}" text-anchor="middle" font-size="${K * .72}" fill="${sb ? "#000" : "#e8590c"}" stroke="#000" stroke-width=".8">★</text>`;
-      if (isa.has(kare)) halka += `${sb ? `<circle cx="${x + K / 2}" cy="${y + K / 2}" r="${K * .36}" fill="none" stroke="#fff" stroke-width="6"/>` : ""}<circle cx="${x + K / 2}" cy="${y + K / 2}" r="${K * .36}" fill="none" stroke="${sb ? "#000" : "#2b8a3e"}" stroke-width="3"/>`;
+      if (isa.has(kare)) halka += `${sb ? `<circle cx="${x + K / 2}" cy="${y + K / 2}" r="${K * .36}" fill="none" stroke="#fff" stroke-width="6"/>` : ""}<circle cx="${x + K / 2}" cy="${y + K / 2}" r="${K * .36}" fill="none" stroke="#e03131" stroke-width="3.2"/>`;
     }
     let etk = "";
     for (let i = 0; i < 8; i++) etk += `<text x="${i * K + K / 2}" y="${8 * K + 11}" text-anchor="middle" font-size="10" font-weight="700" fill="#000">${"abcdefgh"[i]}</text><text x="-6" y="${i * K + K * .62}" text-anchor="middle" font-size="10" font-weight="700" fill="#000">${8 - i}</text>`;
@@ -1411,8 +1452,8 @@
       if (renk[ch]) h += `<circle cx="${x}" cy="${y}" r="${K * .34}" fill="${renk[ch]}" stroke="#222" stroke-width="1"/>`;
       if (sb && (ch === "M" || ch === "T")) h += `<text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="13" font-weight="700" fill="${ch === "M" ? "#fff" : "#000"}">${ch}</text>`;
       if (ch === "*") h += `<text x="${x}" y="${y + 6}" text-anchor="middle" font-size="17" fill="${isaret("#e8590c")}">★</text>`;
-      if (ch === "x") h += `<path d="M${x - 8} ${y - 8}L${x + 8} ${y + 8}M${x + 8} ${y - 8}L${x - 8} ${y + 8}" stroke="${isaret("#2b8a3e")}" stroke-width="3.5"/>`;
-      if (ch === "o") h += `<circle cx="${x}" cy="${y}" r="${K * .36}" fill="none" stroke="${isaret("#2b8a3e")}" stroke-width="3"/>`;
+      if (ch === "x") h += `<path d="M${x - 8} ${y - 8}L${x + 8} ${y + 8}M${x + 8} ${y - 8}L${x - 8} ${y + 8}" stroke="#e03131" stroke-width="3.5"/>`;
+      if (ch === "o") h += `<circle cx="${x}" cy="${y}" r="${K * .36}" fill="none" stroke="#e03131" stroke-width="3.2"/>`;
       if (ch === "^") h += `<text x="${x}" y="${y + 6}" text-anchor="middle" font-size="17" fill="${isaret("#1971c2")}">↑</text>`;
     }));
     return `<svg viewBox="-2 -2 ${G + 4} ${G + 4}" style="width:${boy || "100%"};display:block;margin:auto">${h}</svg>`;
@@ -1447,8 +1488,8 @@
       return ust("PENTAGO · TANIŞMA", "Siyah başlar. Bilyeni koy, sonra bir tablayı 90° çevir (saat yönünde ya da tersine). Yatay, dikey ya da çapraz 5 bilye dizen kazanır.",
         `<h3>1. Doğru mu, yanlış mı?</h3>${cevap ? `<p class="kl-cevap">${dyCevap(PENTAGO_DY)}</p>` : dyTablo(PENTAGO_DY)}
         <h3>2. Siyah tek bilyeyle kazanabilir mi? Bilyeyi nereye koymalı?</h3><div class="kl-iki">
-        ${izgaraKutu(izgaraTahta(cevap ? Ac : A, "pentago", "44mm"), "a) Sıra siyahta", cevap ? "Yeşil halkalı çukura koyar, yatay 5 olur ve tabla çevirmeden kazanır." : "Cevabım: ......................................")}
-        ${izgaraKutu(izgaraTahta(cevap ? Bc : B, "pentago", "44mm"), "b) Sıra siyahta", cevap ? "Yeşil halkalı çukura koyar, çapraz 5 olur." : "Cevabım: ......................................")}</div>
+        ${izgaraKutu(izgaraTahta(cevap ? Ac : A, "pentago", "44mm"), "a) Sıra siyahta", cevap ? "Kırmızı halkalı çukura koyar, yatay 5 olur ve tabla çevirmeden kazanır." : "Cevabım: ......................................")}
+        ${izgaraKutu(izgaraTahta(cevap ? Bc : B, "pentago", "44mm"), "b) Sıra siyahta", cevap ? "Kırmızı halkalı çukura koyar, çapraz 5 olur." : "Cevabım: ......................................")}</div>
         <h3>3. Tablayı çevir! Soldaki tablayı 90° çevirince bilyeler nereye gelir? Boş tablalara çiz.</h3>
         <div class="kl-uc">${izgaraKutu(izgaraTahta(TABLA, "kure", "24mm"), "Başta")}${izgaraKutu(izgaraTahta(cevap ? tablaCevir(TABLA, 1) : ["...", "...", "..."], "kure", "24mm"), "↻ Saat yönünde")}${izgaraKutu(izgaraTahta(cevap ? tablaCevir(TABLA, -1) : ["...", "...", "..."], "kure", "24mm"), "↺ Saat yönünün tersine")}</div>
         `);
@@ -1477,7 +1518,7 @@
     const S = KS[i], w = KL.programlar.SAT.haftalar[i];
     if (!S) return "";
     const kutu = (q, j) => `<div class="kl-soru"><div class="kl-soru-m"><b>${j + 1})</b> ${esc(q.soru)}</div>${satrancTahta(q, cevap, "47mm")}<div class="kl-cizgi">${cevap ? `<b class="kl-cevap">${esc(q.cevap)}</b>` : "Cevabım: ................................................"}</div></div>`;
-    const sayfa = (L, b, n) => klKagit({ baslik: `${w.ad.toLocaleUpperCase("tr")} · ALIŞTIRMA ${n}` + (cevap ? " · CEVAP ANAHTARI" : ""), yonerge: cevap ? "Yeşil halkalar doğru kareleri gösterir." : w.amac,
+    const sayfa = (L, b, n) => klKagit({ baslik: `${w.ad.toLocaleUpperCase("tr")} · ALIŞTIRMA ${n}` + (cevap ? " · CEVAP ANAHTARI" : ""), yonerge: cevap ? "Kırmızı halkalar doğru kareleri gösterir." : w.amac,
       bloklar: [{ t: "html", x: `<div class="kl-iki">${L.map((q, j) => kutu(q, b + j)).join("")}</div>` }] }, `Satranç · ${i + 1}. hafta`);
     return sayfa(S.slice(0, 6), 0, 1) + sayfa(S.slice(6), 6, 2);
   }
@@ -1526,10 +1567,10 @@
       if (ch === "M" || ch === "T") h += `<text x="${X(c)}" y="${Y(r) + 4.2}" text-anchor="middle" font-size="12" font-weight="700" fill="${koyu ? "#fff" : "#000"}">${ch}</text>`;
     }));
     (t.m || []).forEach(([r, c, k]) => { const x = X(c), y = Y(r), dolu = t.s[r][c] === "S" || t.s[r][c] === "M";
-      if (k === "o") h += `<circle cx="${x}" cy="${y}" r="${K * .44}" fill="none" stroke="#fff" stroke-width="4"/><circle cx="${x}" cy="${y}" r="${K * .44}" fill="none" stroke="#000" stroke-width="2.4"/>`;
+      if (k === "o") h += `<circle cx="${x}" cy="${y}" r="${K * .44}" fill="none" stroke="#fff" stroke-width="4"/><circle cx="${x}" cy="${y}" r="${K * .44}" fill="none" stroke="#e03131" stroke-width="2.6"/>`;
       if (k === "n") h += `<circle cx="${x}" cy="${y}" r="${K * .46}" fill="none" stroke="#000" stroke-width="1.4" stroke-dasharray="3 2"/>`;
       if (k === "*" || k === "y") h += `<text x="${x}" y="${y + 6}" text-anchor="middle" font-size="17" fill="${dolu ? "#fff" : "#000"}">★</text>`;
-      if (k === "x") h += `<path d="M${x - 9} ${y - 9}L${x + 9} ${y + 9}M${x + 9} ${y - 9}L${x - 9} ${y + 9}" stroke="#fff" stroke-width="6"/><path d="M${x - 9} ${y - 9}L${x + 9} ${y + 9}M${x + 9} ${y - 9}L${x - 9} ${y + 9}" stroke="#000" stroke-width="3"/>`; });
+      if (k === "x") h += `<path d="M${x - 9} ${y - 9}L${x + 9} ${y + 9}M${x + 9} ${y - 9}L${x - 9} ${y + 9}" stroke="#fff" stroke-width="6"/><path d="M${x - 9} ${y - 9}L${x + 9} ${y + 9}M${x + 9} ${y - 9}L${x - 9} ${y + 9}" stroke="#e03131" stroke-width="3.2"/>`; });
     if (sol) for (let i = 0; i < n; i++) h += `<text x="${X(i)}" y="10" text-anchor="middle" font-size="10" font-weight="700">${"ABCDEFG"[i]}</text><text x="6" y="${Y(i) + 3.5}" text-anchor="middle" font-size="10" font-weight="700">${i + 1}</text>`;
     if (t.dokun) t.s.forEach((s, r) => [...s].forEach((_, c) => { const x = X(c) - K / 2, y = Y(r) - K / 2;
       h += `<rect class="dk-k" data-k="${"ABCDEFG"[c] + (r + 1)}" x="${x}" y="${y}" width="${K}" height="${K}" rx="4"/>`; }));
@@ -1729,7 +1770,7 @@
     const P = KL.programlar[p], simdi = kulupSimdi();
     $("#sahne").innerHTML = `<div class="ust-baslik"><div><h1>Çocuk Kulübü · ${esc(P.ad)}</h1><p>${esc(KL.okul)} · Her Cumartesi ${esc(P.blok)}: ${P.saatler.map(([s, d]) => `${s} ${d}`).join(" · ")} · Öğretmen: ${esc(P.ogretmen)}</p></div>
       <div class="sekmeler" role="tablist">${Object.entries(KL.programlar).map(([k, v]) => `<a role="tab" class="dugme kucuk${k === p ? " ana" : ""}" href="#kulup/${k}">${esc(v.ad)}</a>`).join(" ")}</div>
-      <div class="dugmeler kl-baski" role="group" aria-label="Baskı rengi"><b>Baskı:</b><button class="dugme kucuk" data-kl-renk="renkli">Renkli</button><button class="dugme kucuk" data-kl-renk="sb">Siyah-beyaz</button></div></div>
+      <div class="dugmeler kl-baski" role="group" aria-label="Baskı rengi"><b>Baskı:</b><button class="dugme kucuk" data-kl-renk="renkli">Renkli</button><button class="dugme kucuk" data-kl-renk="sb">Siyah-beyaz</button>${haftaCevapVar(p, simdi) ? `<button class="dugme kucuk ce-dugme" data-kl-ce="${simdi}">📺 Yapılan etkinliklerin cevap anahtarı · büyük ekran</button>` : ""}</div></div>
       <div class="iki-sutun"><div>${P.haftalar.map((w, i) => { const t = kulupTarih(i);
         return `<div class="kart gun-kart ${i === simdi ? "canva-simdi" : ""} ${w.bekliyor ? "gecmis" : ""}" id="kl${i}" style="margin-bottom:14px">
           <div class="gun-tarih"><span class="rozet dunya">${i + 1}. hafta</span><b>${tarihYaz(t)} Cumartesi</b>${i === simdi ? '<span class="rozet tatil">BU HAFTA</span>' : ""}${w.bekliyor ? '<span class="rozet tatil">kurallar bekleniyor</span>' : ""}</div>
@@ -1738,7 +1779,7 @@
           ${w.oyunlar ? `<p class="not"><b>Oyunlar:</b> ${w.oyunlar.map(esc).join(", ")}</p>` : ""}${w.oyun ? `<p class="not"><b>Haftanın oyunu:</b> ${esc(w.oyun)}</p>` : ""}
           <details${i === simdi ? " open" : ""}><summary class="not" style="cursor:pointer">Öğretmen: ders akışı (${w.dersler.length} adım)</summary><ol>${w.dersler.map(([b, m]) => `<li><b>${esc(b)}:</b> ${esc(m)}</li>`).join("")}</ol></details>
           ${(w.video || []).length ? `<div class="kl-video">${w.video.map((v) => v.ytid ? `<figure>${videoKart({ id: v.ytid, ad: v.ad, kanal: v.kanal || "" })}</figure>` : v.src ? `<figure><video src="${v.src}" controls preload="metadata" playsinline></video><figcaption>${esc(v.ad)}</figcaption></figure>` : `<a class="dugme kucuk" href="${v.yt}" target="_blank" rel="noopener">▶ ${esc(v.ad)} ↗</a>`).join("")}</div>` : ""}
-          <div class="dugmeler" style="margin-top:10px"><button class="dugme kucuk ana" data-kl-video="${i}">▶ Video olarak oynat</button><button class="dugme kucuk" data-kl-sun="${i}">${p === "SAT" ? "♟ Tahtada çöz (10 soru)" : "Tahtada sun"}</button>
+          <div class="dugmeler" style="margin-top:10px"><button class="dugme kucuk ana" data-kl-video="${i}">▶ Video olarak oynat</button>${haftaCevapVar(p, i) ? `<button class="dugme kucuk ce-dugme" data-kl-ce="${i}">📺 Cevap anahtarı · büyük ekran</button>` : ""}<button class="dugme kucuk" data-kl-sun="${i}">${p === "SAT" ? "♟ Tahtada çöz (10 soru)" : "Tahtada sun"}</button>
             ${p === "SAT" && KS[i] ? `<button class="dugme kucuk" data-kl-sat="${i}">Alıştırma kâğıdı</button><button class="dugme kucuk" data-kl-satc="${i}">Cevap anahtarı</button>` : ""}
             ${(w.kagitlar || []).map((k) => `<button class="dugme kucuk" data-kl-kag="${k}">Etkinlik kâğıdı: ${esc({ "pentago-tanis": "Pentago tanışma", "kure-tanis": "Küre tanışma", "kure-yakalama": "Küre yakalama" }[k])}</button><button class="dugme kucuk" data-kl-kagc="${k}">Cevap anahtarı</button>`).join("")}
             ${(w.pdf || []).map(([a, f]) => `<a class="dugme kucuk" href="${klPdf(f)}" data-kl-pdf="${f}" target="_blank" rel="noopener">${esc(a)} (PDF)</a>`).join("")}
@@ -1758,6 +1799,10 @@
         ${p === "SAT" ? `<p class="not">Satranç alıştırmalarının cevapları bilgisayarla tek tek doğrulandı. Videolar YouTube'da açılır; bağlantı dersi YouTube'da arar.</p><div class="dugmeler"><button class="dugme kucuk" data-kl-tum="SAT">12 haftanın alıştırmalarını yazdır</button><button class="dugme kucuk ana" data-kl-serbest>♟ Serbest satranç tahtası</button><a class="dugme kucuk ana" href="#dokun/${encodeURIComponent("Satranç 50 Soru")}">☝ 50 dokunmatik soru</a></div>` : `<p class="not">Videolar kendi kural videolarımız (@ankara_zeka_ve_bilim_akademisi). Slaytlardaki kurallar: ${esc(KL.tazofKaynak)}.</p>`}</div></div></div>`;
     const S = (i) => kulupSlaytlari(p, i), baslik = `Çocuk Kulübü · ${P.ad}`;
     document.querySelectorAll("[data-kl-video]").forEach((b) => b.onclick = () => sunumAc(S(+b.dataset.klVideo), 0, baslik, true, true));
+    // yapılan haftalar (1. haftadan bu haftaya), cevabı olanlar
+    const CG = P.haftalar.map((w, j) => ({ j, ad: `${j + 1}. hafta · ${w.ad}`, uret: () => haftaCevaplari(p, j) })).filter((g) => g.j <= Math.max(simdi, 0) && haftaCevapVar(p, g.j));
+    document.querySelectorAll("[data-kl-ce]").forEach((b) => b.onclick = () => { const j = +b.dataset.klCe, k = CG.findIndex((g) => g.j === j);
+      k >= 0 ? cevapEkran(CG, k, P.ad) : cevapEkran([{ ad: `${j + 1}. hafta`, uret: () => haftaCevaplari(p, j) }], 0, `${P.ad} · ${j + 1}. hafta`); });
     document.querySelectorAll("[data-kl-sun]").forEach((b) => b.onclick = () => sunumAc(S(+b.dataset.klSun), 0, baslik));
     document.querySelectorAll("[data-kl-sat]").forEach((b) => b.onclick = () => klBas(() => satrancKagit(+b.dataset.klSat, false)));
     document.querySelectorAll("[data-kl-satc]").forEach((b) => b.onclick = () => klBas(() => satrancKagit(+b.dataset.klSatc, true)));

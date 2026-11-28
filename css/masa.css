@@ -411,7 +411,24 @@ dialog#ayarlar { width: min(860px, 96vw); max-height: 94vh; }
 
 /* çocuk kulübü: baskı seçimi */
 .kl-baski { align-items: center; margin-top: 8px; }
-.baski.sb .kl-cevap { color: #000; font-weight: 700; }
+/* cevap anahtarı: cevaplar kırmızı (ekranda ve baskıda) */
+.kl-cevap, .cevap-sayfa .kl-cizgi, .cevap-sayfa .kl-cizgi b, .cevap-sayfa .kl-cevap, .cevap-sayfa h3 + p b { color: #d00000 !important; font-weight: 700; }
+.cevap-sayfa h1 { color: #d00000; }
+.cevap-sayfa { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+/* cevap anahtarı: büyük ekran görünümü */
+#cevapEkran { position: fixed; inset: 0; z-index: 9999; background: #2b2f36; display: flex; flex-direction: column; }
+#cevapEkran .ce-ust { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; background: #b00000; color: #fff; }
+#cevapEkran .ce-ust b { font-size: 1.15rem; flex: 1; min-width: 200px; }
+#cevapEkran .ce-grup { font: inherit; font-weight: 700; font-size: 1rem; padding: 7px 10px; border-radius: 10px; border: 0; max-width: 320px; }
+#cevapEkran .ce-no { font-weight: 700; margin-right: 6px; }
+#cevapEkran .ce-ust button { font: inherit; font-weight: 700; font-size: 1rem; padding: 8px 14px; border-radius: 10px; border: 0; background: #fff; color: #b00000; cursor: pointer; }
+#cevapEkran .ce-ust button:disabled { opacity: .45; cursor: default; }
+#cevapEkran .ce-alan { flex: 1; overflow: auto; padding: 12px; }
+#cevapEkran .ce-sayfa { margin: 0 auto; position: relative; }
+#cevapEkran .ce-sayfa .sayfa { position: absolute; left: 0; top: 0; box-shadow: 0 6px 30px rgba(0,0,0,.5); }
+#cevapEkran .ce-liste { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 12px; background: #3a3f47; }
+#cevapEkran .ce-liste button { font: inherit; font-size: .85rem; padding: 4px 10px; border-radius: 8px; border: 0; background: #555b65; color: #fff; cursor: pointer; }
+#cevapEkran .ce-liste button.secili { background: #fff; color: #b00000; font-weight: 700; }
 .kl-etk { padding-left: 20px; margin: 6px 0; font-size: .92rem; }
 .kl-etk li { margin-bottom: 6px; }
 .kl-etk li span { display: block; }
@@ -667,3 +684,4 @@ html.uygulama .dk-alan .ct-tahta, html.uygulama .dk-tahta { width: 520px; width:
 .sayfa .dv-ne td:nth-child(4) { font-size: 7pt; color: #495057; }
 .dv-harf { display: inline-block; width: 5mm; height: 5mm; line-height: 5mm; text-align: center; border-radius: 50%; background: #212529; color: #fff; font-weight: 800; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .dv-rozet { display: inline-block; width: 5mm; height: 5mm; line-height: 4.2mm; text-align: center; border-radius: 50%; border: 2.4pt solid; font-weight: 800; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.dugme.ce-dugme { background: #c92a2a; border-color: #a51111; color: #fff; font-weight: 700; }
